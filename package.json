@@ -1,0 +1,57 @@
+{
+  "name": "zerokey-treasury",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-governed Execution Governance Layer for autonomous crypto treasuries",
+  "author": "ZeroKey Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.14.2",
+  "scripts": {
+    "dev": "pnpm --filter frontend dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:all": "pnpm run --parallel --filter './packages/*' dev",
+    "build": "pnpm --filter './packages/*' build",
+    "build:contracts": "pnpm --filter contracts build",
+    "build:backend": "pnpm --filter backend build",
+    "build:frontend": "pnpm --filter frontend build",
+    "test": "pnpm --filter './packages/*' test",
+    "test:contracts": "pnpm --filter contracts test",
+    "test:backend": "pnpm --filter backend test",
+    "test:frontend": "pnpm --filter frontend test",
+    "lint": "pnpm --filter './packages/*' lint",
+    "lint:fix": "pnpm --filter './packages/*' lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "typecheck": "pnpm --filter './packages/*' typecheck",
+    "clean": "pnpm --filter './packages/*' clean && rm -rf node_modules",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/node": "^22.9.0",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "eslint": "^9.15.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.4.1",
+    "prettier-plugin-solidity": "^1.4.1",
+    "typescript": "^5.6.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "packages/contracts/**/*.sol": [
+      "forge fmt --root packages/contracts"
+    ]
+  }
+}
