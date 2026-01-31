@@ -87,12 +87,49 @@ pnpm -C packages/backend build
 
 ---
 
+### Phase 4: x402 Payment ✅ COMPLETED
+
+**実装者**: Shelley (exe.dev VM)
+
+**実装内容:**
+
+1. **`middleware/x402.ts`**
+   - HTTP 402 Payment Requiredプロトコル
+   - X-Paymentヘッダー解析
+   - 決済検証（Base Sepolia）
+
+2. **`services/payment.ts`**
+   - USDCトランザクション検証
+   - 決済記録管理
+   - 予算チェック用集計
+
+3. **`routes/provider.ts`**
+   - `POST /api/provider/translate` - 翻訳サービス (0.03 USDC)
+   - `POST /api/provider/summarize` - 要約サービス (0.02 USDC)
+   - `GET /api/provider/prices` - 価格一覧
+
+**テスト:**
+```bash
+# 価格確認
+curl http://localhost:3001/api/provider/prices
+
+# 決済なし → 402
+curl -X POST http://localhost:3001/api/provider/translate \
+  -H 'Content-Type: application/json' \
+  -d '{"text": "hello", "targetLanguage": "ja"}'
+
+# 決済あり
+curl -X POST http://localhost:3001/api/provider/translate \
+  -H 'Content-Type: application/json' \
+  -H 'X-Payment: 0x123...:84532:30000:0xabc...' \
+  -d '{"text": "hello", "targetLanguage": "ja"}'
+```
+
+---
+
 ## 次のタスク
 
-- [ ] Phase 3.2: `analyzer.ts` プロンプト改善（プロバイダ情報/予算コンテキスト）
-- [ ] Phase 3.3: `routes/firewall.ts` API作成
-- [ ] Phase 3.4: テスト（正常/異常ケースE2E）
-- [ ] Phase 4: x402 Payment（402ミドルウェア、USDC統合）
+- [ ] Phase 4.4: オンチェーン統合 (ZeroKeyGuard.submitDecision)
 - [ ] Phase 5: Frontend UI
 - [ ] Phase 6: 統合テスト & デモ
 
