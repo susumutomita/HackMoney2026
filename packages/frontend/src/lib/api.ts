@@ -10,7 +10,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export interface TransactionInput {
   chainId: number;
   from: string;
+  /** Destination address (resolved if user entered ENS). */
   to: string;
+  /** Optional human-friendly label (e.g. vitalik.eth). */
+  toLabel?: string;
   value: string;
   data?: string;
 }

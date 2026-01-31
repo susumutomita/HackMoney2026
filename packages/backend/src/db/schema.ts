@@ -23,6 +23,7 @@ export const analysisResults = sqliteTable("analysis_results", {
   chainId: integer("chain_id").notNull(),
   fromAddress: text("from_address").notNull(),
   toAddress: text("to_address").notNull(),
+  toLabel: text("to_label"),
   value: text("value").notNull(),
   data: text("data"),
   riskLevel: integer("risk_level").notNull(),

@@ -72,6 +72,7 @@ const CREATE_TABLES_SQL = `
     chain_id INTEGER NOT NULL,
     from_address TEXT NOT NULL,
     to_address TEXT NOT NULL,
+    to_label TEXT,
     value TEXT NOT NULL,
     data TEXT,
     risk_level INTEGER NOT NULL,
@@ -143,9 +144,26 @@ const DEMO_PROVIDERS = [
  * Initialize database tables
  * Creates tables if they don't exist
  */
+function ensureColumn(table: string, column: string, ddl: string): void {
+  const cols = sqlite.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+  const has = cols.some((c) => c.name === column);
+  if (!has) {
+    sqlite.exec(ddl);
+    console.warn(`DB migration: added ${table}.${column}`);
+  }
+}
+
 export function initializeDatabase(): void {
   // Run DDL statements using better-sqlite3's exec method (not child_process.exec)
   sqlite.exec(CREATE_TABLES_SQL);
+
+  // Lightweight migrations for additive schema changes
+  ensureColumn(
+    "analysis_results",
+    "to_label",
+    "ALTER TABLE analysis_results ADD COLUMN to_label TEXT"
+  );
+
   console.log(`Database initialized at ${DB_PATH}`);
 
   // Seed demo providers if table is empty

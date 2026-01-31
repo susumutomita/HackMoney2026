@@ -123,11 +123,7 @@ firewallRouter.post("/check", zValidator("json", checkSchema), async (c) => {
   // Provider context (optional)
   const providerRow = providerId
     ? (
-        await db
-          .select()
-          .from(schema.providers)
-          .where(eq(schema.providers.id, providerId))
-          .limit(1)
+        await db.select().from(schema.providers).where(eq(schema.providers.id, providerId)).limit(1)
       )[0]
     : undefined;
 

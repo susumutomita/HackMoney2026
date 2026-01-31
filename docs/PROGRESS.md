@@ -57,6 +57,7 @@ curl http://localhost:3001/api/a2a/discover?service=translation
 #### 3.1 `services/firewall.ts` 作成 ✅
 
 **実装内容:**
+
 - `packages/backend/src/services/firewall.ts` を追加
   - 決定: `APPROVED | WARNING | REJECTED`
   - チェック: 低信頼プロバイダ、簡易デイリーバジェット(100 USDC)、インメモリレート制限(10/min)
@@ -78,6 +79,7 @@ curl http://localhost:3001/api/a2a/discover?service=translation
 - `packages/backend/src/index.ts` に `/api/firewall` を登録
 
 **ビルド/テスト:**
+
 ```bash
 pnpm -C packages/backend test
 pnpm -C packages/backend build

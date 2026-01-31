@@ -96,7 +96,9 @@ function enforceSpendingLimitPolicy(
     state.risk = maxRisk(state.risk, 3);
     state.hardReject = true;
     reasons.push(`Policy '${policy.name}' blocks: tx.value exceeds per-transaction limit`);
-    warnings.push(`Spending limit exceeded (value=${txValue.toString()} max=${maxAmount.toString()})`);
+    warnings.push(
+      `Spending limit exceeded (value=${txValue.toString()} max=${maxAmount.toString()})`
+    );
   }
 }
 
@@ -203,7 +205,14 @@ export async function checkFirewall(input: FirewallCheckInput): Promise<Firewall
       if (!policy.enabled) continue;
       const state: { risk: 1 | 2 | 3; hardReject: boolean } = { risk, hardReject };
       enforceSpendingLimitPolicy(policy, txValue, matchedPolicyIds, reasons, warnings, state);
-      enforceProtocolAllowlistPolicy(policy, input.tx.to, matchedPolicyIds, reasons, warnings, state);
+      enforceProtocolAllowlistPolicy(
+        policy,
+        input.tx.to,
+        matchedPolicyIds,
+        reasons,
+        warnings,
+        state
+      );
       risk = state.risk;
       hardReject = state.hardReject;
       // NOTE: Other policy types are intentionally ignored in this demo firewall.

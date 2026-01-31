@@ -1,7 +1,10 @@
 export interface TransactionInput {
   chainId: number;
   from: string;
+  /** Destination address (resolved if the user entered ENS). */
   to: string;
+  /** Optional human-friendly label for destination (e.g. vitalik.eth). */
+  toLabel?: string;
   value: string;
   data?: string;
   gasLimit?: string;
