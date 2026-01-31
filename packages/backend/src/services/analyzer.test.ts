@@ -182,9 +182,12 @@ function logResult(
 }
 
 describe("Transaction Analyzer Accuracy Tests", () => {
-  const isCI = process.env.CI === "true";
+  // Live benchmarks depend on the local Claude subscription output and can be flaky.
+  // Opt-in explicitly when you want to evaluate prompt quality.
+  // (We intentionally ignore any global LIVE_LLM_TESTS env that might be set on the host.)
+  const runLive = process.env.RUN_LIVE_BENCHMARKS === "true";
 
-  describe.skipIf(isCI)("Live Accuracy Benchmarks", () => {
+  describe.skipIf(!runLive)("Live Accuracy Benchmarks", () => {
     const results: TestResult[] = [];
 
     TEST_CASES.forEach((testCase) => {

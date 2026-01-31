@@ -6,6 +6,7 @@ import { analyzeRouter } from "./routes/analyze.js";
 import { policyRouter } from "./routes/policy.js";
 import { healthRouter } from "./routes/health.js";
 import a2aRouter from "./routes/a2a.js";
+import { firewallRouter } from "./routes/firewall.js";
 import { config } from "./config.js";
 import { initializeDatabase } from "./db/index.js";
 
@@ -23,6 +24,7 @@ app.route("/health", healthRouter);
 app.route("/api/analyze", analyzeRouter);
 app.route("/api/policy", policyRouter);
 app.route("/api/a2a", a2aRouter);
+app.route("/api/firewall", firewallRouter);
 
 // Start server
 const port = config.port;
