@@ -49,10 +49,32 @@ curl http://localhost:3001/api/a2a/discover?service=translation
 
 ---
 
+## 2026-01-31
+
+### Phase 3: Firewall強化 🚧 IN PROGRESS
+
+#### 3.1 `services/firewall.ts` 作成 ✅
+
+**実装内容:**
+- `packages/backend/src/services/firewall.ts` を追加
+  - 決定: `APPROVED | WARNING | REJECTED`
+  - チェック: 低信頼プロバイダ、簡易デイリーバジェット(100 USDC)、インメモリレート制限(10/min)
+  - 既存 `policyRepository` を参照し、`spending_limit(per_transaction)` と `protocol_allowlist` を適用（他は無視）
+- `packages/backend/src/services/firewall.test.ts` を追加（vitest）
+
+**ビルド/テスト:**
+```bash
+pnpm -C packages/backend test
+pnpm -C packages/backend build
+```
+
+---
+
 ## 次のタスク
 
-- [ ] Phase 2: WebSocket交渉（必要なら）
-- [ ] Phase 3: Firewall強化（LLMプロンプト改善、ポリシーチェック）
+- [ ] Phase 3.2: `analyzer.ts` プロンプト改善（プロバイダ情報/予算コンテキスト）
+- [ ] Phase 3.3: `routes/firewall.ts` API作成
+- [ ] Phase 3.4: テスト（正常/異常ケースE2E）
 - [ ] Phase 4: x402 Payment（402ミドルウェア、USDC統合）
 - [ ] Phase 5: Frontend UI
 - [ ] Phase 6: 統合テスト & デモ
