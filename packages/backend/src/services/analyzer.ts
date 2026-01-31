@@ -2,6 +2,23 @@ import { spawn } from "node:child_process";
 import { z } from "zod";
 import type { TransactionAnalysis, TransactionInput } from "../types/index.js";
 
+export interface AnalyzerContext {
+  provider?: {
+    id?: string;
+    name?: string;
+    trustScore?: number;
+    pricePerUnit?: string;
+    unit?: string;
+    services?: string[];
+  };
+  budget?: {
+    /** USDC base units (6 decimals) */
+    dailyLimitUsdcBaseUnits?: string;
+    /** USDC base units (6 decimals) */
+    spentTodayUsdcBaseUnits?: string;
+  };
+}
+
 /** CLI execution timeout in milliseconds (2 minutes) */
 const CLI_TIMEOUT_MS = 120_000;
 
@@ -21,16 +38,26 @@ const analysisResponseSchema = z.object({
 /**
  * Build the analysis prompt for A2A API Marketplace transactions
  */
-function buildAnalysisPrompt(tx: TransactionInput): string {
-  return `You are an AI security analyst for an AI Agent API Marketplace with Execution Firewall.
+function buildAnalysisPrompt(tx: TransactionInput, ctx?: AnalyzerContext): string {
+  const providerInfo = ctx?.provider
+    ? `\nProvider Context (from marketplace DB, may be partial):\n- Provider ID: ${ctx.provider.id ?? "unknown"}\n- Provider Name: ${ctx.provider.name ?? "unknown"}\n- Provider Trust Score (0-100): ${ctx.provider.trustScore ?? "unknown"}\n- Provider Price: ${ctx.provider.pricePerUnit ?? "unknown"} USDC per ${ctx.provider.unit ?? "unit"}\n- Provider Services: ${(ctx.provider.services ?? []).join(", ") || "unknown"}`
+    : "\nProvider Context: (not provided)";
+
+  const budgetInfo = ctx?.budget
+    ? `\nBudget Context (USDC base units; 6 decimals):\n- Daily Limit: ${ctx.budget.dailyLimitUsdcBaseUnits ?? "unknown"}\n- Spent Today (approved): ${ctx.budget.spentTodayUsdcBaseUnits ?? "unknown"}`
+    : "\nBudget Context: (not provided)";
+
+  return `You are an AI security analyst for an AI Agent API Marketplace with an Execution Firewall.
 Analyze the following service purchase request and provide a risk assessment.
 
 Transaction Details:
 - Chain ID: ${tx.chainId}
 - From (Client Agent): ${tx.from}
-- To (Service Provider): ${tx.to}
-- Value: ${tx.value} (in wei, USDC has 6 decimals)
+- To (Service Provider / Address): ${tx.to}
+- Value: ${tx.value} (USDC base units; USDC has 6 decimals)
 - Data: ${tx.data || "0x"}
+${providerInfo}
+${budgetInfo}
 
 Analyze this transaction and respond with ONLY a JSON object (no other text) containing:
 1. "riskLevel": 1 (low), 2 (medium), or 3 (high)
@@ -41,11 +68,16 @@ Analyze this transaction and respond with ONLY a JSON object (no other text) con
 6. "recommendations": array of suggested actions (can be empty)
 
 Consider:
-- Transaction value and budget impact
-- Provider reputation and trust score
+- Transaction value and budget impact (including Budget Context if provided)
+- Provider reputation and trust score (including Provider Context if provided)
 - Service category appropriateness
 - Unusual patterns or anomalies
 - Potential security or fraud risks
+
+Guidelines:
+- Treat very low-trust providers (trustScore ≤ 15) as high risk.
+- If budget context indicates this would exceed a daily limit, do NOT approve.
+- If the service looks unrelated to business needs (games/personal use), increase risk.
 
 Respond with ONLY the JSON object, no additional text or markdown.`;
 }
@@ -141,8 +173,11 @@ function executeClaudeCLI(prompt: string): Promise<string> {
 /**
  * Analyze a transaction using Claude CLI (subscription-based, no API costs)
  */
-export async function analyzeTransaction(tx: TransactionInput): Promise<TransactionAnalysis> {
-  const prompt = buildAnalysisPrompt(tx);
+export async function analyzeTransaction(
+  tx: TransactionInput,
+  ctx?: AnalyzerContext
+): Promise<TransactionAnalysis> {
+  const prompt = buildAnalysisPrompt(tx, ctx);
 
   try {
     const response = await executeClaudeCLI(prompt);
