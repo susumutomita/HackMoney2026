@@ -13,11 +13,13 @@ ZeroKey Treasuryのエンドツーエンドテストシナリオ。
 **目的**: 翻訳サービスを提供するプロバイダを見つける
 
 **リクエスト**:
+
 ```bash
 curl -s "http://localhost:3001/api/a2a/discover?service=translation"
 ```
 
 **期待するレスポンス**:
+
 ```json
 {
   "success": true,
@@ -37,6 +39,7 @@ curl -s "http://localhost:3001/api/a2a/discover?service=translation"
 ```
 
 **検証ポイント**:
+
 - [ ] `success` が `true`
 - [ ] `results` に1件以上のプロバイダ
 - [ ] TranslateAI Pro (trustScore >= 70) が含まれる
@@ -48,6 +51,7 @@ curl -s "http://localhost:3001/api/a2a/discover?service=translation"
 **目的**: 選んだプロバイダと交渉を開始
 
 **リクエスト**:
+
 ```bash
 curl -s -X POST "http://localhost:3001/api/a2a/negotiate" \
   -H "Content-Type: application/json" \
@@ -60,6 +64,7 @@ curl -s -X POST "http://localhost:3001/api/a2a/negotiate" \
 ```
 
 **期待するレスポンス**:
+
 ```json
 {
   "success": true,
@@ -75,6 +80,7 @@ curl -s -X POST "http://localhost:3001/api/a2a/negotiate" \
 ```
 
 **検証ポイント**:
+
 - [ ] `success` が `true`
 - [ ] `session.id` が存在
 - [ ] `session.providerPrice` が "0.03"
@@ -86,6 +92,7 @@ curl -s -X POST "http://localhost:3001/api/a2a/negotiate" \
 **目的**: 価格を交渉して合意に達する
 
 **リクエスト**:
+
 ```bash
 # SESSION_IDはステップ2のレスポンスから取得
 curl -s -X POST "http://localhost:3001/api/a2a/negotiate/${SESSION_ID}/offer" \
@@ -97,6 +104,7 @@ curl -s -X POST "http://localhost:3001/api/a2a/negotiate/${SESSION_ID}/offer" \
 ```
 
 **期待するレスポンス**:
+
 ```json
 {
   "success": true,
@@ -109,6 +117,7 @@ curl -s -X POST "http://localhost:3001/api/a2a/negotiate/${SESSION_ID}/offer" \
 ```
 
 **検証ポイント**:
+
 - [ ] `success` が `true`
 - [ ] `response.type` が "accept" または "counter"
 - [ ] 90%以上のオファーは accept される
@@ -120,6 +129,7 @@ curl -s -X POST "http://localhost:3001/api/a2a/negotiate/${SESSION_ID}/offer" \
 **目的**: 合意した取引がFirewallを通過するか確認
 
 **リクエスト**:
+
 ```bash
 curl -s -X POST "http://localhost:3001/api/firewall/check" \
   -H "Content-Type: application/json" \
@@ -129,6 +139,7 @@ curl -s -X POST "http://localhost:3001/api/firewall/check" \
 ```
 
 **期待するレスポンス**:
+
 ```json
 {
   "success": true,
@@ -142,6 +153,7 @@ curl -s -X POST "http://localhost:3001/api/firewall/check" \
 ```
 
 **検証ポイント**:
+
 - [ ] `success` が `true`
 - [ ] `firewall.decision` が "APPROVED"
 - [ ] `firewall.riskLevel` が 1 または 2
@@ -154,6 +166,7 @@ curl -s -X POST "http://localhost:3001/api/firewall/check" \
 **目的**: USDCで決済してサービスを利用
 
 **リクエスト (402レスポンス確認)**:
+
 ```bash
 curl -s -X POST "http://localhost:3001/api/provider/translate" \
   -H "Content-Type: application/json" \
@@ -164,6 +177,7 @@ curl -s -X POST "http://localhost:3001/api/provider/translate" \
 ```
 
 **期待するレスポンス (402)**:
+
 ```json
 {
   "error": "Payment Required",
@@ -178,6 +192,7 @@ curl -s -X POST "http://localhost:3001/api/provider/translate" \
 ```
 
 **リクエスト (決済後)**:
+
 ```bash
 curl -s -X POST "http://localhost:3001/api/provider/translate" \
   -H "Content-Type: application/json" \
@@ -189,6 +204,7 @@ curl -s -X POST "http://localhost:3001/api/provider/translate" \
 ```
 
 **期待するレスポンス (200)**:
+
 ```json
 {
   "success": true,
@@ -207,6 +223,7 @@ curl -s -X POST "http://localhost:3001/api/provider/translate" \
 ```
 
 **検証ポイント**:
+
 - [ ] 決済なし → 402ステータス
 - [ ] 決済あり → 200ステータス
 - [ ] 翻訳結果が返ってくる
@@ -253,6 +270,7 @@ curl -s -X POST "http://localhost:3001/api/firewall/check" \
 ```
 
 **期待するレスポンス**:
+
 ```json
 {
   "success": true,
@@ -269,6 +287,7 @@ curl -s -X POST "http://localhost:3001/api/firewall/check" \
 ```
 
 **検証ポイント**:
+
 - [ ] `firewall.decision` が "WARNING" または "REJECTED"
 - [ ] `firewall.riskLevel` が 3 (HIGH)
 - [ ] `firewall.warnings` に警告メッセージ
@@ -284,6 +303,7 @@ curl -s "http://localhost:3001/health"
 ```
 
 **期待するレスポンス**:
+
 ```json
 {
   "status": "healthy",
@@ -337,19 +357,19 @@ curl -s "http://localhost:3001/api/provider/prices" | jq .
 
 ## APIエンドポイント一覧
 
-| Method | Endpoint | 説明 | 認証 |
-|--------|----------|------|------|
-| GET | `/health` | ヘルスチェック | なし |
-| GET | `/api/a2a/discover?service=xxx` | プロバイダ検索 | なし |
-| GET | `/api/a2a/provider/:id` | プロバイダ詳細 | なし |
-| POST | `/api/a2a/negotiate` | 交渉開始 | なし |
-| POST | `/api/a2a/negotiate/:id/offer` | オファー送信 | なし |
-| GET | `/api/a2a/negotiate/:id` | セッション状態 | なし |
-| POST | `/api/firewall/check` | Firewallチェック | なし |
-| GET | `/api/firewall/status/:txHash` | ステータス取得 | なし |
-| GET | `/api/provider/prices` | 価格一覧 | なし |
-| POST | `/api/provider/translate` | 翻訳サービス | x402 |
-| POST | `/api/provider/summarize` | 要約サービス | x402 |
+| Method | Endpoint                        | 説明             | 認証 |
+| ------ | ------------------------------- | ---------------- | ---- |
+| GET    | `/health`                       | ヘルスチェック   | なし |
+| GET    | `/api/a2a/discover?service=xxx` | プロバイダ検索   | なし |
+| GET    | `/api/a2a/provider/:id`         | プロバイダ詳細   | なし |
+| POST   | `/api/a2a/negotiate`            | 交渉開始         | なし |
+| POST   | `/api/a2a/negotiate/:id/offer`  | オファー送信     | なし |
+| GET    | `/api/a2a/negotiate/:id`        | セッション状態   | なし |
+| POST   | `/api/firewall/check`           | Firewallチェック | なし |
+| GET    | `/api/firewall/status/:txHash`  | ステータス取得   | なし |
+| GET    | `/api/provider/prices`          | 価格一覧         | なし |
+| POST   | `/api/provider/translate`       | 翻訳サービス     | x402 |
+| POST   | `/api/provider/summarize`       | 要約サービス     | x402 |
 
 ---
 

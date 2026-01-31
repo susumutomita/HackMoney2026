@@ -20,7 +20,8 @@ export default function TutorialPage() {
   const steps = [
     {
       title: "👋 はじめに",
-      description: "ZeroKey Treasuryは、AIエージェントがAPIサービスを安全に購入するためのマーケットプレイスです。",
+      description:
+        "ZeroKey Treasuryは、AIエージェントがAPIサービスを安全に購入するためのマーケットプレイスです。",
       details: `
 **主要機能:**
 - 🔍 **A2A Gateway**: AIエージェント間のサービス検索・価格交渉
@@ -195,7 +196,7 @@ CheapTranslateの特徴:
           }),
         });
         const negData = await negRes.json();
-        
+
         if (!negData.session?.id) {
           return negData;
         }
@@ -275,7 +276,9 @@ CheapTranslateの特徴:
         <div className="mb-8">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
             <span>Tutorial Progress</span>
-            <span>{currentStep + 1} / {steps.length}</span>
+            <span>
+              {currentStep + 1} / {steps.length}
+            </span>
           </div>
           <div className="h-2 bg-gray-700 rounded-full">
             <div
@@ -312,12 +315,14 @@ CheapTranslateの特徴:
             )}
 
             {result && (
-              <div className={`mt-6 p-4 rounded-lg ${
-                result.success ? "bg-green-900/30 border border-green-700" : "bg-red-900/30 border border-red-700"
-              }`}>
-                <h3 className="font-semibold mb-2">
-                  {result.success ? "✅ 成功" : "❌ エラー"}
-                </h3>
+              <div
+                className={`mt-6 p-4 rounded-lg ${
+                  result.success
+                    ? "bg-green-900/30 border border-green-700"
+                    : "bg-red-900/30 border border-red-700"
+                }`}
+              >
+                <h3 className="font-semibold mb-2">{result.success ? "✅ 成功" : "❌ エラー"}</h3>
                 <pre className="text-xs overflow-x-auto">
                   {JSON.stringify(result.data || result.error, null, 2)}
                 </pre>

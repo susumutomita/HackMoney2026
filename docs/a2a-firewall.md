@@ -50,7 +50,6 @@ To avoid cross-implementation mismatches, this spec fixes base64 variants as fol
 - Unless explicitly stated otherwise, **Base64** means **RFC 4648 standard Base64** with `+` and `/`, and with `=` padding.
 - Applies to: `X-Nonce`, `Signature.signature`, and all `base64(...)` values shown in this document.
 
-
 ### 3.1 Requests with a body (POST/PUT/PATCH)
 
 Required:

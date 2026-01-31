@@ -109,6 +109,7 @@ pnpm -C packages/backend build
    - `GET /api/provider/prices` - 価格一覧
 
 **テスト:**
+
 ```bash
 # 価格確認
 curl http://localhost:3001/api/provider/prices
@@ -145,6 +146,7 @@ curl -X POST http://localhost:3001/api/provider/translate \
    - ウォレット接続統合
 
 **テスト:**
+
 ```bash
 cd packages/frontend && pnpm dev
 # http://localhost:3000/marketplace
