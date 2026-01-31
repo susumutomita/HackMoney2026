@@ -6,7 +6,7 @@
 
 ## プロンプト
 
-```
+````
 You are an autonomous development agent working on ZeroKey Treasury for HackMoney 2026 hackathon.
 
 ## Mission
@@ -52,10 +52,11 @@ cd /home/exedev/HackMoney2026
 git pull origin main
 pnpm install
 cd packages/backend && pnpm dev  # Start backend
-```
+````
 
 Start now. Pick the first uncompleted task and begin implementation.
 No need to ask for confirmation - just start coding.
+
 ```
 
 ---
@@ -63,6 +64,7 @@ No need to ask for confirmation - just start coding.
 ## Codex/Discord用短縮版
 
 ```
+
 ZeroKey Treasuryの自律開発を開始。
 
 1. cd /home/exedev/HackMoney2026
@@ -72,6 +74,7 @@ ZeroKey Treasuryの自律開発を開始。
 5. コミットとPROGRESS.md更新を忘れずに
 
 Claude CLIを使う（Anthropic APIは使わない）。動くもの優先。
+
 ```
 
 ---
@@ -79,15 +82,20 @@ Claude CLIを使う（Anthropic APIは使わない）。動くもの優先。
 ## Discordでclawdbotに投げる用
 
 ```
+
 @ZeroKeyBot HackMoney2026の自律開発モードを開始して。
 
 /home/exedev/HackMoney2026 に移動して、AGENTS.mdとdocs/AUTONOMOUS_DEV.mdを読んで、タスクリストに従って実装を進めて。
 
 ルール:
+
 - 指示を待たずに進める
 - Claude CLIを使う（APIは使わない）
 - タスク完了ごとにコミットとPROGRESS.md更新
 - Phase完了時にPR作成・マージ
 
 24時間動いて、デモが完全に動くまで実装して。
+
+```
+
 ```
