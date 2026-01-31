@@ -30,9 +30,9 @@ export default function MarketplacePage() {
     setLoading(true);
     setError(null);
     try {
-      const url = service
-        ? `${API_URL}/api/a2a/discover?service=${encodeURIComponent(service)}`
-        : `${API_URL}/api/a2a/discover?service=all`;
+      // Default to "translation" to show demo providers
+      const searchService = service || "translation";
+      const url = `${API_URL}/api/a2a/discover?service=${encodeURIComponent(searchService)}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
