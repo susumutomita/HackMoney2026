@@ -37,7 +37,9 @@ const DEFAULT_REQUIRED_HEADERS = [
   "x-nonce",
 ] as const;
 
-function jsonError(c: Context, status: number, error: string, message: string) {
+type A2AHttpStatus = 400 | 401 | 403 | 500;
+
+function jsonError(c: Context, status: A2AHttpStatus, error: string, message: string) {
   const requestId = (globalThis.crypto?.randomUUID?.() ?? undefined) as string | undefined;
   return c.json(
     {

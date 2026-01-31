@@ -354,8 +354,8 @@ export function getTranslation(locale: Locale) {
 }
 
 export function detectLocale(): Locale {
-  if (typeof window === "undefined") return "en";
-  const lang = navigator.language.toLowerCase();
+  const nav = (globalThis as any)?.navigator as { language?: string } | undefined;
+  const lang = (nav?.language ?? "en").toLowerCase();
   if (lang.startsWith("ja")) return "ja";
   return "en";
 }

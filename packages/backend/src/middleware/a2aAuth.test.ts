@@ -67,9 +67,9 @@ describe("a2aAuth middleware", () => {
       const sig = cryptoSign(null, Buffer.from(canonical, "utf8"), privateKey);
       c.header(
         "X-Signature-Out",
-        `keyId=\"kid-001\",alg=\"ed25519\",headers=\"${signedHeaders.join(
+        `keyId="kid-001",alg="ed25519",headers="${signedHeaders.join(
           " "
-        )}\",signature=\"${sig.toString("base64")}\"`
+        )}",signature="${sig.toString("base64")}"`
       );
       return c.text("ok");
     });
@@ -94,7 +94,7 @@ describe("a2aAuth middleware", () => {
     );
 
     expect(res.status).toBe(200);
-    const json = await res.json();
+    const json = (await res.json()) as any;
     expect(json.ok).toBe(true);
   });
 
@@ -133,9 +133,9 @@ describe("a2aAuth middleware", () => {
       const canonical = buildCanonicalString(c, signedHeaders);
       const sig = cryptoSign(null, Buffer.from(canonical, "utf8"), privateKey);
       return c.text(
-        `keyId=\"kid-001\",alg=\"ed25519\",headers=\"${signedHeaders.join(
+        `keyId="kid-001",alg="ed25519",headers="${signedHeaders.join(
           " "
-        )}\",signature=\"${sig.toString("base64")}\"`
+        )}",signature="${sig.toString("base64")}"`
       );
     });
 
@@ -172,7 +172,7 @@ describe("a2aAuth middleware", () => {
 
     const r2 = await app.request(makeReq());
     expect(r2.status).toBe(401);
-    const j2 = await r2.json();
+    const j2 = (await r2.json()) as any;
     expect(j2.error).toBe("replay_detected");
   });
 });
