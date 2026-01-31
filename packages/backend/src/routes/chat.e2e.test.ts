@@ -15,13 +15,14 @@ function mkEnvelope(overrides: Record<string, unknown> = {}) {
   return { ...base, ...overrides };
 }
 
-async function postJson(path: string, body: unknown) {
+async function postJson(path: string, body: unknown): Promise<{ res: Response; json: any }> {
   const res = await app.request(path, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
-  const json = await res.json().catch(() => ({}));
+  // Response.json() is typed as unknown in this environment; for E2E assertions we treat it as any.
+  const json = (await res.json().catch(() => ({}))) as any;
   return { res, json };
 }
 
