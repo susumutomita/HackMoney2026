@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { parseEther } from "viem";
 import { useAccount } from "wagmi";
 import { analyzeApi, type AnalysisResult } from "@/lib/api";
 import { CHAIN_NAMES, RISK_LABELS } from "@/lib/constants";
+import { looksLikeEnsName, resolveEns } from "@/lib/ens";
 
 interface FormData {
   chainId: string;
@@ -74,8 +75,40 @@ export function TransactionAnalyzer() {
     data: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [resolvedTo, setResolvedTo] = useState<`0x${string}` | null>(null);
+  const [isResolvingEns, setIsResolvingEns] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      const to = formData.to.trim();
+      setResolvedTo(null);
+
+      if (!to) return;
+      if (!looksLikeEnsName(to)) return;
+
+      setIsResolvingEns(true);
+      try {
+        const addr = await resolveEns(to);
+        if (cancelled) return;
+        setResolvedTo(addr);
+      } catch {
+        if (cancelled) return;
+        setResolvedTo(null);
+      } finally {
+        if (!cancelled) setIsResolvingEns(false);
+      }
+    }
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.to]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -88,10 +121,18 @@ export function TransactionAnalyzer() {
     try {
       const valueWei = formData.value ? parseEther(formData.value).toString() : "0";
 
+      const toInput = formData.to.trim();
+      const toResolved = looksLikeEnsName(toInput) ? resolvedTo : (toInput as `0x${string}`);
+
+      if (!toResolved) {
+        throw new Error("Could not resolve ENS name");
+      }
+
       const analysis = await analyzeApi.analyzeTransaction({
         chainId: parseInt(formData.chainId),
         from: address,
-        to: formData.to as `0x${string}`,
+        to: toResolved,
+        toLabel: looksLikeEnsName(toInput) ? toInput.toLowerCase() : undefined,
         value: valueWei,
         data: formData.data || undefined,
       });
@@ -139,15 +180,26 @@ export function TransactionAnalyzer() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">To Address</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            To Address (0x… or ENS)
+          </label>
           <input
             type="text"
             value={formData.to}
             onChange={(e) => setFormData({ ...formData, to: e.target.value })}
-            placeholder="0x..."
+            placeholder="0x… or vitalik.eth"
             className="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all font-mono text-sm"
             required
           />
+          {looksLikeEnsName(formData.to) && (
+            <p className="mt-2 text-xs text-slate-400 font-mono">
+              {isResolvingEns
+                ? "Resolving ENS…"
+                : resolvedTo
+                  ? `Resolved: ${resolvedTo}`
+                  : "Could not resolve"}
+            </p>
+          )}
         </div>
 
         <div>

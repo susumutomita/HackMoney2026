@@ -151,7 +151,9 @@ export function AnalysisHistory() {
 
             <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
               <span className="font-mono text-slate-300">
-                {formatAddress(result.transaction.to)}
+                {result.transaction.toLabel
+                  ? result.transaction.toLabel
+                  : formatAddress(result.transaction.to)}
               </span>
               <span className="text-slate-600">-</span>
               <span className="text-white font-medium">

@@ -5,6 +5,7 @@ import { isAddress } from "viem";
 import { analyzeTransaction } from "../services/analyzer.js";
 import { analysisRepository } from "../repositories/index.js";
 import { guardService } from "../services/guard.js";
+import { looksLikeEnsName, resolveEnsToAddress } from "../services/ens.js";
 
 export const analyzeRouter = new Hono();
 
@@ -44,7 +45,8 @@ const supportedChainId = z.number().refine(
 const transactionSchema = z.object({
   chainId: supportedChainId,
   from: ethereumAddress,
-  to: ethereumAddress,
+  // accept 0x address OR ENS (resolved server-side)
+  to: z.string().min(1),
   value: z.string().refine(
     (val) => {
       try {
@@ -69,10 +71,43 @@ analyzeRouter.post("/transaction", zValidator("json", transactionSchema), async 
   const { submitOnChain, ...transaction } = c.req.valid("json");
 
   try {
-    const analysis = await analyzeTransaction(transaction);
+    // Resolve ENS recipient if provided.
+    let toLabel: string | undefined;
+    let toResolved = transaction.to;
 
-    // Save analysis result to database
-    const storedResult = await analysisRepository.save(transaction, analysis);
+    if (!isAddress(toResolved) && looksLikeEnsName(toResolved)) {
+      const resolved = await resolveEnsToAddress(toResolved);
+      if (!resolved) {
+        return c.json(
+          {
+            error: "Invalid ENS name",
+            message: `Could not resolve ENS name: ${toResolved}`,
+          },
+          400
+        );
+      }
+
+      toLabel = toResolved.trim().toLowerCase();
+      toResolved = resolved;
+    }
+
+    if (!isAddress(toResolved)) {
+      return c.json(
+        {
+          error: "Invalid to address",
+          message: `Invalid recipient (address or ENS): ${transaction.to}`,
+        },
+        400
+      );
+    }
+
+    const analysis = await analyzeTransaction({ ...transaction, to: toResolved });
+
+    // Save analysis result to database (store ENS label if any)
+    const storedResult = await analysisRepository.save(
+      { ...transaction, to: toResolved, toLabel },
+      analysis
+    );
 
     // Prepare response
     const response: Record<string, unknown> = {
