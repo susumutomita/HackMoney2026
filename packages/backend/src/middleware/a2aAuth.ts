@@ -184,7 +184,9 @@ export function a2aAuth(opts: A2AAuthOptions) {
     }
 
     // Key lookup
-    const keyRec = opts.keys.find((k) => k.kid === parsed.keyId && (k.status ?? "active") === "active");
+    const keyRec = opts.keys.find(
+      (k) => k.kid === parsed.keyId && (k.status ?? "active") === "active"
+    );
     if (!keyRec) {
       return jsonError(c, 401, "unknown_kid", "unknown key id");
     }
@@ -196,7 +198,12 @@ export function a2aAuth(opts: A2AAuthOptions) {
     // Timestamp window
     const ts = Number(tsStr);
     if (!Number.isFinite(ts)) {
-      return jsonError(c, 400, "invalid_header_format", "X-Timestamp must be an epoch seconds number");
+      return jsonError(
+        c,
+        400,
+        "invalid_header_format",
+        "X-Timestamp must be an epoch seconds number"
+      );
     }
     const nowSec = Math.floor(Date.now() / 1000);
     if (Math.abs(nowSec - ts) > opts.timestampWindowSeconds) {
@@ -216,7 +223,13 @@ export function a2aAuth(opts: A2AAuthOptions) {
 
     if (hasBody) {
       const cd = c.req.header("Content-Digest");
-      if (!cd) return jsonError(c, 400, "missing_header", "Content-Digest required for requests with body");
+      if (!cd)
+        return jsonError(
+          c,
+          400,
+          "missing_header",
+          "Content-Digest required for requests with body"
+        );
 
       let expectedB64: string;
       try {
@@ -237,12 +250,22 @@ export function a2aAuth(opts: A2AAuthOptions) {
 
       // If body exists, ensure content-digest is in signed headers.
       if (!parsed.headers.includes("content-digest")) {
-        return jsonError(c, 401, "invalid_signature", "content-digest must be signed for requests with body");
+        return jsonError(
+          c,
+          401,
+          "invalid_signature",
+          "content-digest must be signed for requests with body"
+        );
       }
     } else {
       // If no body, forbid including content-digest in signed headers unless actually present.
       if (parsed.headers.includes("content-digest") && !c.req.header("Content-Digest")) {
-        return jsonError(c, 400, "invalid_header_format", "content-digest signed but header missing");
+        return jsonError(
+          c,
+          400,
+          "invalid_header_format",
+          "content-digest signed but header missing"
+        );
       }
     }
 
