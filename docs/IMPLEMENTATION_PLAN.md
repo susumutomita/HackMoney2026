@@ -1,51 +1,84 @@
 # 実装計画
 
-## Phase 1: 基盤整備 (Day 1-2)
+## Phase 1: 基盤整備 (Day 1-2) ✅ COMPLETED
 
 ### 1.1 既存コードのリファクタリング
 
-- [ ] `analyzer.ts`: Claude CLI → Anthropic API直接呼び出しに変更
-- [ ] プロンプトをA2A/APIマーケットプレイス用に更新
-- [ ] ポリシースキーマの拡張（予算、プロバイダ信頼度）
+- [x] `analyzer.ts`: A2Aマーケットプレイス用プロンプトに更新 (Claude CLI使用 - サブスク活用)
+- [x] プロンプトをA2A/APIマーケットプレイス用に更新
+- [x] ポリシースキーマの拡張（予算、プロバイダ信頼度）
 
-### 1.2 プロバイダレジストリ
+> **Note**: Anthropic API直接呼び出しではなくClaude CLIを使用。サブスクリプションを活用してデモ時の課金を回避。
+
+### 1.2 プロバイダレジストリ ✅
 
 ```typescript
-// packages/backend/src/db/schema.ts に追加
-
-const providers = sqliteTable("providers", {
+// packages/backend/src/db/schema.ts - 実装済み
+export const providers = sqliteTable("providers", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   endpoint: text("endpoint").notNull(),
-  services: text("services").notNull(), // JSON
-  trustScore: integer("trust_score").default(50),
-  totalTransactions: integer("total_transactions").default(0),
-  createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+  services: text("services", { mode: "json" }).$type<string[]>().notNull(),
+  pricePerUnit: text("price_per_unit").notNull(),
+  unit: text("unit").notNull(),
+  trustScore: integer("trust_score").notNull().default(50),
+  totalTransactions: integer("total_transactions").notNull().default(0),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const negotiations = sqliteTable("negotiations", {
+  id: text("id").primaryKey(),
+  clientId: text("client_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  service: text("service").notNull(),
+  status: text("status").notNull(), // 'pending' | 'negotiating' | 'agreed' | 'rejected' | 'expired'
+  initialOffer: text("initial_offer").notNull(),
+  finalPrice: text("final_price"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+  expiresAt: text("expires_at").notNull(),
 });
 ```
 
-### 1.3 デモプロバイダの作成
+### 1.3 デモプロバイダの作成 ✅
 
-3つのモックプロバイダを作成:
+3つのデモプロバイダをシード済み (`packages/backend/src/db/index.ts`):
 
-1. **TranslateAI**: 翻訳サービス ($0.03/1000トークン)
-2. **SummarizeBot**: 要約サービス ($0.02/ページ)
-3. **SketchyService**: 怪しいサービス ($0.005 - 安すぎて詐欺リスク)
+| ID | Name | Service | Price | Trust Score |
+|----|------|---------|-------|-------------|
+| `translate-ai-001` | TranslateAI Pro | translation, localization | $0.03/1000 tokens | 85 |
+| `summarize-bot-001` | SummarizeBot | summarization, extraction | $0.02/page | 78 |
+| `sketchy-service-001` | CheapTranslate | translation | $0.005/1000 tokens | 15 |
 
 ---
 
-## Phase 2: A2A Gateway (Day 3-4)
+### 1.4 A2A APIルート ✅
 
-### 2.1 サービスディスカバリ API
+実装済みAPI (`packages/backend/src/routes/a2a.ts`):
 
-```typescript
-// GET /api/a2a/discover
-app.get("/discover", async (c) => {
-  const { service, maxPrice } = c.req.query();
-  const providers = await findProviders(service, maxPrice);
-  return c.json(providers);
-});
+| Method | Endpoint | 説明 |
+|--------|----------|------|
+| GET | `/api/a2a/discover?service=xxx&maxPrice=xxx` | プロバイダ検索 |
+| GET | `/api/a2a/provider/:id` | プロバイダ詳細取得 |
+| POST | `/api/a2a/negotiate` | 交渉セッション開始 |
+| POST | `/api/a2a/negotiate/:sessionId/offer` | オファー送信 |
+| GET | `/api/a2a/negotiate/:sessionId` | セッション状態取得 |
+
+**テスト例:**
+```bash
+curl http://localhost:3001/api/a2a/discover?service=translation
 ```
+
+---
+
+## Phase 2: A2A Gateway - WebSocket (Day 3-4)
+
+### 2.1 リアルタイム交渉 (TODO)
+
+現在はHTTP APIでシンプルな交渉ロジックを実装済み。
+WebSocketでのリアルタイム交渉は必要に応じて追加。
 
 ### 2.2 交渉エンジン
 

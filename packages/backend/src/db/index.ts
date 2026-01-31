@@ -30,6 +30,33 @@ export const db = drizzle(sqlite, { schema });
  * Using parameterized statements for safety
  */
 const CREATE_TABLES_SQL = `
+  CREATE TABLE IF NOT EXISTS providers (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    endpoint TEXT NOT NULL,
+    services TEXT NOT NULL,
+    price_per_unit TEXT NOT NULL,
+    unit TEXT NOT NULL,
+    trust_score INTEGER NOT NULL DEFAULT 50,
+    total_transactions INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS negotiations (
+    id TEXT PRIMARY KEY,
+    client_id TEXT NOT NULL,
+    provider_id TEXT NOT NULL,
+    service TEXT NOT NULL,
+    status TEXT NOT NULL,
+    initial_offer TEXT NOT NULL,
+    final_price TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS policies (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -69,7 +96,48 @@ const CREATE_TABLES_SQL = `
   CREATE INDEX IF NOT EXISTS idx_analysis_tx_hash ON analysis_results(tx_hash);
   CREATE INDEX IF NOT EXISTS idx_audit_tx_hash ON audit_logs(tx_hash);
   CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp);
+  CREATE INDEX IF NOT EXISTS idx_providers_services ON providers(services);
+  CREATE INDEX IF NOT EXISTS idx_negotiations_status ON negotiations(status);
 `;
+
+/**
+ * Demo providers for the marketplace
+ */
+const DEMO_PROVIDERS = [
+  {
+    id: "translate-ai-001",
+    name: "TranslateAI Pro",
+    endpoint: "https://api.translateai.example/v1",
+    services: JSON.stringify(["translation", "localization"]),
+    price_per_unit: "0.03",
+    unit: "1000 tokens",
+    trust_score: 85,
+    total_transactions: 1250,
+    is_active: 1,
+  },
+  {
+    id: "summarize-bot-001",
+    name: "SummarizeBot",
+    endpoint: "https://api.summarizebot.example/v1",
+    services: JSON.stringify(["summarization", "extraction"]),
+    price_per_unit: "0.02",
+    unit: "page",
+    trust_score: 78,
+    total_transactions: 890,
+    is_active: 1,
+  },
+  {
+    id: "sketchy-service-001",
+    name: "CheapTranslate",
+    endpoint: "https://cheap-translate.example/api",
+    services: JSON.stringify(["translation"]),
+    price_per_unit: "0.005",
+    unit: "1000 tokens",
+    trust_score: 15,
+    total_transactions: 3,
+    is_active: 1,
+  },
+];
 
 /**
  * Initialize database tables
@@ -79,6 +147,32 @@ export function initializeDatabase(): void {
   // Run DDL statements using better-sqlite3's exec method (not child_process.exec)
   sqlite.exec(CREATE_TABLES_SQL);
   console.log(`Database initialized at ${DB_PATH}`);
+
+  // Seed demo providers if table is empty
+  const count = sqlite.prepare("SELECT COUNT(*) as count FROM providers").get() as { count: number };
+  if (count.count === 0) {
+    const now = new Date().toISOString();
+    const insert = sqlite.prepare(`
+      INSERT INTO providers (id, name, endpoint, services, price_per_unit, unit, trust_score, total_transactions, is_active, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const provider of DEMO_PROVIDERS) {
+      insert.run(
+        provider.id,
+        provider.name,
+        provider.endpoint,
+        provider.services,
+        provider.price_per_unit,
+        provider.unit,
+        provider.trust_score,
+        provider.total_transactions,
+        provider.is_active,
+        now,
+        now
+      );
+    }
+    console.log(`Seeded ${DEMO_PROVIDERS.length} demo providers`);
+  }
 }
 
 /**

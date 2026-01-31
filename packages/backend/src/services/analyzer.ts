@@ -19,33 +19,33 @@ const analysisResponseSchema = z.object({
 });
 
 /**
- * Build the analysis prompt using template literals
- * This is safer than string.replace() chains which can be corrupted by input values
+ * Build the analysis prompt for A2A API Marketplace transactions
  */
 function buildAnalysisPrompt(tx: TransactionInput): string {
-  return `You are an AI security analyst for a crypto treasury management system.
-Analyze the following transaction and provide a risk assessment.
+  return `You are an AI security analyst for an AI Agent API Marketplace with Execution Firewall.
+Analyze the following service purchase request and provide a risk assessment.
 
 Transaction Details:
 - Chain ID: ${tx.chainId}
-- From: ${tx.from}
-- To: ${tx.to}
-- Value: ${tx.value} (in wei)
+- From (Client Agent): ${tx.from}
+- To (Service Provider): ${tx.to}
+- Value: ${tx.value} (in wei, USDC has 6 decimals)
 - Data: ${tx.data || "0x"}
 
 Analyze this transaction and respond with ONLY a JSON object (no other text) containing:
 1. "riskLevel": 1 (low), 2 (medium), or 3 (high)
-2. "classification": type of transaction (e.g., "transfer", "swap", "lending", "unknown")
+2. "classification": type of service (e.g., "translation", "summarization", "data-processing", "unknown")
 3. "approved": boolean - whether to approve based on risk
 4. "reason": human-readable explanation
 5. "warnings": array of specific concerns (can be empty)
 6. "recommendations": array of suggested actions (can be empty)
 
 Consider:
-- Transaction value and potential impact
-- Known contract interactions
-- Unusual patterns
-- Potential security risks
+- Transaction value and budget impact
+- Provider reputation and trust score
+- Service category appropriateness
+- Unusual patterns or anomalies
+- Potential security or fraud risks
 
 Respond with ONLY the JSON object, no additional text or markdown.`;
 }
@@ -56,7 +56,6 @@ Respond with ONLY the JSON object, no additional text or markdown.`;
  */
 function parseAnalysisResponse(text: string): Omit<TransactionAnalysis, "timestamp"> {
   // Try to extract JSON from the response
-  // Handle cases where LLM might include markdown code blocks
   let jsonText = text.trim();
 
   // Remove markdown code block if present
@@ -89,7 +88,8 @@ function parseAnalysisResponse(text: string): Omit<TransactionAnalysis, "timesta
 }
 
 /**
- * Execute Claude Code CLI with the given prompt via stdin
+ * Execute Claude CLI with the given prompt via stdin
+ * Uses subscription-based Claude (no API costs)
  */
 function executeClaudeCLI(prompt: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -138,6 +138,9 @@ function executeClaudeCLI(prompt: string): Promise<string> {
   });
 }
 
+/**
+ * Analyze a transaction using Claude CLI (subscription-based, no API costs)
+ */
 export async function analyzeTransaction(tx: TransactionInput): Promise<TransactionAnalysis> {
   const prompt = buildAnalysisPrompt(tx);
 

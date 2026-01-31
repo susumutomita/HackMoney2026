@@ -5,6 +5,7 @@ import { logger } from "hono/logger";
 import { analyzeRouter } from "./routes/analyze.js";
 import { policyRouter } from "./routes/policy.js";
 import { healthRouter } from "./routes/health.js";
+import a2aRouter from "./routes/a2a.js";
 import { config } from "./config.js";
 import { initializeDatabase } from "./db/index.js";
 
@@ -21,6 +22,7 @@ app.use("*", cors());
 app.route("/health", healthRouter);
 app.route("/api/analyze", analyzeRouter);
 app.route("/api/policy", policyRouter);
+app.route("/api/a2a", a2aRouter);
 
 // Start server
 const port = config.port;
