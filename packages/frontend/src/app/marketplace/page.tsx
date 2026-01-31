@@ -83,10 +83,7 @@ export default function MarketplacePage() {
           >
             Dashboard
           </Link>
-          <Link
-            href="/marketplace"
-            className="text-sm font-medium text-primary-400"
-          >
+          <Link href="/marketplace" className="text-sm font-medium text-primary-400">
             Marketplace
           </Link>
           <ConnectButton />
@@ -178,9 +175,7 @@ function ProviderCard({
 
       <div className="flex justify-between items-center mb-4 text-sm">
         <span className="text-gray-400">Trust Score</span>
-        <span className={getTrustColor(provider.trustScore)}>
-          {provider.trustScore}/100
-        </span>
+        <span className={getTrustColor(provider.trustScore)}>{provider.trustScore}/100</span>
       </div>
 
       <div className="flex justify-between items-center mb-4 text-sm">
@@ -189,9 +184,7 @@ function ProviderCard({
       </div>
 
       <div className="flex justify-between items-center mb-6">
-        <span className="text-2xl font-bold text-primary-400">
-          ${provider.price}
-        </span>
+        <span className="text-2xl font-bold text-primary-400">${provider.price}</span>
         <span className="text-gray-400 text-sm">/{provider.unit}</span>
       </div>
 

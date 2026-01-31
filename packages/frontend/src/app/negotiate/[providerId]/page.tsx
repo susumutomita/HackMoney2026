@@ -204,7 +204,9 @@ export default function NegotiatePage() {
             <span>•</span>
             <span>Trust Score: {provider.trustScore}/100</span>
             <span>•</span>
-            <span>Base Price: ${provider.pricePerUnit}/{provider.unit}</span>
+            <span>
+              Base Price: ${provider.pricePerUnit}/{provider.unit}
+            </span>
           </div>
         </div>
 
@@ -233,7 +235,11 @@ export default function NegotiatePage() {
                     }`}
                   >
                     <div className="text-xs text-gray-500 mb-1">
-                      {msg.type === "user" ? "You" : msg.type === "provider" ? provider.name : "System"}
+                      {msg.type === "user"
+                        ? "You"
+                        : msg.type === "provider"
+                          ? provider.name
+                          : "System"}
                     </div>
                     {msg.content}
                   </div>
@@ -303,9 +309,7 @@ export default function NegotiatePage() {
                         : "bg-red-900/30 border-red-700"
                   }`}
                 >
-                  <h3 className="font-semibold mb-2">
-                    Firewall: {firewallResult.decision}
-                  </h3>
+                  <h3 className="font-semibold mb-2">Firewall: {firewallResult.decision}</h3>
                   <p className="text-sm text-gray-300 mb-2">{firewallResult.reason}</p>
                   {firewallResult.warnings.length > 0 && (
                     <ul className="text-sm text-yellow-300 list-disc list-inside">

@@ -64,7 +64,8 @@ export default function Home() {
         <section className="bg-gray-800/50 rounded-xl p-8 border border-gray-700 text-center">
           <h2 className="text-2xl font-semibold mb-4">Get Started</h2>
           <p className="text-gray-400 mb-6">
-            Learn how AI agents discover, negotiate, and pay for API services with built-in security.
+            Learn how AI agents discover, negotiate, and pay for API services with built-in
+            security.
           </p>
           <div className="flex gap-4 justify-center">
             <Link

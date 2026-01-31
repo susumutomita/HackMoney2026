@@ -12,7 +12,8 @@ const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as Address;
 const USDC_DECIMALS = 6;
 
 // Payment recipient (provider wallet)
-const PROVIDER_WALLET = (process.env.PROVIDER_WALLET_ADDRESS || "0x0000000000000000000000000000000000000000") as Address;
+const PROVIDER_WALLET = (process.env.PROVIDER_WALLET_ADDRESS ||
+  "0x0000000000000000000000000000000000000000") as Address;
 
 export interface PaymentRequirement {
   amount: string; // USDC amount in base units
@@ -35,7 +36,7 @@ export interface PaymentProof {
  */
 export function createPaymentRequired(serviceId: string, priceUsdc: string): PaymentRequirement {
   const amountInBaseUnits = parseUnits(priceUsdc, USDC_DECIMALS).toString();
-  
+
   return {
     amount: amountInBaseUnits,
     recipient: PROVIDER_WALLET,
@@ -54,10 +55,10 @@ export function parsePaymentHeader(header: string): PaymentProof | null {
   try {
     const parts = header.split(":");
     if (parts.length !== 4) return null;
-    
+
     const [txHash, chainIdStr, amount, payer] = parts;
     if (!txHash || !chainIdStr || !amount || !payer) return null;
-    
+
     return {
       txHash: txHash as Hex,
       chainId: parseInt(chainIdStr, 10),
@@ -78,28 +79,28 @@ export async function verifyPayment(
 ): Promise<{ valid: boolean; reason?: string }> {
   // For demo: accept any proof with matching amount
   // In production: verify actual transaction on-chain
-  
+
   if (proof.chainId !== requirement.chainId) {
     return { valid: false, reason: "Chain ID mismatch" };
   }
-  
+
   if (BigInt(proof.amount) < BigInt(requirement.amount)) {
     return { valid: false, reason: "Insufficient payment amount" };
   }
-  
+
   // Verify transaction exists on-chain (basic check)
   try {
     const client = createPublicClient({
       chain: baseSepolia,
       transport: http(),
     });
-    
+
     const tx = await client.getTransaction({ hash: proof.txHash });
-    
+
     if (!tx) {
       return { valid: false, reason: "Transaction not found" };
     }
-    
+
     // For demo: just check tx exists
     // Production should verify: recipient, amount, token, etc.
     return { valid: true };
@@ -118,11 +119,11 @@ export async function verifyPayment(
 export function x402Middleware(priceUsdc: string, serviceId: string = "default") {
   return async (c: Context, next: Next) => {
     const paymentHeader = c.req.header("X-Payment");
-    
+
     // No payment header -> return 402
     if (!paymentHeader) {
       const requirement = createPaymentRequired(serviceId, priceUsdc);
-      
+
       return c.json(
         {
           error: "Payment Required",
@@ -138,7 +139,7 @@ export function x402Middleware(priceUsdc: string, serviceId: string = "default")
         402
       );
     }
-    
+
     // Parse payment proof
     const proof = parsePaymentHeader(paymentHeader);
     if (!proof) {
@@ -151,11 +152,11 @@ export function x402Middleware(priceUsdc: string, serviceId: string = "default")
         400
       );
     }
-    
+
     // Verify payment
     const requirement = createPaymentRequired(serviceId, priceUsdc);
     const verification = await verifyPayment(proof, requirement);
-    
+
     if (!verification.valid) {
       return c.json(
         {
@@ -167,7 +168,7 @@ export function x402Middleware(priceUsdc: string, serviceId: string = "default")
         402
       );
     }
-    
+
     // Payment verified - continue to handler
     c.set("payment", proof);
     await next();

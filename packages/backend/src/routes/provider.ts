@@ -13,12 +13,15 @@ import type { Address } from "viem";
 const app = new Hono();
 
 // Provider wallet (for receiving payments)
-const PROVIDER_WALLET = (process.env.PROVIDER_WALLET_ADDRESS || "0x0000000000000000000000000000000000000000") as Address;
+const PROVIDER_WALLET = (process.env.PROVIDER_WALLET_ADDRESS ||
+  "0x0000000000000000000000000000000000000000") as Address;
 
 /**
  * Helper to get payment from header
  */
-function getPaymentFromHeader(c: { req: { header: (name: string) => string | undefined } }): PaymentProof | null {
+function getPaymentFromHeader(c: {
+  req: { header: (name: string) => string | undefined };
+}): PaymentProof | null {
   const header = c.req.header("X-Payment");
   if (!header) return null;
   return parsePaymentHeader(header);
@@ -41,19 +44,13 @@ app.post(
   async (c) => {
     const { text, targetLanguage, sourceLanguage } = c.req.valid("json");
     const payment = getPaymentFromHeader(c);
-    
+
     if (!payment) {
       return c.json({ error: "Payment not found" }, 400);
     }
 
     // Record the payment
-    recordPayment(
-      payment.txHash,
-      payment.payer,
-      PROVIDER_WALLET,
-      "0.03",
-      "translation"
-    );
+    recordPayment(payment.txHash, payment.payer, PROVIDER_WALLET, "0.03", "translation");
 
     // Mock translation (in production, call actual translation API)
     const translations: Record<string, Record<string, string>> = {
@@ -82,7 +79,8 @@ app.post(
 
     const lowerText = text.toLowerCase();
     const langTranslations = translations[targetLanguage] ?? translations.en ?? {};
-    const translatedText = langTranslations[lowerText] ?? `[Translated to ${targetLanguage}]: ${text}`;
+    const translatedText =
+      langTranslations[lowerText] ?? `[Translated to ${targetLanguage}]: ${text}`;
 
     return c.json({
       success: true,
@@ -117,25 +115,17 @@ app.post(
   async (c) => {
     const { text, maxLength } = c.req.valid("json");
     const payment = getPaymentFromHeader(c);
-    
+
     if (!payment) {
       return c.json({ error: "Payment not found" }, 400);
     }
 
     // Record the payment
-    recordPayment(
-      payment.txHash,
-      payment.payer,
-      PROVIDER_WALLET,
-      "0.02",
-      "summarization"
-    );
+    recordPayment(payment.txHash, payment.payer, PROVIDER_WALLET, "0.02", "summarization");
 
     // Mock summarization
     const words = text.split(/\s+/);
-    const summary = words.length > 20
-      ? words.slice(0, 20).join(" ") + "..."
-      : text;
+    const summary = words.length > 20 ? words.slice(0, 20).join(" ") + "..." : text;
 
     return c.json({
       success: true,

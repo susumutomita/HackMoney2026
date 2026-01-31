@@ -11,7 +11,8 @@ const USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as Address;
 const USDC_DECIMALS = 6;
 
 // ERC20 Transfer event signature
-const TRANSFER_EVENT_SIGNATURE = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+const TRANSFER_EVENT_SIGNATURE =
+  "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 
 export interface PaymentRecord {
   txHash: Hex;
@@ -44,7 +45,7 @@ export async function verifyUsdcTransfer(
 
     // Get transaction receipt
     const receipt = await client.getTransactionReceipt({ hash: txHash });
-    
+
     if (!receipt) {
       return { valid: false, reason: "Transaction not found or not confirmed" };
     }
@@ -158,7 +159,7 @@ export function getTotalSpent(payer: Address, sinceTimestamp?: number): number {
   const filtered = sinceTimestamp
     ? payments.filter((p) => p.timestamp >= sinceTimestamp)
     : payments;
-  
+
   return filtered.reduce((sum, p) => sum + parseFloat(p.amountUsdc), 0);
 }
 
