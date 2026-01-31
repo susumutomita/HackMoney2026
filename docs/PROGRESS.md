@@ -39,6 +39,7 @@
 **コミット:** `a2aa2fa` - "feat: Phase 1 - A2A Gateway foundation"
 
 **テスト:**
+
 ```bash
 # バックエンド起動
 cd packages/backend && pnpm dev

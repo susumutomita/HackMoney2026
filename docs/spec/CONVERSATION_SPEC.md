@@ -1,7 +1,7 @@
 # ZeroKey Treasury — Conversation Interface Spec (v0.1)
 
 > Goal: **A single, strict, auditable interface** for all agent-to-agent (A2A) and UI→backend interactions.
-> 
+>
 > Design principle: **Fail-closed**. If the message is malformed, out-of-order, or violates policy/state, the system must reject it.
 
 ---
@@ -239,7 +239,7 @@ Every inbound message MUST be recorded:
 ## 7. Notes for ENS integration (for pool prize)
 
 - ENS resolution is **read-only** and should use **Ethereum mainnet** RPC.
-- Payments can remain on **Base Sepolia**; ENS is used for *recipient resolution* and *display names*.
+- Payments can remain on **Base Sepolia**; ENS is used for _recipient resolution_ and _display names_.
 
 ---
 

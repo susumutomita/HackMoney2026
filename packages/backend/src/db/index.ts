@@ -149,7 +149,9 @@ export function initializeDatabase(): void {
   console.log(`Database initialized at ${DB_PATH}`);
 
   // Seed demo providers if table is empty
-  const count = sqlite.prepare("SELECT COUNT(*) as count FROM providers").get() as { count: number };
+  const count = sqlite.prepare("SELECT COUNT(*) as count FROM providers").get() as {
+    count: number;
+  };
   if (count.count === 0) {
     const now = new Date().toISOString();
     const insert = sqlite.prepare(`

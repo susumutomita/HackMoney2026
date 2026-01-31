@@ -110,11 +110,13 @@ ZeroKey Treasuryを**完全に動作するデモ**まで実装する。
 ## 🔄 自律開発ルール
 
 ### 1. タスク選択
+
 - 上のリストから未完了タスクを選ぶ
 - 優先度HIGHから順に
 - 依存関係を考慮（Firewall → x402 → Frontend）
 
 ### 2. 実装サイクル
+
 ```
 1. タスク選択
 2. コード実装
@@ -126,21 +128,25 @@ ZeroKey Treasuryを**完全に動作するデモ**まで実装する。
 ```
 
 ### 3. コミットルール
+
 - 小さく頻繁にコミット
 - フォーマット: `feat/fix/docs: 簡潔な説明`
 - 動作する状態を維持
 
 ### 4. PRルール
+
 - PhaseごとにPR作成
 - squash mergeを使用
 - マージ後はmainをpull
 
 ### 5. エラー時
+
 - ビルドエラー: 修正して再ビルド
 - テスト失敗: デバッグして修正
 - 詰まったら: 簡略化してまず動かす
 
 ### 6. ドキュメント更新
+
 - タスク完了時: PROGRESS.mdに追記
 - 設計変更時: AGENTS.md更新
 - API追加時: CLAUDE.md更新
@@ -170,10 +176,10 @@ cd packages/backend && pnpm dev &
 
 ## 📊 進捗チェックポイント
 
-| チェックポイント | 確認方法 |
-|------------------|----------|
-| Backend起動 | `curl http://localhost:3001/health` |
-| A2A API | `curl http://localhost:3001/api/a2a/discover?service=translation` |
-| Firewall API | `curl -X POST http://localhost:3001/api/firewall/check -H 'Content-Type: application/json' -d '{...}'` |
-| Frontend | `http://localhost:3000` |
-| E2E | 全フロー手動テスト |
+| チェックポイント | 確認方法                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| Backend起動      | `curl http://localhost:3001/health`                                                                    |
+| A2A API          | `curl http://localhost:3001/api/a2a/discover?service=translation`                                      |
+| Firewall API     | `curl -X POST http://localhost:3001/api/firewall/check -H 'Content-Type: application/json' -d '{...}'` |
+| Frontend         | `http://localhost:3000`                                                                                |
+| E2E              | 全フロー手動テスト                                                                                     |

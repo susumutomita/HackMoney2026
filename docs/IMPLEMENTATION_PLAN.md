@@ -46,11 +46,11 @@ export const negotiations = sqliteTable("negotiations", {
 
 3つのデモプロバイダをシード済み (`packages/backend/src/db/index.ts`):
 
-| ID | Name | Service | Price | Trust Score |
-|----|------|---------|-------|-------------|
-| `translate-ai-001` | TranslateAI Pro | translation, localization | $0.03/1000 tokens | 85 |
-| `summarize-bot-001` | SummarizeBot | summarization, extraction | $0.02/page | 78 |
-| `sketchy-service-001` | CheapTranslate | translation | $0.005/1000 tokens | 15 |
+| ID                    | Name            | Service                   | Price              | Trust Score |
+| --------------------- | --------------- | ------------------------- | ------------------ | ----------- |
+| `translate-ai-001`    | TranslateAI Pro | translation, localization | $0.03/1000 tokens  | 85          |
+| `summarize-bot-001`   | SummarizeBot    | summarization, extraction | $0.02/page         | 78          |
+| `sketchy-service-001` | CheapTranslate  | translation               | $0.005/1000 tokens | 15          |
 
 ---
 
@@ -58,15 +58,16 @@ export const negotiations = sqliteTable("negotiations", {
 
 実装済みAPI (`packages/backend/src/routes/a2a.ts`):
 
-| Method | Endpoint | 説明 |
-|--------|----------|------|
-| GET | `/api/a2a/discover?service=xxx&maxPrice=xxx` | プロバイダ検索 |
-| GET | `/api/a2a/provider/:id` | プロバイダ詳細取得 |
-| POST | `/api/a2a/negotiate` | 交渉セッション開始 |
-| POST | `/api/a2a/negotiate/:sessionId/offer` | オファー送信 |
-| GET | `/api/a2a/negotiate/:sessionId` | セッション状態取得 |
+| Method | Endpoint                                     | 説明               |
+| ------ | -------------------------------------------- | ------------------ |
+| GET    | `/api/a2a/discover?service=xxx&maxPrice=xxx` | プロバイダ検索     |
+| GET    | `/api/a2a/provider/:id`                      | プロバイダ詳細取得 |
+| POST   | `/api/a2a/negotiate`                         | 交渉セッション開始 |
+| POST   | `/api/a2a/negotiate/:sessionId/offer`        | オファー送信       |
+| GET    | `/api/a2a/negotiate/:sessionId`              | セッション状態取得 |
 
 **テスト例:**
+
 ```bash
 curl http://localhost:3001/api/a2a/discover?service=translation
 ```
