@@ -1,0 +1,69 @@
+name: Deploy Contracts
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: "Network to deploy to"
+        required: true
+        type: choice
+        options:
+          - base-sepolia
+          - optimism-sepolia
+          - sepolia
+      dry_run:
+        description: "Dry run (simulate only)"
+        required: false
+        type: boolean
+        default: true
+
+env:
+  FOUNDRY_PROFILE: default
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.network }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.network }}
+    defaults:
+      run:
+        working-directory: packages/contracts
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Build contracts
+        run: forge build
+
+      - name: Run tests
+        run: forge test -vvv
+
+      - name: Deploy (Dry Run)
+        if: inputs.dry_run
+        run: |
+          forge script script/Deploy.s.sol \
+            --rpc-url ${{ secrets[format('{0}_RPC_URL', inputs.network)] }} \
+            --private-key ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+        env:
+          POLICY_ORACLE_ADDRESS: ${{ secrets.POLICY_ORACLE_ADDRESS }}
+
+      - name: Deploy (Live)
+        if: ${{ !inputs.dry_run }}
+        run: |
+          forge script script/Deploy.s.sol \
+            --rpc-url ${{ secrets[format('{0}_RPC_URL', inputs.network)] }} \
+            --private-key ${{ secrets.DEPLOYER_PRIVATE_KEY }} \
+            --broadcast \
+            --verify
+        env:
+          POLICY_ORACLE_ADDRESS: ${{ secrets.POLICY_ORACLE_ADDRESS }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}

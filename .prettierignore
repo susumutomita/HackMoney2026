@@ -1,0 +1,11 @@
+node_modules
+dist
+.next
+out
+coverage
+pnpm-lock.yaml
+*.min.js
+*.min.css
+packages/contracts/lib
+packages/contracts/cache
+packages/contracts/out
