@@ -18,12 +18,15 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
     "@hono/node-server": "^1.13.7",
+    "@hono/swagger-ui": "^0.5.3",
+    "@hono/zod-openapi": "^1.2.0",
     "@hono/zod-validator": "^0.4.1",
     "@zerokey/shared": "workspace:*",
     "better-sqlite3": "^12.5.0",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.6.10",
+    "hono-zod-openapi": "^1.0.2",
     "viem": "^2.21.40",
     "zod": "^3.23.8"
   },
