@@ -11,6 +11,18 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-4">
           <Link
+            href="/tutorial"
+            className="text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors"
+          >
+            📖 Tutorial
+          </Link>
+          <Link
+            href="/marketplace"
+            className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+          >
+            Marketplace
+          </Link>
+          <Link
             href="/dashboard"
             className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
           >
@@ -52,15 +64,22 @@ export default function Home() {
         <section className="bg-gray-800/50 rounded-xl p-8 border border-gray-700 text-center">
           <h2 className="text-2xl font-semibold mb-4">Get Started</h2>
           <p className="text-gray-400 mb-6">
-            Connect your wallet and access the dashboard to analyze transactions and manage
-            policies.
+            Learn how AI agents discover, negotiate, and pay for API services with built-in security.
           </p>
-          <Link
-            href="/dashboard"
-            className="inline-block bg-primary-500 hover:bg-primary-600 text-white font-medium px-6 py-3 rounded-lg transition-colors"
-          >
-            Open Dashboard
-          </Link>
+          <div className="flex gap-4 justify-center">
+            <Link
+              href="/tutorial"
+              className="inline-block bg-primary-500 hover:bg-primary-600 text-white font-medium px-6 py-3 rounded-lg transition-colors"
+            >
+              📖 Start Tutorial
+            </Link>
+            <Link
+              href="/marketplace"
+              className="inline-block bg-gray-700 hover:bg-gray-600 text-white font-medium px-6 py-3 rounded-lg transition-colors"
+            >
+              🛍️ Marketplace
+            </Link>
+          </div>
         </section>
       </div>
     </main>
