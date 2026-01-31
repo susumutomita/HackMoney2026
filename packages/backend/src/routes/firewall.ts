@@ -8,8 +8,22 @@ import { analysisRepository } from "../repositories/index.js";
 import { db, schema } from "../db/index.js";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+import { a2aAuth } from "../middleware/a2aAuth.js";
+import { config } from "../config.js";
+import { parseA2AAllowlist, parseA2AKeys } from "../middleware/a2aAuthConfig.js";
 
 export const firewallRouter = new Hono();
+
+// Protect critical POST operations first.
+firewallRouter.use(
+  "/check",
+  a2aAuth({
+    enabled: config.a2a.enabled,
+    timestampWindowSeconds: config.a2a.timestampWindowSeconds,
+    keys: parseA2AKeys(config.a2a.keys),
+    allowlist: parseA2AAllowlist(config.a2a.allowlist),
+  })
+);
 
 const SUPPORTED_CHAIN_IDS = [
   1, // Ethereum Mainnet

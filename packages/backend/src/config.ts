@@ -10,9 +10,26 @@ const envSchema = z.object({
   POLICY_ORACLE_PRIVATE_KEY: z.string().optional(),
   BASE_SEPOLIA_RPC_URL: z.string().optional(),
   GUARD_CONTRACT_ADDRESS: z.string().optional(),
+
+  // A2A auth (see docs/a2a-firewall.md)
+  A2A_AUTH_ENABLED: z.string().optional(),
+  A2A_TIMESTAMP_WINDOW_SECONDS: z.string().optional(),
+  /** JSON array of { kid, clientId, publicKeyPem, status? } */
+  A2A_KEYS_JSON: z.string().optional(),
+  /** JSON array of { clientId, method, path } */
+  A2A_ALLOWLIST_JSON: z.string().optional(),
 });
 
 const env = envSchema.parse(process.env);
+
+function parseJson<T>(raw: string | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
 
 export const config = {
   port: parseInt(env.PORT, 10),
@@ -23,4 +40,13 @@ export const config = {
   policyOraclePrivateKey: env.POLICY_ORACLE_PRIVATE_KEY,
   rpcUrl: env.BASE_SEPOLIA_RPC_URL,
   guardContractAddress: env.GUARD_CONTRACT_ADDRESS,
+
+  a2a: {
+    enabled: env.A2A_AUTH_ENABLED === "true",
+    timestampWindowSeconds: env.A2A_TIMESTAMP_WINDOW_SECONDS
+      ? parseInt(env.A2A_TIMESTAMP_WINDOW_SECONDS, 10)
+      : 300,
+    keys: parseJson<unknown[]>(env.A2A_KEYS_JSON, []),
+    allowlist: parseJson<unknown[]>(env.A2A_ALLOWLIST_JSON, []),
+  },
 } as const;
