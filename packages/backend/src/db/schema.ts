@@ -84,6 +84,35 @@ export const negotiations = sqliteTable("negotiations", {
   expiresAt: text("expires_at").notNull(),
 });
 
+/**
+ * Conversation sessions table
+ * Stores state machine + idempotency for the strict chat interface.
+ */
+export const conversationSessions = sqliteTable("conversation_sessions", {
+  id: text("id").primaryKey(),
+  state: text("state").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+/**
+ * Conversation events table
+ * Full audit trail of inbound/outbound messages.
+ */
+export const conversationEvents = sqliteTable("conversation_events", {
+  id: text("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  idempotencyKey: text("idempotency_key"),
+  type: text("type").notNull(),
+  actorKind: text("actor_kind").notNull(),
+  actorId: text("actor_id").notNull(),
+  ts: integer("ts").notNull(),
+  payload: text("payload", { mode: "json" }).notNull(),
+  accepted: integer("accepted", { mode: "boolean" }).notNull(),
+  error: text("error"),
+  createdAt: text("created_at").notNull(),
+});
+
 export type PolicyRow = typeof policies.$inferSelect;
 export type NewPolicyRow = typeof policies.$inferInsert;
 export type AnalysisResultRow = typeof analysisResults.$inferSelect;
@@ -94,3 +123,7 @@ export type ProviderRow = typeof providers.$inferSelect;
 export type NewProviderRow = typeof providers.$inferInsert;
 export type NegotiationRow = typeof negotiations.$inferSelect;
 export type NewNegotiationRow = typeof negotiations.$inferInsert;
+export type ConversationSessionRow = typeof conversationSessions.$inferSelect;
+export type NewConversationSessionRow = typeof conversationSessions.$inferInsert;
+export type ConversationEventRow = typeof conversationEvents.$inferSelect;
+export type NewConversationEventRow = typeof conversationEvents.$inferInsert;

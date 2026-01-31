@@ -94,11 +94,36 @@ const CREATE_TABLES_SQL = `
     timestamp TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS conversation_sessions (
+    id TEXT PRIMARY KEY,
+    state TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS conversation_events (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    idempotency_key TEXT,
+    type TEXT NOT NULL,
+    actor_kind TEXT NOT NULL,
+    actor_id TEXT NOT NULL,
+    ts INTEGER NOT NULL,
+    payload TEXT NOT NULL,
+    accepted INTEGER NOT NULL,
+    error TEXT,
+    created_at TEXT NOT NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_analysis_tx_hash ON analysis_results(tx_hash);
   CREATE INDEX IF NOT EXISTS idx_audit_tx_hash ON audit_logs(tx_hash);
   CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp);
   CREATE INDEX IF NOT EXISTS idx_providers_services ON providers(services);
   CREATE INDEX IF NOT EXISTS idx_negotiations_status ON negotiations(status);
+
+  CREATE INDEX IF NOT EXISTS idx_conv_session_state ON conversation_sessions(state);
+  CREATE INDEX IF NOT EXISTS idx_conv_events_session ON conversation_events(session_id);
+  CREATE INDEX IF NOT EXISTS idx_conv_events_idem ON conversation_events(session_id, idempotency_key);
 `;
 
 /**
