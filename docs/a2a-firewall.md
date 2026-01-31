@@ -43,6 +43,14 @@ and MUST reject requests when `kid` is not owned by the provided `X-Client-Id`.
 
 ## 3. Required headers
 
+## 3.0 Encoding conventions
+
+To avoid cross-implementation mismatches, this spec fixes base64 variants as follows:
+
+- Unless explicitly stated otherwise, **Base64** means **RFC 4648 standard Base64** with `+` and `/`, and with `=` padding.
+- Applies to: `X-Nonce`, `Signature.signature`, and all `base64(...)` values shown in this document.
+
+
 ### 3.1 Requests with a body (POST/PUT/PATCH)
 
 Required:
@@ -75,6 +83,11 @@ Required:
 - Server accepts requests only if:
 
 `abs(now - X-Timestamp) <= 300 seconds`
+
+Operational notes:
+
+- Hosts should run **NTP** (or equivalent time sync). If clocks drift, otherwise-valid requests will be rejected.
+- Implementations MAY make the window configurable (e.g. env var) but should keep a secure default of **300s**.
 
 ### 4.2 Nonce storage
 
