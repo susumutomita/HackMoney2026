@@ -127,10 +127,34 @@ curl -X POST http://localhost:3001/api/provider/translate \
 
 ---
 
+### Phase 5: Frontend UI ✅ COMPLETED
+
+**実装者**: Shelley (exe.dev VM)
+
+**実装内容:**
+
+1. **`/marketplace` ページ**
+   - プロバイダ一覧カード
+   - サービス検索
+   - 信頼スコア表示（低信頼は警告）
+
+2. **`/negotiate/[providerId]` ページ**
+   - チャット風交渉UI
+   - オファー/カウンター/承諾/拒否
+   - Firewall結果表示
+   - ウォレット接続統合
+
+**テスト:**
+```bash
+cd packages/frontend && pnpm dev
+# http://localhost:3000/marketplace
+```
+
+---
+
 ## 次のタスク
 
 - [ ] Phase 4.4: オンチェーン統合 (ZeroKeyGuard.submitDecision)
-- [ ] Phase 5: Frontend UI
 - [ ] Phase 6: 統合テスト & デモ
 
 ---
