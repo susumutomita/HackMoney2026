@@ -62,6 +62,20 @@ curl http://localhost:3001/api/a2a/discover?service=translation
   - 既存 `policyRepository` を参照し、`spending_limit(per_transaction)` と `protocol_allowlist` を適用（他は無視）
 - `packages/backend/src/services/firewall.test.ts` を追加（vitest）
 
+#### 3.2 `analyzer.ts` プロンプト改善 ✅
+
+- `AnalyzerContext` を追加し、プロバイダ情報・予算コンテキストをプロンプトへ注入できるようにした
+- `analyzeTransaction(tx, ctx?)` の形で後方互換を維持
+
+#### 3.3 `routes/firewall.ts` API作成 ✅
+
+- `POST /api/firewall/check`
+  - 交渉 `sessionId` から provider と価格を解決（`negotiations`）
+  - `checkFirewall` + `analyzeTransaction` を実行し、`analysis_results` / `audit_logs` に保存
+- `GET /api/firewall/status/:txHash`
+  - 保存済みの analysis + audit を返す
+- `packages/backend/src/index.ts` に `/api/firewall` を登録
+
 **ビルド/テスト:**
 ```bash
 pnpm -C packages/backend test
