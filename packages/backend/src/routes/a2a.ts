@@ -39,7 +39,7 @@ app.get("/discover", zValidator("query", discoverQuerySchema), async (c) => {
     // Sort by trust score (descending)
     const sorted = filtered.sort((a, b) => b.trustScore - a.trustScore);
 
-    // Return formatted response
+    // Return formatted response with ENS data
     const response = sorted.map((p) => ({
       id: p.id,
       name: p.name,
@@ -48,6 +48,9 @@ app.get("/discover", zValidator("query", discoverQuerySchema), async (c) => {
       unit: p.unit,
       trustScore: p.trustScore,
       totalTransactions: p.totalTransactions,
+      // ENS integration fields
+      walletAddress: p.walletAddress || undefined,
+      ensName: p.ensName || undefined,
     }));
 
     return c.json({

@@ -2,6 +2,7 @@ import type { ChainConfig } from "./types.js";
 
 /**
  * Supported chains configuration
+ * Includes Arc Network for HackMoney 2026 Arc Prize integration
  */
 export const SUPPORTED_CHAINS: Record<number, ChainConfig> = {
   1: {
@@ -38,6 +39,43 @@ export const SUPPORTED_CHAINS: Record<number, ChainConfig> = {
     rpcUrl: "https://sepolia.optimism.io",
     blockExplorer: "https://sepolia-optimism.etherscan.io",
     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  },
+  // Arc Network - Circle's L1 for global USDC payments
+  // See: https://docs.arc.network/arc/concepts/welcome-to-arc
+  411: {
+    id: 411,
+    name: "Arc",
+    rpcUrl: "https://rpc.arc.network",
+    blockExplorer: "https://explorer.arc.network",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  },
+  // Arc Testnet for development
+  412: {
+    id: 412,
+    name: "Arc Testnet",
+    rpcUrl: "https://rpc-testnet.arc.network",
+    blockExplorer: "https://explorer-testnet.arc.network",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  },
+} as const;
+
+/**
+ * Arc Network specific configuration
+ * For HackMoney 2026 Arc Prize: "Build Global Payouts and Treasury Systems with USDC on Arc"
+ */
+export const ARC_CONFIG = {
+  /** Arc mainnet chain ID */
+  chainId: 411,
+  /** Arc testnet chain ID */
+  testnetChainId: 412,
+  /** Native USDC on Arc */
+  usdcAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const,
+  /** Circle Gateway API endpoint */
+  circleGatewayUrl: "https://api.circle.com/v1/w3s",
+  /** Default gas settings for Arc */
+  defaultGas: {
+    maxFeePerGas: "1000000000", // 1 gwei
+    maxPriorityFeePerGas: "100000000", // 0.1 gwei
   },
 } as const;
 

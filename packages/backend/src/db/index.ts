@@ -40,6 +40,8 @@ const CREATE_TABLES_SQL = `
     trust_score INTEGER NOT NULL DEFAULT 50,
     total_transactions INTEGER NOT NULL DEFAULT 0,
     is_active INTEGER NOT NULL DEFAULT 1,
+    wallet_address TEXT,
+    ens_name TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );
@@ -144,6 +146,7 @@ const CREATE_TABLES_SQL = `
 
 /**
  * Demo providers for the marketplace
+ * Including wallet addresses for ENS integration demonstration
  */
 const DEMO_PROVIDERS = [
   {
@@ -156,6 +159,9 @@ const DEMO_PROVIDERS = [
     trust_score: 85,
     total_transactions: 1250,
     is_active: 1,
+    // Demo: Using vitalik.eth's address to show ENS resolution
+    wallet_address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+    ens_name: null, // Will be resolved dynamically
   },
   {
     id: "summarize-bot-001",
@@ -167,6 +173,9 @@ const DEMO_PROVIDERS = [
     trust_score: 78,
     total_transactions: 890,
     is_active: 1,
+    // Demo: Using nick.eth's address
+    wallet_address: "0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5",
+    ens_name: null,
   },
   {
     id: "sketchy-service-001",
@@ -178,6 +187,9 @@ const DEMO_PROVIDERS = [
     trust_score: 15,
     total_transactions: 3,
     is_active: 1,
+    // Sketchy provider - no ENS, random address
+    wallet_address: "0x0000000000000000000000000000000000000001",
+    ens_name: null,
   },
 ];
 
@@ -207,6 +219,18 @@ export function initializeDatabase(): void {
 
   console.log(`Database initialized at ${DB_PATH}`);
 
+  // Add new columns for ENS support
+  ensureColumn(
+    "providers",
+    "wallet_address",
+    "ALTER TABLE providers ADD COLUMN wallet_address TEXT"
+  );
+  ensureColumn(
+    "providers",
+    "ens_name",
+    "ALTER TABLE providers ADD COLUMN ens_name TEXT"
+  );
+
   // Seed demo providers if table is empty
   const count = sqlite.prepare("SELECT COUNT(*) as count FROM providers").get() as {
     count: number;
@@ -214,8 +238,8 @@ export function initializeDatabase(): void {
   if (count.count === 0) {
     const now = new Date().toISOString();
     const insert = sqlite.prepare(`
-      INSERT INTO providers (id, name, endpoint, services, price_per_unit, unit, trust_score, total_transactions, is_active, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO providers (id, name, endpoint, services, price_per_unit, unit, trust_score, total_transactions, is_active, wallet_address, ens_name, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     for (const provider of DEMO_PROVIDERS) {
       insert.run(
@@ -228,11 +252,21 @@ export function initializeDatabase(): void {
         provider.trust_score,
         provider.total_transactions,
         provider.is_active,
+        provider.wallet_address,
+        provider.ens_name,
         now,
         now
       );
     }
-    console.log(`Seeded ${DEMO_PROVIDERS.length} demo providers`);
+    console.log(`Seeded ${DEMO_PROVIDERS.length} demo providers with ENS support`);
+  } else {
+    // Update existing providers with wallet addresses if missing
+    const update = sqlite.prepare(`
+      UPDATE providers SET wallet_address = ?, ens_name = ? WHERE id = ? AND wallet_address IS NULL
+    `);
+    for (const provider of DEMO_PROVIDERS) {
+      update.run(provider.wallet_address, provider.ens_name, provider.id);
+    }
   }
 }
 
