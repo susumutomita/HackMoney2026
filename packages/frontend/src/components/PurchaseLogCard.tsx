@@ -34,10 +34,16 @@ export function PurchaseLogCard() {
     setError(null);
     try {
       const res = await fetch(`${API_URL}/api/purchases`, { cache: "no-store" });
-      const json = (await res.json()) as any;
+      const json = (await res.json()) as {
+        success?: boolean;
+        error?: string;
+        purchases?: Purchase[];
+      };
+
       if (!res.ok || !json.success) {
         throw new Error(json.error ?? "Failed to load purchases");
       }
+
       setRows(json.purchases ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
@@ -48,7 +54,6 @@ export function PurchaseLogCard() {
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
