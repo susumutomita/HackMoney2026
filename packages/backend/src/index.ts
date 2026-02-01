@@ -32,13 +32,16 @@ app.route("/api/chat", chatRouter);
 app.route("/api/provider", providerRouter);
 app.route("/docs", docsRouter);
 
-// Start server
+// Start server (avoid listening during tests/imports)
 const port = config.port;
-console.log(`ZeroKey Backend running on port ${port}`);
+const shouldListen = config.nodeEnv !== "test" && process.env.VITEST !== "true";
 
-serve({
-  fetch: app.fetch,
-  port,
-});
+if (shouldListen) {
+  console.log(`ZeroKey Backend running on port ${port}`);
+  serve({
+    fetch: app.fetch,
+    port,
+  });
+}
 
 export default app;

@@ -21,7 +21,8 @@
     "react-dom": "^19.0.0-rc.1",
     "viem": "^2.21.40",
     "wagmi": "^2.13.0",
-    "@rainbow-me/rainbowkit": "^2.2.1"
+    "@rainbow-me/rainbowkit": "^2.2.1",
+    "@react-native-async-storage/async-storage": "^1.23.1"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
