@@ -19,6 +19,7 @@ This doc explains the design in plain terms: what is on-chain vs off-chain, what
 ### 1.1 Off-chain (Node/TS)
 
 **Backend API (packages/backend)**
+
 - Exposes endpoints like:
   - `POST /api/a2a/negotiate`
   - `POST /api/firewall/check` (critical)
@@ -27,6 +28,7 @@ This doc explains the design in plain terms: what is on-chain vs off-chain, what
   - `packages/backend/src/middleware/a2aAuth.ts`
 
 **Clients / Agents**
+
 - UI (Next.js frontend)
 - Agent-to-agent callers
 - CLI scripts
@@ -36,6 +38,7 @@ They call the backend over HTTPS.
 ### 1.2 On-chain (Solidity)
 
 **Guard / Policy contracts**
+
 - Enforce execution constraints at the blockchain layer.
 - The chain can validate:
   - signer of a transaction (EOA / smart account)
@@ -44,6 +47,7 @@ They call the backend over HTTPS.
   - policy rules
 
 But the chain cannot:
+
 - call arbitrary HTTP endpoints
 - run heavy AI analysis
 
@@ -60,6 +64,7 @@ Even with Account Abstraction (EIP-4337), you still need off-chain services:
 - EVM does not have a standard cheap Ed25519 verify primitive.
 
 Therefore:
+
 - HTTP request signing is implemented off-chain (Node/TS).
 - On-chain uses its own signature scheme (EOA/secp256k1 or account validation).
 
