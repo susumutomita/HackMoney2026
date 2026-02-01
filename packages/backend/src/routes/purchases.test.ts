@@ -5,7 +5,9 @@ import { db, schema } from "../db/index.js";
 describe("/api/purchases", () => {
   it("lists persisted purchases", async () => {
     const id = `test-${Date.now()}`;
-    const txHash = `0x${"11".repeat(32)}`;
+    const txHash = `0x${Math.floor(Math.random() * 1e16)
+      .toString(16)
+      .padStart(16, "0")}${"11".repeat(24)}`;
 
     await db.insert(schema.purchases).values({
       id,

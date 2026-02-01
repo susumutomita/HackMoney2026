@@ -441,6 +441,9 @@ export default function NegotiatePage() {
                           body: JSON.stringify({
                             txHash,
                             expectedAmountUsdc: payment.amountUsdc,
+                            providerId,
+                            firewallDecision: firewallResult?.decision ?? "REJECTED",
+                            firewallReason: firewallResult?.reason ?? "Firewall not approved",
                           }),
                         });
 
