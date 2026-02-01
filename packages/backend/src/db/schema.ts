@@ -113,6 +113,25 @@ export const conversationEvents = sqliteTable("conversation_events", {
   createdAt: text("created_at").notNull(),
 });
 
+/**
+ * Purchases table
+ * Stores proof that an agent paid for a service (for demo + audit).
+ */
+export const purchases = sqliteTable("purchases", {
+  id: text("id").primaryKey(),
+  txHash: text("tx_hash").notNull().unique(),
+  chainId: integer("chain_id").notNull(),
+  token: text("token").notNull(),
+  payer: text("payer").notNull(),
+  recipient: text("recipient").notNull(),
+  amountUsdc: text("amount_usdc").notNull(),
+  providerId: text("provider_id").notNull(),
+  providerName: text("provider_name"),
+  firewallDecision: text("firewall_decision").notNull(),
+  firewallReason: text("firewall_reason").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
 export type PolicyRow = typeof policies.$inferSelect;
 export type NewPolicyRow = typeof policies.$inferInsert;
 export type AnalysisResultRow = typeof analysisResults.$inferSelect;
@@ -127,3 +146,5 @@ export type ConversationSessionRow = typeof conversationSessions.$inferSelect;
 export type NewConversationSessionRow = typeof conversationSessions.$inferInsert;
 export type ConversationEventRow = typeof conversationEvents.$inferSelect;
 export type NewConversationEventRow = typeof conversationEvents.$inferInsert;
+export type PurchaseRow = typeof purchases.$inferSelect;
+export type NewPurchaseRow = typeof purchases.$inferInsert;

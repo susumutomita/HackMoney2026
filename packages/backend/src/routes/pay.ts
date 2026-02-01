@@ -4,6 +4,8 @@ import { z } from "zod";
 import type { Address, Hex } from "viem";
 import { baseSepolia } from "viem/chains";
 import { verifyUsdcTransfer } from "../services/payment.js";
+import { db, schema } from "../db/index.js";
+import { randomUUID } from "node:crypto";
 
 /**
  * Payment routes (x402-style)
@@ -81,8 +83,28 @@ payRouter.post("/submit", zValidator("json", submitSchema), async (c) => {
     );
   }
 
+  // Persist purchase proof (demo/audit)
+  const now = new Date().toISOString();
+  const record = res.record;
+  if (record) {
+    await db.insert(schema.purchases).values({
+      id: randomUUID(),
+      txHash: record.txHash,
+      chainId: record.chainId,
+      token: USDC_BASE_SEPOLIA,
+      payer: record.payer,
+      recipient: record.recipient,
+      amountUsdc: expectedAmountUsdc,
+      providerId: record.serviceId ?? "unknown",
+      providerName: null,
+      firewallDecision: "APPROVED",
+      firewallReason: "Approved by Firewall (demo placeholder)",
+      createdAt: now,
+    });
+  }
+
   return c.json({
     success: true,
-    payment: res.record,
+    payment: record,
   });
 });

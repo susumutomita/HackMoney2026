@@ -4,7 +4,13 @@ import type { ReactNode } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 import Link from "next/link";
-import { TransactionAnalyzer, AnalysisHistory, PolicyList, StatsCards } from "@/components";
+import {
+  TransactionAnalyzer,
+  AnalysisHistory,
+  PolicyList,
+  StatsCards,
+  PurchaseLogCard,
+} from "@/components";
 
 function Logo() {
   return (
@@ -181,6 +187,11 @@ export default function DashboardPage() {
             {/* Stats Cards */}
             <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
               <StatsCards />
+            </div>
+
+            {/* Purchase Log (proof of agent economy) */}
+            <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
+              <PurchaseLogCard />
             </div>
 
             {/* Grid Layout */}
