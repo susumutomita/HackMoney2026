@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import Link from "next/link";
-import { PayConfirmModal } from "@/components";
+import { erc20Abi, parseUnits } from "viem";
+import { PayConfirmModal, PaymentStatusModal } from "@/components";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -44,7 +45,13 @@ export default function NegotiatePage() {
   const [negotiationStatus, setNegotiationStatus] = useState<string>("idle");
   const [firewallResult, setFirewallResult] = useState<FirewallResult | null>(null);
   const [payConfirmOpen, setPayConfirmOpen] = useState(false);
+  const [payStatusOpen, setPayStatusOpen] = useState(false);
+  const [payStatus, setPayStatus] = useState<"idle" | "processing" | "success" | "failed">("idle");
+  const [payError, setPayError] = useState<string | undefined>(undefined);
   const [agreedPrice, setAgreedPrice] = useState<string | null>(null);
+
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
 
   useEffect(() => {
     fetchProvider();
@@ -379,10 +386,76 @@ export default function NegotiatePage() {
                   <PayConfirmModal
                     open={payConfirmOpen}
                     onClose={() => setPayConfirmOpen(false)}
-                    onConfirm={() => {
+                    onConfirm={async () => {
                       setPayConfirmOpen(false);
-                      // TODO: wire actual payment execution
-                      addMessage("system", "Payment confirmed (demo). Next: execute payment flow.");
+
+                      if (!walletClient || !publicClient) {
+                        setPayStatus("failed");
+                        setPayError("Wallet not connected");
+                        setPayStatusOpen(true);
+                        return;
+                      }
+
+                      const amountUsdc = agreedPrice ?? "0.03";
+
+                      setPayError(undefined);
+                      setPayStatus("processing");
+                      setPayStatusOpen(true);
+                      addMessage("system", "Processing payment…");
+
+                      try {
+                        // Request payment info (x402-style 402 response)
+                        const req = await fetch(`${API_URL}/api/pay/request`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ amountUsdc, serviceId: providerId }),
+                        });
+
+                        const data = await req.json();
+                        const payment = data.payment as {
+                          recipient: `0x${string}`;
+                          token: `0x${string}`;
+                          chainId: number;
+                          amountUsdc: string;
+                        };
+
+                        if (!payment?.recipient || !payment?.token) {
+                          throw new Error("Payment request failed");
+                        }
+
+                        // Send USDC transfer via wallet
+                        const value = parseUnits(payment.amountUsdc, 6);
+                        const txHash = await walletClient.writeContract({
+                          address: payment.token,
+                          abi: erc20Abi,
+                          functionName: "transfer",
+                          args: [payment.recipient, value],
+                        });
+
+                        await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+                        // Submit txHash for verification
+                        const submit = await fetch(`${API_URL}/api/pay/submit`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            txHash,
+                            expectedAmountUsdc: payment.amountUsdc,
+                          }),
+                        });
+
+                        const submitJson = await submit.json();
+                        if (!submit.ok || !submitJson.success) {
+                          throw new Error(submitJson.reason ?? "Payment verification failed");
+                        }
+
+                        setPayStatus("success");
+                        addMessage("system", "✅ Payment successful.");
+                      } catch (e) {
+                        setPayStatus("failed");
+                        setPayError(e instanceof Error ? e.message : "Unknown error");
+                        addMessage("system", "⛔ Payment failed.");
+                      }
                     }}
                     confirmDisabled={firewallResult?.decision !== "APPROVED"}
                     confirmText={`Confirm & Pay $${agreedPrice} USDC`}
@@ -390,12 +463,31 @@ export default function NegotiatePage() {
                     recipientLabel={
                       provider?.name ? `${provider.name} (${provider.id})` : providerId
                     }
-                    chainLabel="Base Sepolia (demo)"
+                    chainLabel="Base Sepolia"
                     firewallSummary={
                       firewallResult
                         ? `${firewallResult.decision}: ${firewallResult.reason}`
                         : "Firewall result not available"
                     }
+                  />
+
+                  <PaymentStatusModal
+                    open={payStatusOpen}
+                    status={payStatus}
+                    amountLabel={`$${agreedPrice} USDC`}
+                    recipientLabel={provider?.name ? provider.name : providerId}
+                    errorMessage={payError}
+                    onClose={() => {
+                      setPayStatusOpen(false);
+                      setPayStatus("idle");
+                      setPayError(undefined);
+                    }}
+                    onRetry={() => {
+                      setPayStatus("idle");
+                      setPayError(undefined);
+                      setPayStatusOpen(false);
+                      setPayConfirmOpen(true);
+                    }}
                   />
 
                   {firewallResult?.decision !== "APPROVED" && (
