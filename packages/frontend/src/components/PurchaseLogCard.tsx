@@ -24,6 +24,19 @@ function shortHash(h: string) {
   return `${h.slice(0, 6)}…${h.slice(-4)}`;
 }
 
+function explorerUrl(chainId: number, txHash: string) {
+  // Base Sepolia
+  if (chainId === 84532) return `https://sepolia.basescan.org/tx/${txHash}`;
+  return `https://sepolia.basescan.org/tx/${txHash}`;
+}
+
+function providerLabel(p: Purchase) {
+  if (p.providerName && p.providerName !== p.providerId) {
+    return `${p.providerName} (${p.providerId})`;
+  }
+  return p.providerName ?? p.providerId;
+}
+
 export function PurchaseLogCard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,15 +98,28 @@ export function PurchaseLogCard() {
             {rows.slice(0, 5).map((p) => (
               <div key={p.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm text-white font-medium">
-                    {p.providerName ?? p.providerId}
+                  <div className="text-sm text-white font-medium">{providerLabel(p)}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+                      Verified
+                    </span>
+                    <span className="text-xs text-slate-300">{p.amountUsdc} USDC</span>
                   </div>
-                  <div className="text-xs text-slate-300">{p.amountUsdc} USDC</div>
                 </div>
 
                 <div className="mt-2 grid grid-cols-1 gap-1 text-xs text-slate-400">
                   <div>
-                    tx: <span className="text-slate-200">{shortHash(p.txHash)}</span>
+                    tx:{" "}
+                    <a
+                      href={explorerUrl(p.chainId, p.txHash)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-cyan-300 hover:text-cyan-200 underline underline-offset-2"
+                      title={p.txHash}
+                    >
+                      {shortHash(p.txHash)}
+                    </a>
+                    <span className="ml-2 text-slate-500">(Base Sepolia)</span>
                   </div>
                   <div>
                     decision: <span className="text-slate-200">{p.firewallDecision}</span>
