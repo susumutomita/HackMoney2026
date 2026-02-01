@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 import Link from "next/link";
+import { PayConfirmModal } from "@/components";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -42,6 +43,7 @@ export default function NegotiatePage() {
   const [offerAmount, setOfferAmount] = useState("");
   const [negotiationStatus, setNegotiationStatus] = useState<string>("idle");
   const [firewallResult, setFirewallResult] = useState<FirewallResult | null>(null);
+  const [payConfirmOpen, setPayConfirmOpen] = useState(false);
   const [agreedPrice, setAgreedPrice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -369,9 +371,32 @@ export default function NegotiatePage() {
                         ? "Ready to pay"
                         : "Payment is only enabled after Firewall APPROVED"
                     }
+                    onClick={() => setPayConfirmOpen(true)}
                   >
                     💳 Pay ${agreedPrice} USDC
                   </button>
+
+                  <PayConfirmModal
+                    open={payConfirmOpen}
+                    onClose={() => setPayConfirmOpen(false)}
+                    onConfirm={() => {
+                      setPayConfirmOpen(false);
+                      // TODO: wire actual payment execution
+                      addMessage("system", "Payment confirmed (demo). Next: execute payment flow.");
+                    }}
+                    confirmDisabled={firewallResult?.decision !== "APPROVED"}
+                    confirmText={`Confirm & Pay $${agreedPrice} USDC`}
+                    amountLabel={`$${agreedPrice} USDC`}
+                    recipientLabel={
+                      provider?.name ? `${provider.name} (${provider.id})` : providerId
+                    }
+                    chainLabel="Base Sepolia (demo)"
+                    firewallSummary={
+                      firewallResult
+                        ? `${firewallResult.decision}: ${firewallResult.reason}`
+                        : "Firewall result not available"
+                    }
+                  />
 
                   {firewallResult?.decision !== "APPROVED" && (
                     <div className="text-xs text-gray-400">
