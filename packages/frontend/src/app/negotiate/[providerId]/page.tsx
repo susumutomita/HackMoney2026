@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 import Link from "next/link";
-import { PayConfirmModal } from "@/components";
+import { PayConfirmModal, PaymentStatusModal } from "@/components";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -44,6 +44,9 @@ export default function NegotiatePage() {
   const [negotiationStatus, setNegotiationStatus] = useState<string>("idle");
   const [firewallResult, setFirewallResult] = useState<FirewallResult | null>(null);
   const [payConfirmOpen, setPayConfirmOpen] = useState(false);
+  const [payStatusOpen, setPayStatusOpen] = useState(false);
+  const [payStatus, setPayStatus] = useState<"idle" | "processing" | "success" | "failed">("idle");
+  const [payError, setPayError] = useState<string | undefined>(undefined);
   const [agreedPrice, setAgreedPrice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -379,10 +382,27 @@ export default function NegotiatePage() {
                   <PayConfirmModal
                     open={payConfirmOpen}
                     onClose={() => setPayConfirmOpen(false)}
-                    onConfirm={() => {
+                    onConfirm={async () => {
                       setPayConfirmOpen(false);
-                      // TODO: wire actual payment execution
-                      addMessage("system", "Payment confirmed (demo). Next: execute payment flow.");
+
+                      // Demo payment state machine UI.
+                      setPayError(undefined);
+                      setPayStatus("processing");
+                      setPayStatusOpen(true);
+                      addMessage("system", "Processing payment…");
+
+                      try {
+                        // Simulate async payment.
+                        await new Promise((r) => setTimeout(r, 1200));
+
+                        // In real implementation, call x402/onchain here.
+                        setPayStatus("success");
+                        addMessage("system", "✅ Payment successful.");
+                      } catch (e) {
+                        setPayStatus("failed");
+                        setPayError(e instanceof Error ? e.message : "Unknown error");
+                        addMessage("system", "⛔ Payment failed.");
+                      }
                     }}
                     confirmDisabled={firewallResult?.decision !== "APPROVED"}
                     confirmText={`Confirm & Pay $${agreedPrice} USDC`}
@@ -396,6 +416,25 @@ export default function NegotiatePage() {
                         ? `${firewallResult.decision}: ${firewallResult.reason}`
                         : "Firewall result not available"
                     }
+                  />
+
+                  <PaymentStatusModal
+                    open={payStatusOpen}
+                    status={payStatus}
+                    amountLabel={`$${agreedPrice} USDC`}
+                    recipientLabel={provider?.name ? provider.name : providerId}
+                    errorMessage={payError}
+                    onClose={() => {
+                      setPayStatusOpen(false);
+                      setPayStatus("idle");
+                      setPayError(undefined);
+                    }}
+                    onRetry={() => {
+                      setPayStatus("processing");
+                      setPayError(undefined);
+                      // NOTE: in real implementation, retry the payment call.
+                      setTimeout(() => setPayStatus("success"), 800);
+                    }}
                   />
 
                   {firewallResult?.decision !== "APPROVED" && (
