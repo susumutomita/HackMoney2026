@@ -95,11 +95,11 @@ export async function getEnsText(name: string, key: string): Promise<string | nu
  */
 export async function getEnsProfile(nameOrAddress: string): Promise<EnsProfile | null> {
   const client = createMainnetClient();
-  
+
   try {
     let name: string | null = null;
     let address: `0x${string}` | null = null;
-    
+
     // Determine if input is name or address
     if (looksLikeEnsName(nameOrAddress)) {
       name = normalize(nameOrAddress.trim().toLowerCase());
@@ -111,23 +111,25 @@ export async function getEnsProfile(nameOrAddress: string): Promise<EnsProfile |
     } else {
       return null;
     }
-    
+
     if (!address) return null;
-    
+
     // Fetch standard and custom text records in parallel
-    const textRecords = name ? await Promise.all([
-      client.getEnsAvatar({ name }).catch(() => null),
-      client.getEnsText({ name, key: "description" }).catch(() => null),
-      client.getEnsText({ name, key: "url" }).catch(() => null),
-      client.getEnsText({ name, key: "com.twitter" }).catch(() => null),
-      client.getEnsText({ name, key: "com.github" }).catch(() => null),
-      client.getEnsText({ name, key: "email" }).catch(() => null),
-      // Custom AI agent records - creative ENS usage for DeFi
-      client.getEnsText({ name, key: "ai.api.endpoint" }).catch(() => null),
-      client.getEnsText({ name, key: "ai.services" }).catch(() => null),
-      client.getEnsText({ name, key: "ai.trustscore" }).catch(() => null),
-    ]) : [null, null, null, null, null, null, null, null, null];
-    
+    const textRecords = name
+      ? await Promise.all([
+          client.getEnsAvatar({ name }).catch(() => null),
+          client.getEnsText({ name, key: "description" }).catch(() => null),
+          client.getEnsText({ name, key: "url" }).catch(() => null),
+          client.getEnsText({ name, key: "com.twitter" }).catch(() => null),
+          client.getEnsText({ name, key: "com.github" }).catch(() => null),
+          client.getEnsText({ name, key: "email" }).catch(() => null),
+          // Custom AI agent records - creative ENS usage for DeFi
+          client.getEnsText({ name, key: "ai.api.endpoint" }).catch(() => null),
+          client.getEnsText({ name, key: "ai.services" }).catch(() => null),
+          client.getEnsText({ name, key: "ai.trustscore" }).catch(() => null),
+        ])
+      : [null, null, null, null, null, null, null, null, null];
+
     return {
       name,
       address,
@@ -150,10 +152,7 @@ export async function getEnsProfile(nameOrAddress: string): Promise<EnsProfile |
  * Format an address with optional ENS name
  * Returns "name.eth (0x1234...abcd)" or just "0x1234...abcd"
  */
-export function formatAddressWithEns(
-  address: `0x${string}`,
-  ensName?: string | null
-): string {
+export function formatAddressWithEns(address: `0x${string}`, ensName?: string | null): string {
   const shortAddr = `${address.slice(0, 6)}...${address.slice(-4)}`;
   if (ensName) {
     return `${ensName} (${shortAddr})`;
@@ -170,18 +169,18 @@ export async function batchReverseResolve(
 ): Promise<Map<`0x${string}`, string | null>> {
   const client = createMainnetClient();
   const results = new Map<`0x${string}`, string | null>();
-  
+
   // Process in parallel with rate limiting
   const batchSize = 5;
   for (let i = 0; i < addresses.length; i += batchSize) {
     const batch = addresses.slice(i, i + batchSize);
     const names = await Promise.all(
-      batch.map(addr => client.getEnsName({ address: addr }).catch(() => null))
+      batch.map((addr) => client.getEnsName({ address: addr }).catch(() => null))
     );
     batch.forEach((addr, idx) => {
       results.set(addr, names[idx]);
     });
   }
-  
+
   return results;
 }

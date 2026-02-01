@@ -17,7 +17,11 @@ interface EnsProfileCardProps {
  * Displays ENS profile information including custom AI agent records
  * This demonstrates creative use of ENS for DeFi/AI agent discovery
  */
-export function EnsProfileCard({ addressOrName, compact = false, showAiFields = true }: EnsProfileCardProps) {
+export function EnsProfileCard({
+  addressOrName,
+  compact = false,
+  showAiFields = true,
+}: EnsProfileCardProps) {
   const [profile, setProfile] = useState<EnsProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,15 +67,13 @@ export function EnsProfileCard({ addressOrName, compact = false, showAiFields = 
     // Show minimal display without ENS
     const addr = addressOrName.startsWith("0x") ? addressOrName : null;
     if (!addr) return null;
-    
+
     return (
       <div className="flex items-center gap-2 text-slate-400">
         <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">
           🤖
         </div>
-        <span className="font-mono text-sm">
-          {`${addr.slice(0, 6)}...${addr.slice(-4)}`}
-        </span>
+        <span className="font-mono text-sm">{`${addr.slice(0, 6)}...${addr.slice(-4)}`}</span>
       </div>
     );
   }
@@ -128,22 +130,16 @@ export function EnsProfileCard({ addressOrName, compact = false, showAiFields = 
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-bold text-white truncate">
-              {profile.name || "Unknown"}
-            </h3>
+            <h3 className="text-lg font-bold text-white truncate">{profile.name || "Unknown"}</h3>
             {profile.name && (
               <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs">
                 ENS ✓
               </span>
             )}
           </div>
-          <p className="text-sm text-slate-400 font-mono truncate">
-            {profile.address}
-          </p>
+          <p className="text-sm text-slate-400 font-mono truncate">{profile.address}</p>
           {profile.description && (
-            <p className="mt-2 text-sm text-slate-300 line-clamp-2">
-              {profile.description}
-            </p>
+            <p className="mt-2 text-sm text-slate-300 line-clamp-2">{profile.description}</p>
           )}
         </div>
       </div>
@@ -182,8 +178,18 @@ export function EnsProfileCard({ addressOrName, compact = false, showAiFields = 
               rel="noopener noreferrer"
               className="text-slate-400 hover:text-cyan-400 transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                />
               </svg>
             </a>
           )}
@@ -191,42 +197,40 @@ export function EnsProfileCard({ addressOrName, compact = false, showAiFields = 
       )}
 
       {/* AI Agent Fields - Creative ENS usage */}
-      {showAiFields && (profile.aiApiEndpoint || profile.aiServiceCategories || profile.trustScore) && (
-        <div className="mt-4 pt-4 border-t border-slate-700 space-y-2">
-          <div className="text-xs font-semibold text-cyan-400 uppercase tracking-wide">
-            AI Agent Info (ENS Records)
-          </div>
-          {profile.aiApiEndpoint && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-slate-400">API:</span>
-              <code className="px-2 py-0.5 bg-slate-800 rounded text-cyan-300 text-xs">
-                {profile.aiApiEndpoint}
-              </code>
+      {showAiFields &&
+        (profile.aiApiEndpoint || profile.aiServiceCategories || profile.trustScore) && (
+          <div className="mt-4 pt-4 border-t border-slate-700 space-y-2">
+            <div className="text-xs font-semibold text-cyan-400 uppercase tracking-wide">
+              AI Agent Info (ENS Records)
             </div>
-          )}
-          {profile.aiServiceCategories && (
-            <div className="flex items-center gap-2 text-sm flex-wrap">
-              <span className="text-slate-400">Services:</span>
-              {profile.aiServiceCategories.split(",").map((service, i) => (
-                <span
-                  key={i}
-                  className="px-2 py-0.5 bg-slate-800 rounded text-slate-300 text-xs"
-                >
-                  {service.trim()}
+            {profile.aiApiEndpoint && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-slate-400">API:</span>
+                <code className="px-2 py-0.5 bg-slate-800 rounded text-cyan-300 text-xs">
+                  {profile.aiApiEndpoint}
+                </code>
+              </div>
+            )}
+            {profile.aiServiceCategories && (
+              <div className="flex items-center gap-2 text-sm flex-wrap">
+                <span className="text-slate-400">Services:</span>
+                {profile.aiServiceCategories.split(",").map((service, i) => (
+                  <span key={i} className="px-2 py-0.5 bg-slate-800 rounded text-slate-300 text-xs">
+                    {service.trim()}
+                  </span>
+                ))}
+              </div>
+            )}
+            {profile.trustScore && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-slate-400">Trust Score:</span>
+                <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-emerald-400 text-xs font-semibold">
+                  {profile.trustScore}/100
                 </span>
-              ))}
-            </div>
-          )}
-          {profile.trustScore && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-slate-400">Trust Score:</span>
-              <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-emerald-400 text-xs font-semibold">
-                {profile.trustScore}/100
-              </span>
-            </div>
-          )}
-        </div>
-      )}
+              </div>
+            )}
+          </div>
+        )}
     </div>
   );
 }
@@ -269,10 +273,7 @@ export function EnsName({ address }: { address: `0x${string}` }) {
   }
 
   return (
-    <span
-      className="font-mono text-sm text-white"
-      title={address}
-    >
+    <span className="font-mono text-sm text-white" title={address}>
       {ensName ? (
         <span className="text-cyan-400">{ensName}</span>
       ) : (

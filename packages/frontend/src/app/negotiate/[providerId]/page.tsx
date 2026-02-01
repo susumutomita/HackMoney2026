@@ -190,10 +190,10 @@ export default function NegotiatePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <nav className="flex items-center justify-between p-6 border-b border-gray-700">
+    <main className="min-h-screen bg-[#0a0a0f] text-white">
+      <nav className="flex items-center justify-between p-6 border-b border-white/5">
         <Link href="/">
-          <span className="text-2xl font-bold text-primary-400">ZeroKey</span>
+          <span className="text-2xl font-bold text-cyan-400">ZeroKey</span>
           <span className="text-gray-400"> Treasury</span>
         </Link>
         <div className="flex items-center gap-4">
@@ -206,7 +206,7 @@ export default function NegotiatePage() {
 
       <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Provider Info */}
-        <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 mb-6">
+        <div className="bg-[#12121a] rounded-xl p-6 border border-white/5 mb-6">
           <h1 className="text-2xl font-bold mb-2">Negotiate with {provider.name}</h1>
           <div className="flex gap-4 text-sm text-gray-400">
             <span>Services: {provider.services.join(", ")}</span>
@@ -220,15 +220,15 @@ export default function NegotiatePage() {
         </div>
 
         {!isConnected ? (
-          <div className="bg-gray-800/50 rounded-xl p-8 border border-gray-700 text-center">
+          <div className="bg-[#12121a] rounded-xl p-8 border border-white/5 text-center">
             <p className="text-gray-400 mb-4">Connect your wallet to start negotiating</p>
             <ConnectButton />
           </div>
         ) : (
           <div className="grid md:grid-cols-3 gap-6">
             {/* Chat */}
-            <div className="md:col-span-2 bg-gray-800/50 rounded-xl border border-gray-700">
-              <div className="p-4 border-b border-gray-700">
+            <div className="md:col-span-2 bg-[#12121a] rounded-xl border border-white/5">
+              <div className="p-4 border-b border-white/5">
                 <h2 className="font-semibold">Negotiation Chat</h2>
               </div>
               <div className="h-96 overflow-y-auto p-4 space-y-3">
@@ -237,7 +237,7 @@ export default function NegotiatePage() {
                     key={i}
                     className={`p-3 rounded-lg ${
                       msg.type === "user"
-                        ? "bg-primary-500/20 ml-8"
+                        ? "bg-cyan-500/20 ml-8"
                         : msg.type === "provider"
                           ? "bg-gray-700 mr-8"
                           : "bg-gray-700/50 text-sm text-gray-400"
@@ -259,7 +259,7 @@ export default function NegotiatePage() {
             {/* Controls */}
             <div className="space-y-4">
               {negotiationStatus === "idle" && (
-                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                <div className="bg-[#12121a] rounded-xl p-4 border border-white/5">
                   <label className="block text-sm text-gray-400 mb-2">Your Offer (USDC)</label>
                   <input
                     type="text"
@@ -269,7 +269,7 @@ export default function NegotiatePage() {
                   />
                   <button
                     onClick={startNegotiation}
-                    className="w-full bg-primary-500 hover:bg-primary-600 py-3 rounded-lg font-medium"
+                    className="w-full bg-cyan-500 hover:bg-cyan-600 py-3 rounded-lg font-medium"
                   >
                     Start Negotiation
                   </button>
@@ -277,7 +277,7 @@ export default function NegotiatePage() {
               )}
 
               {negotiationStatus === "negotiating" && (
-                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                <div className="bg-[#12121a] rounded-xl p-4 border border-white/5">
                   <label className="block text-sm text-gray-400 mb-2">Counter Offer (USDC)</label>
                   <input
                     type="text"
@@ -288,7 +288,7 @@ export default function NegotiatePage() {
                   <div className="space-y-2">
                     <button
                       onClick={() => sendOffer("offer")}
-                      className="w-full bg-primary-500 hover:bg-primary-600 py-2 rounded-lg"
+                      className="w-full bg-cyan-500 hover:bg-cyan-600 py-2 rounded-lg"
                     >
                       Send Offer
                     </button>
@@ -369,7 +369,7 @@ export default function NegotiatePage() {
                   <button
                     className={`w-full py-3 rounded-lg font-medium ${
                       firewallResult?.decision === "APPROVED"
-                        ? "bg-primary-500 hover:bg-primary-600"
+                        ? "bg-cyan-500 hover:bg-cyan-600"
                         : "bg-gray-700 text-gray-400 cursor-not-allowed"
                     }`}
                     disabled={firewallResult?.decision !== "APPROVED"}
