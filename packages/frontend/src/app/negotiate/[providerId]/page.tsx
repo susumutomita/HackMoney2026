@@ -309,22 +309,77 @@ export default function NegotiatePage() {
                         : "bg-red-900/30 border-red-700"
                   }`}
                 >
-                  <h3 className="font-semibold mb-2">Firewall: {firewallResult.decision}</h3>
-                  <p className="text-sm text-gray-300 mb-2">{firewallResult.reason}</p>
+                  <h3 className="font-semibold mb-2">
+                    {firewallResult.decision === "APPROVED"
+                      ? "✅ Firewall APPROVED"
+                      : firewallResult.decision === "WARNING"
+                        ? "⚠️ Firewall WARNING"
+                        : "⛔ Firewall REJECTED"}
+                  </h3>
+
+                  <p className="text-sm text-gray-200 mb-3">{firewallResult.reason}</p>
+
                   {firewallResult.warnings.length > 0 && (
-                    <ul className="text-sm text-yellow-300 list-disc list-inside">
-                      {firewallResult.warnings.map((w, i) => (
-                        <li key={i}>{w}</li>
-                      ))}
-                    </ul>
+                    <div className="mb-3">
+                      <div className="text-xs uppercase tracking-wide text-yellow-200/80 mb-1">
+                        Warnings
+                      </div>
+                      <ul className="text-sm text-yellow-200 list-disc list-inside">
+                        {firewallResult.warnings.map((w, i) => (
+                          <li key={i}>{w}</li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
+
+                  <div className="text-xs uppercase tracking-wide text-gray-300/80 mb-1">
+                    Next step
+                  </div>
+                  <div className="text-sm text-gray-200">
+                    {firewallResult.decision === "APPROVED" ? (
+                      <span>
+                        Proceed to payment. You can still double-check the provider and amount.
+                      </span>
+                    ) : firewallResult.decision === "WARNING" ? (
+                      <span>
+                        We recommend proceeding only after verifying the provider identity and
+                        starting with a small test amount.
+                      </span>
+                    ) : (
+                      <span>
+                        Payment is blocked. Choose a different provider, reduce the amount, or
+                        contact support to review the policy.
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {negotiationStatus === "agreed" && firewallResult?.decision === "APPROVED" && (
-                <button className="w-full bg-primary-500 hover:bg-primary-600 py-3 rounded-lg font-medium">
-                  💳 Pay ${agreedPrice} USDC
-                </button>
+              {negotiationStatus === "agreed" && (
+                <div className="space-y-2">
+                  <button
+                    className={`w-full py-3 rounded-lg font-medium ${
+                      firewallResult?.decision === "APPROVED"
+                        ? "bg-primary-500 hover:bg-primary-600"
+                        : "bg-gray-700 text-gray-400 cursor-not-allowed"
+                    }`}
+                    disabled={firewallResult?.decision !== "APPROVED"}
+                    title={
+                      firewallResult?.decision === "APPROVED"
+                        ? "Ready to pay"
+                        : "Payment is only enabled after Firewall APPROVED"
+                    }
+                  >
+                    💳 Pay ${agreedPrice} USDC
+                  </button>
+
+                  {firewallResult?.decision !== "APPROVED" && (
+                    <div className="text-xs text-gray-400">
+                      Pay is disabled until the Firewall returns{" "}
+                      <span className="text-green-300">APPROVED</span>.
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
