@@ -99,6 +99,16 @@ packages/
 
 ---
 
+## ✅ Must-run: UX評価（開発者バイアス対策）
+
+このリポでは、開発者目線のバイアスを避けるため、**重要なUI/導線変更を入れたら必ず**以下を実施する。
+
+- 評価シナリオ: `docs/UX_EVAL_SCENARIOS.md`
+- 原則「作った本人」ではなく、**別のエージェント/別の人**が実行する
+- 結果はPR/Issueに貼り付ける（confusion points / fear moments / 1-fix-only 等）
+
+---
+
 ## 🚀 開発コマンド
 
 ```bash
