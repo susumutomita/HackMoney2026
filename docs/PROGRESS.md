@@ -154,10 +154,101 @@ cd packages/frontend && pnpm dev
 
 ---
 
+---
+
+## 2026-02-01
+
+### ENS Integration + Arc Network ✅ COMPLETED
+
+**実装者**: Shelley (exe.dev VM)
+
+**Prize Track: ENS ($3,500-$5,000)**
+
+1. **ENS utilities (`packages/frontend/src/lib/ens.ts`)**
+   - Forward resolution: ENS name → address
+   - Reverse resolution: address → ENS name
+   - Full profile fetching with custom AI agent records
+   - Batch reverse resolution for provider lists
+
+2. **Custom ENS text records for AI agents**
+   - `ai.api.endpoint` - API endpoint URL
+   - `ai.services` - Comma-separated service types  
+   - `ai.trustscore` - Reputation score (0-100)
+
+3. **EnsProfileCard component**
+   - Display ENS avatar, name, description
+   - Show social links (Twitter, GitHub, URL)
+   - AI agent specific fields display
+
+4. **Provider ENS integration**
+   - Added `wallet_address` and `ens_name` to providers table
+   - Demo providers use known ENS addresses (vitalik.eth, nick.eth)
+   - Marketplace shows ENS names with address tooltips
+
+**Prize Track: Arc Network ($2,500)**
+
+1. **Arc Network chain config**
+   - Arc mainnet (chainId: 411)
+   - Arc testnet (chainId: 412)
+   - RPC and block explorer URLs
+
+2. **Arc-specific USDC configuration**
+   - Native USDC address on Arc
+   - Circle Gateway API endpoint
+   - Default gas settings
+
+**Documentation**
+
+1. **English README.md**
+   - Complete project overview
+   - ENS and Arc prize track details
+   - Architecture diagrams
+   - API reference
+   - Quick start guide
+
+**Commit**: `57f927d` - "feat: ENS integration + Arc Network support + English README"
+
+---
+
+## E2E Demo Verified ✅
+
+```bash
+# 1. Discover providers (with ENS wallet addresses)
+curl http://localhost:3001/api/a2a/discover?service=translation
+# Returns providers with walletAddress for ENS lookup
+
+# 2. Start negotiation
+curl -X POST http://localhost:3001/api/a2a/negotiate \
+  -H "Content-Type: application/json" \
+  -d '{"clientId":"0x123...","providerId":"translate-ai-001","service":"translation","initialOffer":"0.025"}'
+
+# 3. Accept offer
+curl -X POST "http://localhost:3001/api/a2a/negotiate/neg-xxx/offer" \
+  -H "Content-Type: application/json" \
+  -d '{"amount":"0.03","type":"accept"}'
+
+# 4. Firewall check - APPROVED for trusted provider
+curl -X POST http://localhost:3001/api/firewall/check \
+  -H "Content-Type: application/json" \
+  -d '{"sessionId":"neg-xxx","userAddress":"0x123..."}'
+# → approved: true, riskLevel: 1 (LOW)
+
+# 5. Firewall check - REJECTED for sketchy provider
+# → approved: false, decision: WARNING, riskLevel: 3
+# → Warnings about scam risk, suspicious pricing
+```
+
+---
+
 ## 次のタスク
 
+- [x] ENS Integration (Prize track)
+- [x] Arc Network configuration (Prize track)
+- [x] English documentation
+- [x] E2E demo verification
 - [ ] Phase 4.4: オンチェーン統合 (ZeroKeyGuard.submitDecision)
-- [ ] Phase 6: 統合テスト & デモ
+- [ ] デモビデオ作成
+- [ ] 最終提出準備
 
 ---
 
@@ -166,3 +257,4 @@ cd packages/frontend && pnpm dev
 1. **LLMはClaude CLIを使用** - Anthropic APIではなくサブスクリプションを活用
 2. **DBはSQLite** - `packages/backend/data/zerokey.db`
 3. **バックエンドポート**: 3001
+4. **フロントエンドポート**: 8000

@@ -52,6 +52,7 @@ export const auditLogs = sqliteTable("audit_logs", {
 /**
  * Providers table
  * Stores API service providers in the marketplace
+ * Supports ENS integration for decentralized identity
  */
 export const providers = sqliteTable("providers", {
   id: text("id").primaryKey(),
@@ -63,6 +64,10 @@ export const providers = sqliteTable("providers", {
   trustScore: integer("trust_score").notNull().default(50),
   totalTransactions: integer("total_transactions").notNull().default(0),
   isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  /** Wallet address for ENS lookup and payments */
+  walletAddress: text("wallet_address"),
+  /** ENS name if registered (e.g., translateai.eth) */
+  ensName: text("ens_name"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });

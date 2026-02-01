@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
+import { reverseResolveEns } from "@/lib/ens";
 
 interface Provider {
   id: string;
@@ -12,6 +13,10 @@ interface Provider {
   unit: string;
   trustScore: number;
   totalTransactions: number;
+  /** Optional wallet address for ENS lookup */
+  walletAddress?: `0x${string}`;
+  /** Optional ENS name */
+  ensName?: string | null;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -36,7 +41,17 @@ export default function MarketplacePage() {
       const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
-        setProviders(data.results);
+        // Fetch ENS names for providers with wallet addresses
+        const providersWithEns = await Promise.all(
+          data.results.map(async (p: Provider) => {
+            if (p.walletAddress) {
+              const ensName = await reverseResolveEns(p.walletAddress);
+              return { ...p, ensName };
+            }
+            return p;
+          })
+        );
+        setProviders(providersWithEns);
       } else {
         setError(data.error || "Failed to fetch providers");
       }
@@ -96,13 +111,16 @@ export default function MarketplacePage() {
           <p className="text-gray-400">
             Discover and negotiate with AI service providers. Protected by ZeroKey Firewall.
           </p>
+          <p className="text-sm text-cyan-400 mt-2">
+            🌐 ENS-enabled: Providers can register their services using ENS text records
+          </p>
         </section>
 
         {/* Search */}
         <div className="flex gap-4 mb-8">
           <input
             type="text"
-            placeholder="Search services (e.g., translation, summarization)"
+            placeholder="Search services (e.g., translation, summarization) or ENS name"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -135,6 +153,31 @@ export default function MarketplacePage() {
             ))}
           </div>
         )}
+
+        {/* ENS Integration Info */}
+        <section className="mt-12 p-6 bg-gray-800/50 rounded-xl border border-cyan-500/20">
+          <h2 className="text-xl font-bold mb-4 text-cyan-400">
+            🌐 ENS Integration for AI Agents
+          </h2>
+          <p className="text-gray-300 mb-4">
+            ZeroKey Treasury uses ENS (Ethereum Name Service) for decentralized provider identity.
+            AI agents can register their services using custom ENS text records:
+          </p>
+          <div className="grid md:grid-cols-3 gap-4 text-sm">
+            <div className="p-3 bg-gray-900/50 rounded-lg">
+              <code className="text-cyan-300">ai.api.endpoint</code>
+              <p className="text-gray-400 mt-1">API endpoint URL</p>
+            </div>
+            <div className="p-3 bg-gray-900/50 rounded-lg">
+              <code className="text-cyan-300">ai.services</code>
+              <p className="text-gray-400 mt-1">Comma-separated service types</p>
+            </div>
+            <div className="p-3 bg-gray-900/50 rounded-lg">
+              <code className="text-cyan-300">ai.trustscore</code>
+              <p className="text-gray-400 mt-1">Reputation score (0-100)</p>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   );
@@ -152,7 +195,20 @@ function ProviderCard({
   return (
     <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-primary-500 transition-colors">
       <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xl font-semibold">{provider.name}</h3>
+        <div>
+          <h3 className="text-xl font-semibold">{provider.name}</h3>
+          {provider.ensName && (
+            <span className="text-sm text-cyan-400 flex items-center gap-1">
+              <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
+              {provider.ensName}
+            </span>
+          )}
+          {provider.walletAddress && !provider.ensName && (
+            <span className="text-xs text-gray-500 font-mono">
+              {`${provider.walletAddress.slice(0, 6)}...${provider.walletAddress.slice(-4)}`}
+            </span>
+          )}
+        </div>
         <span
           className={`text-sm px-2 py-1 rounded ${getTrustColor(provider.trustScore)} bg-gray-700`}
         >
