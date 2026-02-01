@@ -128,11 +128,17 @@ Pass criteria:
 Steps:
 
 1. Open Dashboard.
-2. Look for a history of decisions/transactions.
+2. Find **Agent Purchase Log**.
+3. Verify that a completed purchase appears with:
+   - txHash (short)
+   - amount (USDC)
+   - provider
+   - firewall decision + reason
 
 Pass criteria:
 
 - You can answer: “what happened, when, and why did the firewall approve/reject?”
+- There is visible proof the agent paid (txHash) and why it was allowed.
 
 ---
 

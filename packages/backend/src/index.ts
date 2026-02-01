@@ -11,6 +11,7 @@ import { chatRouter } from "./routes/chat.js";
 import providerRouter from "./routes/provider.js";
 import docsRouter from "./routes/openapi.js";
 import { payRouter } from "./routes/pay.js";
+import { purchasesRouter } from "./routes/purchases.js";
 import { config } from "./config.js";
 import { initializeDatabase } from "./db/index.js";
 
@@ -32,6 +33,7 @@ app.route("/api/firewall", firewallRouter);
 app.route("/api/chat", chatRouter);
 app.route("/api/provider", providerRouter);
 app.route("/api/pay", payRouter);
+app.route("/api/purchases", purchasesRouter);
 app.route("/docs", docsRouter);
 
 // Start server (avoid listening during tests/imports)
