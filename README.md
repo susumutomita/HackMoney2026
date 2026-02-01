@@ -18,7 +18,7 @@ ZeroKey Treasury is an **execution firewall** for AI agents autonomously discove
         │
         ▼ A2A Discovery & Negotiation
 [Provider A] "$0.05/1000 tokens" - Trust: 85/100
-[Provider B] "$0.03/1000 tokens" - Trust: 78/100  
+[Provider B] "$0.03/1000 tokens" - Trust: 78/100
 [Provider C] "$0.01/1000 tokens" - Trust: 15/100 ← Suspicious
         │
         ▼ Negotiation Result: Provider B selected ($0.03)
@@ -68,15 +68,15 @@ ZeroKey Treasury is designed as a **global payout and treasury system** using US
 
 ## 🎯 Key Features
 
-| Feature | Description |
-|---------|-------------|
-| **A2A Gateway** | AI agents discover and negotiate with service providers |
-| **Execution Firewall** | LLM-powered semantic analysis + policy enforcement |
-| **x402 Payment** | HTTP 402 protocol for USDC micropayments |
-| **On-chain Guard** | Approval decisions recorded on blockchain |
-| **ENS Integration** | Decentralized identity for AI agents |
-| **Trust Scoring** | Provider reputation system |
-| **Fail-safe** | Blocks transactions when analysis fails |
+| Feature                | Description                                             |
+| ---------------------- | ------------------------------------------------------- |
+| **A2A Gateway**        | AI agents discover and negotiate with service providers |
+| **Execution Firewall** | LLM-powered semantic analysis + policy enforcement      |
+| **x402 Payment**       | HTTP 402 protocol for USDC micropayments                |
+| **On-chain Guard**     | Approval decisions recorded on blockchain               |
+| **ENS Integration**    | Decentralized identity for AI agents                    |
+| **Trust Scoring**      | Provider reputation system                              |
+| **Fail-safe**          | Blocks transactions when analysis fails                 |
 
 ---
 
@@ -96,6 +96,7 @@ cd packages/frontend && PORT=8000 pnpm dev
 ```
 
 **URLs**:
+
 - Frontend: http://localhost:8000
 - Backend API: http://localhost:3001
 - Health Check: http://localhost:3001/health
@@ -138,6 +139,7 @@ cd packages/frontend && PORT=8000 pnpm dev
 ## 📡 API Reference
 
 ### Discovery
+
 ```bash
 # Find translation providers
 GET /api/a2a/discover?service=translation
@@ -157,6 +159,7 @@ GET /api/a2a/discover?service=translation
 ```
 
 ### Negotiation
+
 ```bash
 # Start negotiation session
 POST /api/a2a/negotiate
@@ -176,6 +179,7 @@ POST /api/a2a/negotiate/:sessionId/offer
 ```
 
 ### Firewall Check
+
 ```bash
 # Request approval before payment
 POST /api/firewall/check
@@ -203,30 +207,30 @@ POST /api/firewall/check
 
 ## 🛡️ Firewall Decisions
 
-| Scenario | Decision | Reason |
-|----------|----------|--------|
+| Scenario                     | Decision | Reason                    |
+| ---------------------------- | -------- | ------------------------- |
 | Trusted provider (85+ score) | APPROVED | High trust, within budget |
-| Moderate provider (40-84) | WARNING | Proceed with caution |
-| Low trust provider (<40) | REJECTED | Potential scam risk |
-| Budget exceeded | REJECTED | Daily limit reached |
-| Rate limit hit | REJECTED | Too many requests |
-| Analysis failed | REJECTED | Fail-safe default |
+| Moderate provider (40-84)    | WARNING  | Proceed with caution      |
+| Low trust provider (<40)     | REJECTED | Potential scam risk       |
+| Budget exceeded              | REJECTED | Daily limit reached       |
+| Rate limit hit               | REJECTED | Too many requests         |
+| Analysis failed              | REJECTED | Fail-safe default         |
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| **Smart Contracts** | Solidity 0.8.24, Foundry |
-| **Backend** | Hono, TypeScript, Zod |
-| **Frontend** | Next.js 15, React 19, TailwindCSS |
-| **Web3** | Wagmi, Viem, RainbowKit |
-| **AI** | Claude (Anthropic) |
-| **Payments** | USDC, x402 Protocol |
-| **Identity** | ENS (Ethereum Name Service) |
-| **Database** | SQLite + Drizzle ORM |
-| **Blockchain** | Base Sepolia (Arc-ready) |
+| Layer               | Technology                        |
+| ------------------- | --------------------------------- |
+| **Smart Contracts** | Solidity 0.8.24, Foundry          |
+| **Backend**         | Hono, TypeScript, Zod             |
+| **Frontend**        | Next.js 15, React 19, TailwindCSS |
+| **Web3**            | Wagmi, Viem, RainbowKit           |
+| **AI**              | Claude (Anthropic)                |
+| **Payments**        | USDC, x402 Protocol               |
+| **Identity**        | ENS (Ethereum Name Service)       |
+| **Database**        | SQLite + Drizzle ORM              |
+| **Blockchain**      | Base Sepolia (Arc-ready)          |
 
 ---
 
@@ -313,4 +317,4 @@ Built for **HackMoney 2026** by ETHGlobal
 
 ---
 
-**ZeroKey Treasury** - *Execution Governance for Autonomous Finance*
+**ZeroKey Treasury** - _Execution Governance for Autonomous Finance_

@@ -172,7 +172,7 @@ cd packages/frontend && pnpm dev
 
 2. **Custom ENS text records for AI agents**
    - `ai.api.endpoint` - API endpoint URL
-   - `ai.services` - Comma-separated service types  
+   - `ai.services` - Comma-separated service types
    - `ai.trustscore` - Reputation score (0-100)
 
 3. **EnsProfileCard component**
