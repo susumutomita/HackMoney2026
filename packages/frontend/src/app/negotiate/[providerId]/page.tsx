@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import Link from "next/link";
+import { erc20Abi, parseUnits } from "viem";
 import { PayConfirmModal, PaymentStatusModal } from "@/components";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -48,6 +49,9 @@ export default function NegotiatePage() {
   const [payStatus, setPayStatus] = useState<"idle" | "processing" | "success" | "failed">("idle");
   const [payError, setPayError] = useState<string | undefined>(undefined);
   const [agreedPrice, setAgreedPrice] = useState<string | null>(null);
+
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
 
   useEffect(() => {
     fetchProvider();
@@ -385,17 +389,66 @@ export default function NegotiatePage() {
                     onConfirm={async () => {
                       setPayConfirmOpen(false);
 
-                      // Demo payment state machine UI.
+                      if (!walletClient || !publicClient) {
+                        setPayStatus("failed");
+                        setPayError("Wallet not connected");
+                        setPayStatusOpen(true);
+                        return;
+                      }
+
+                      const amountUsdc = agreedPrice ?? "0.03";
+
                       setPayError(undefined);
                       setPayStatus("processing");
                       setPayStatusOpen(true);
                       addMessage("system", "Processing payment…");
 
                       try {
-                        // Simulate async payment.
-                        await new Promise((r) => setTimeout(r, 1200));
+                        // Request payment info (x402-style 402 response)
+                        const req = await fetch(`${API_URL}/api/pay/request`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ amountUsdc, serviceId: providerId }),
+                        });
 
-                        // In real implementation, call x402/onchain here.
+                        const data = await req.json();
+                        const payment = data.payment as {
+                          recipient: `0x${string}`;
+                          token: `0x${string}`;
+                          chainId: number;
+                          amountUsdc: string;
+                        };
+
+                        if (!payment?.recipient || !payment?.token) {
+                          throw new Error("Payment request failed");
+                        }
+
+                        // Send USDC transfer via wallet
+                        const value = parseUnits(payment.amountUsdc, 6);
+                        const txHash = await walletClient.writeContract({
+                          address: payment.token,
+                          abi: erc20Abi,
+                          functionName: "transfer",
+                          args: [payment.recipient, value],
+                        });
+
+                        await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+                        // Submit txHash for verification
+                        const submit = await fetch(`${API_URL}/api/pay/submit`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            txHash,
+                            expectedAmountUsdc: payment.amountUsdc,
+                          }),
+                        });
+
+                        const submitJson = await submit.json();
+                        if (!submit.ok || !submitJson.success) {
+                          throw new Error(submitJson.reason ?? "Payment verification failed");
+                        }
+
                         setPayStatus("success");
                         addMessage("system", "✅ Payment successful.");
                       } catch (e) {
@@ -410,7 +463,7 @@ export default function NegotiatePage() {
                     recipientLabel={
                       provider?.name ? `${provider.name} (${provider.id})` : providerId
                     }
-                    chainLabel="Base Sepolia (demo)"
+                    chainLabel="Base Sepolia"
                     firewallSummary={
                       firewallResult
                         ? `${firewallResult.decision}: ${firewallResult.reason}`
@@ -430,10 +483,10 @@ export default function NegotiatePage() {
                       setPayError(undefined);
                     }}
                     onRetry={() => {
-                      setPayStatus("processing");
+                      setPayStatus("idle");
                       setPayError(undefined);
-                      // NOTE: in real implementation, retry the payment call.
-                      setTimeout(() => setPayStatus("success"), 800);
+                      setPayStatusOpen(false);
+                      setPayConfirmOpen(true);
                     }}
                   />
 
