@@ -3,6 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import type { Address, Hex } from "viem";
 import { baseSepolia } from "viem/chains";
+import { eq } from "drizzle-orm";
 import { verifyUsdcTransfer } from "../services/payment.js";
 import { db, schema } from "../db/index.js";
 import { randomUUID } from "node:crypto";
@@ -61,6 +62,9 @@ payRouter.post("/request", zValidator("json", requestSchema), async (c) => {
 const submitSchema = z.object({
   txHash: z.string().startsWith("0x").min(10),
   expectedAmountUsdc: z.string().min(1),
+  providerId: z.string().min(1),
+  firewallDecision: z.enum(["APPROVED", "WARNING", "REJECTED"]),
+  firewallReason: z.string().min(1),
 });
 
 /**
@@ -68,7 +72,20 @@ const submitSchema = z.object({
  * Verify that txHash includes a USDC transfer to the configured recipient.
  */
 payRouter.post("/submit", zValidator("json", submitSchema), async (c) => {
-  const { txHash, expectedAmountUsdc } = c.req.valid("json");
+  const { txHash, expectedAmountUsdc, providerId, firewallDecision, firewallReason } =
+    c.req.valid("json");
+
+  // Minimal integrity gate: only approved flows may settle and be recorded.
+  if (firewallDecision !== "APPROVED") {
+    return c.json(
+      {
+        success: false,
+        error: "firewall_not_approved",
+        reason: firewallReason,
+      },
+      403
+    );
+  }
 
   const res = await verifyUsdcTransfer(txHash as Hex, RECIPIENT, expectedAmountUsdc);
 
@@ -87,20 +104,29 @@ payRouter.post("/submit", zValidator("json", submitSchema), async (c) => {
   const now = new Date().toISOString();
   const record = res.record;
   if (record) {
-    await db.insert(schema.purchases).values({
-      id: randomUUID(),
-      txHash: record.txHash,
-      chainId: record.chainId,
-      token: USDC_BASE_SEPOLIA,
-      payer: record.payer,
-      recipient: record.recipient,
-      amountUsdc: expectedAmountUsdc,
-      providerId: record.serviceId ?? "unknown",
-      providerName: null,
-      firewallDecision: "APPROVED",
-      firewallReason: "Approved by Firewall (demo placeholder)",
-      createdAt: now,
-    });
+    const provider = await db
+      .select()
+      .from(schema.providers)
+      .where(eq(schema.providers.id, providerId))
+      .get();
+
+    await db
+      .insert(schema.purchases)
+      .values({
+        id: randomUUID(),
+        txHash: record.txHash,
+        chainId: record.chainId,
+        token: USDC_BASE_SEPOLIA,
+        payer: record.payer,
+        recipient: record.recipient,
+        amountUsdc: expectedAmountUsdc,
+        providerId,
+        providerName: provider?.name ?? null,
+        firewallDecision,
+        firewallReason,
+        createdAt: now,
+      })
+      .onConflictDoNothing();
   }
 
   return c.json({
