@@ -315,52 +315,117 @@ export default function NegotiatePage() {
                       ? "bg-green-900/30 border-green-700"
                       : firewallResult.decision === "WARNING"
                         ? "bg-yellow-900/30 border-yellow-700"
-                        : "bg-red-900/30 border-red-700"
+                        : "bg-red-950/60 border-red-600 shadow-[0_0_0_1px_rgba(239,68,68,0.25)]"
                   }`}
                 >
-                  <h3 className="font-semibold mb-2">
-                    {firewallResult.decision === "APPROVED"
-                      ? "✅ Firewall APPROVED"
-                      : firewallResult.decision === "WARNING"
-                        ? "⚠️ Firewall WARNING"
-                        : "⛔ Firewall REJECTED"}
-                  </h3>
-
-                  <p className="text-sm text-gray-200 mb-3">{firewallResult.reason}</p>
-
-                  {firewallResult.warnings.length > 0 && (
-                    <div className="mb-3">
-                      <div className="text-xs uppercase tracking-wide text-yellow-200/80 mb-1">
-                        Warnings
+                  {firewallResult.decision === "REJECTED" ? (
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center">
+                          <svg
+                            className="w-5 h-5 text-red-300"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 3 4 6v6c0 5 3.5 9 8 12 4.5-3 8-7 8-12V6l-8-3Z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M9.5 12.5 11 14l3.5-4"
+                            />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-xs tracking-widest uppercase text-red-300/90">
+                            Transfer Blocked
+                          </div>
+                          <h3 className="text-lg font-semibold text-white">
+                            Security policy violation
+                          </h3>
+                          <p className="mt-1 text-sm text-red-100/90 whitespace-pre-line">
+                            {firewallResult.reason}
+                          </p>
+                        </div>
                       </div>
-                      <ul className="text-sm text-yellow-200 list-disc list-inside">
-                        {firewallResult.warnings.map((w, i) => (
-                          <li key={i}>{w}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
 
-                  <div className="text-xs uppercase tracking-wide text-gray-300/80 mb-1">
-                    Next step
-                  </div>
-                  <div className="text-sm text-gray-200">
-                    {firewallResult.decision === "APPROVED" ? (
-                      <span>
-                        Proceed to payment. You can still double-check the provider and amount.
-                      </span>
-                    ) : firewallResult.decision === "WARNING" ? (
-                      <span>
-                        We recommend proceeding only after verifying the provider identity and
-                        starting with a small test amount.
-                      </span>
-                    ) : (
-                      <span>
-                        Payment is blocked. Choose a different provider, reduce the amount, or
-                        contact support to review the policy.
-                      </span>
-                    )}
-                  </div>
+                      <div className="rounded-lg bg-black/20 border border-red-500/20 p-3">
+                        <div className="text-xs uppercase tracking-wide text-red-200/80 mb-1">
+                          What you can do
+                        </div>
+                        <ul className="text-sm text-red-100/90 list-disc list-inside space-y-1">
+                          <li>Choose a verified provider (known recipient).</li>
+                          <li>Request manual approval for this recipient.</li>
+                          <li>Start with a small test transaction after verification.</li>
+                        </ul>
+                      </div>
+
+                      <details className="rounded-lg bg-white/5 border border-white/10 p-3">
+                        <summary className="cursor-pointer text-xs text-gray-300">
+                          Technical details (for developers)
+                        </summary>
+                        <div className="mt-2 text-xs text-gray-400 space-y-1">
+                          <div>
+                            decision: <span className="text-gray-200">REJECTED</span>
+                          </div>
+                          {firewallResult.warnings.length > 0 && (
+                            <div>
+                              warnings:
+                              <ul className="list-disc list-inside">
+                                {firewallResult.warnings.map((w, i) => (
+                                  <li key={i}>{w}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    </div>
+                  ) : (
+                    <>
+                      <h3 className="font-semibold mb-2">
+                        {firewallResult.decision === "APPROVED"
+                          ? "✅ Firewall APPROVED"
+                          : "⚠️ Firewall WARNING"}
+                      </h3>
+
+                      <p className="text-sm text-gray-200 mb-3">{firewallResult.reason}</p>
+
+                      {firewallResult.warnings.length > 0 && (
+                        <div className="mb-3">
+                          <div className="text-xs uppercase tracking-wide text-yellow-200/80 mb-1">
+                            Warnings
+                          </div>
+                          <ul className="text-sm text-yellow-200 list-disc list-inside">
+                            {firewallResult.warnings.map((w, i) => (
+                              <li key={i}>{w}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      <div className="text-xs uppercase tracking-wide text-gray-300/80 mb-1">
+                        Next step
+                      </div>
+                      <div className="text-sm text-gray-200">
+                        {firewallResult.decision === "APPROVED" ? (
+                          <span>
+                            Proceed to payment. You can still double-check the provider and amount.
+                          </span>
+                        ) : (
+                          <span>
+                            We recommend proceeding only after verifying the provider identity and
+                            starting with a small test amount.
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
