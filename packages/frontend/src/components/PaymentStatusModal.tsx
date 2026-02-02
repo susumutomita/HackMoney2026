@@ -86,7 +86,6 @@ export function PaymentStatusModal({
                   <div className="text-xs uppercase tracking-wide text-green-200/80 mb-2">
                     Purchased output
                   </div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={resultUrl}
                     alt="Purchased output"
