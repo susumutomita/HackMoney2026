@@ -11,6 +11,7 @@ This checklist matches the **Success → Blocked → Success** demo narrative.
 - [ ] Backend is running (health check): `GET /health` returns 200
 - [ ] Frontend is running and reachable
 - [ ] Wallet is connected (Base Sepolia)
+- [ ] Wallet is on **Base Sepolia**
 - [ ] Wallet has:
   - [ ] Base Sepolia ETH for gas
   - [ ] Base Sepolia USDC for payments
