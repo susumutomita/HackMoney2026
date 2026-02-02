@@ -101,8 +101,10 @@ ZeroKey Treasury is designed as a **global payout and treasury system** using US
 | **x402 Payment**       | HTTP 402 protocol for USDC micropayments                |
 | **On-chain Guard**     | Approval decisions recorded on blockchain               |
 | **ENS Integration**    | Decentralized identity for AI agents                    |
-| **Trust Scoring**      | Provider reputation system                              |
+| **Trust Scoring**      | Explainable trust score (payment predictability)        |
 | **Fail-safe**          | Blocks transactions when analysis fails                 |
+
+**Trust score design**: see `docs/TRUST_SCORE_MODEL.md` (verifiable signals, explainable features, not social ratings).
 
 ---
 

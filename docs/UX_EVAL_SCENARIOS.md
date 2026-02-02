@@ -80,7 +80,7 @@ Steps:
 
 Observe:
 
-- Do you understand what “trust score” means?
+- Do you understand what “trust score” means? (It is an explainable _payment predictability_ score; see `docs/TRUST_SCORE_MODEL.md`.)
 
 Pass criteria:
 
