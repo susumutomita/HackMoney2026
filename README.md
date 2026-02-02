@@ -1,17 +1,34 @@
 # ZeroKey Treasury
 
-> **AI Agent API Marketplace with Execution Firewall**
+> **Firewall for Agent Commerce** — policy decides **before money moves**.
 
 [![HackMoney 2026](https://img.shields.io/badge/HackMoney-2026-blue)](https://ethglobal.com)
 [![ENS Integration](https://img.shields.io/badge/ENS-Integrated-5284FF)](https://ens.domains)
 [![Arc Network](https://img.shields.io/badge/Arc-Ready-00D4FF)](https://arc.network)
 [![Base Sepolia](https://img.shields.io/badge/Base-Sepolia-0052FF)](https://base.org)
 
-ZeroKey Treasury is an **execution firewall** for AI agents autonomously discovering, negotiating, and paying for API services. It combines the x402 protocol with USDC payments to enable a secure Agent-to-Agent (A2A) marketplace.
+### The premise we break (Before / After)
+
+**Before:** In DeFi, if you sign, money moves. There is no second chance.
+
+**After:** With ZeroKey, signing is a request. Money moves only if policy says yes.
+
+### Mental model
+
+AI agents are overconfident interns. **ZeroKey is the CFO standing between your agent and your wallet.**
+
+ZeroKey Treasury is an **execution firewall** for agent-to-agent commerce: agents discover providers, negotiate, run a policy check (recipient invariants, spend limits, anomaly checks), then pay in USDC using an HTTP 402 flow. All outcomes are auditable: we persist txHash for successful settlement, and we log blocked events as “money never moved”.
 
 ## 🎬 Demo
 
 **Live Demo**: [https://zerokey.exe.xyz:8000](https://zerokey.exe.xyz:8000)
+
+Quick links:
+
+- Demo script: `docs/DEMO_SCRIPT.md`
+- Demo checklist: `docs/DEMO_CHECKLIST.md`
+- Sponsor tech map: `docs/SPONSOR_TECH_MAP.md`
+- Trust score model: `docs/TRUST_SCORE_MODEL.md`
 
 ### Firewall before execution (30-second mental model)
 
