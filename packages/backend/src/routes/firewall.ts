@@ -152,6 +152,13 @@ firewallRouter.post("/check", zValidator("json", checkSchema), async (c) => {
       }
     : undefined;
 
+  // If the client didn't specify an onchain destination, assume the provider's recipient.
+  if (!input.to && providerRow?.walletAddress) {
+    tx.to = providerRow.walletAddress;
+  }
+
+  const expectedRecipient = providerId ? config.providerRegistry[providerId]?.recipient : undefined;
+
   const providerForFirewall = providerRow
     ? {
         id: providerRow.id,
@@ -159,6 +166,8 @@ firewallRouter.post("/check", zValidator("json", checkSchema), async (c) => {
         trustScore: providerRow.trustScore,
         priceWei: providerRow.pricePerUnit,
         service: providerRow.services?.[0] ?? undefined,
+        expectedRecipient,
+        recipient: providerRow.walletAddress ?? undefined,
       }
     : undefined;
 
