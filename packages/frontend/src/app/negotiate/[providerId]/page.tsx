@@ -48,6 +48,7 @@ export default function NegotiatePage() {
   const [payStatusOpen, setPayStatusOpen] = useState(false);
   const [payStatus, setPayStatus] = useState<"idle" | "processing" | "success" | "failed">("idle");
   const [payError, setPayError] = useState<string | undefined>(undefined);
+  const [payResultUrl, setPayResultUrl] = useState<string | undefined>(undefined);
   const [agreedPrice, setAgreedPrice] = useState<string | null>(null);
 
   const { data: walletClient } = useWalletClient();
@@ -464,6 +465,7 @@ export default function NegotiatePage() {
                       const amountUsdc = agreedPrice ?? "0.03";
 
                       setPayError(undefined);
+                      setPayResultUrl(undefined);
                       setPayStatus("processing");
                       setPayStatusOpen(true);
                       addMessage("system", "Processing payment…");
@@ -517,6 +519,11 @@ export default function NegotiatePage() {
                           throw new Error(submitJson.reason ?? "Payment verification failed");
                         }
 
+                        const resultUrl = submitJson.result?.url as string | undefined;
+                        if (resultUrl) {
+                          setPayResultUrl(`${API_URL}${resultUrl}`);
+                        }
+
                         setPayStatus("success");
                         addMessage("system", "✅ Payment successful.");
                       } catch (e) {
@@ -545,10 +552,12 @@ export default function NegotiatePage() {
                     amountLabel={`$${agreedPrice} USDC`}
                     recipientLabel={provider?.name ? provider.name : providerId}
                     errorMessage={payError}
+                    resultUrl={payResultUrl}
                     onClose={() => {
                       setPayStatusOpen(false);
                       setPayStatus("idle");
                       setPayError(undefined);
+                      setPayResultUrl(undefined);
                     }}
                     onRetry={() => {
                       setPayStatus("idle");

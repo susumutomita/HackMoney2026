@@ -8,6 +8,7 @@ export type PaymentStatusModalProps = {
   onClose: () => void;
   onRetry?: () => void;
   errorMessage?: string;
+  resultUrl?: string;
 };
 
 export function PaymentStatusModal({
@@ -18,6 +19,7 @@ export function PaymentStatusModal({
   onClose,
   onRetry,
   errorMessage,
+  resultUrl,
 }: PaymentStatusModalProps) {
   if (!open) return null;
 
@@ -78,6 +80,20 @@ export function PaymentStatusModal({
               <div className="mt-1 text-xs text-green-200/80">
                 You can now proceed with the service execution.
               </div>
+
+              {resultUrl && (
+                <div className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3">
+                  <div className="text-xs uppercase tracking-wide text-green-200/80 mb-2">
+                    Purchased output
+                  </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={resultUrl}
+                    alt="Purchased output"
+                    className="w-full rounded-md border border-white/10 bg-white/5"
+                  />
+                </div>
+              )}
             </div>
           )}
 
