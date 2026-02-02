@@ -104,7 +104,7 @@ function HeroSection() {
           <span className="text-white"> Treasury</span>
         </h1>
         <p className="text-lg text-slate-400 max-w-lg mx-auto leading-relaxed">
-          AI-powered transaction firewall for autonomous finance.
+          Policy-first execution firewall for autonomous finance.
           <span className="text-cyan-400"> Protect</span>,
           <span className="text-purple-400"> analyze</span>, and
           <span className="text-amber-400"> govern</span> your on-chain operations.

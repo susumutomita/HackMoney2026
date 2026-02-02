@@ -126,7 +126,7 @@ export default function Home() {
             <FeatureCard
               step="01"
               title="Semantic Analysis"
-              description="LLM-powered intent detection understands what the transaction is trying to do, not just the raw data."
+              description="Intent detection understands what the transaction is trying to do, not just the raw data."
             />
             <FeatureCard
               step="02"

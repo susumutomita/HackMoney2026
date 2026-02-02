@@ -25,7 +25,7 @@ export const translations = {
     startTutorial: "📖 Start Tutorial",
     aiAnalysis: "AI Analysis",
     aiAnalysisDesc:
-      "Semantic transaction analysis powered by LLMs to understand intent and assess risk",
+      "Intent-aware transaction analysis to understand what a payment is trying to do",
     policyEngine: "Policy Engine",
     policyEngineDesc: "Enforce spending limits, KYC requirements, and protocol restrictions",
     onChainGuards: "On-Chain Guards",
@@ -197,7 +197,7 @@ This is a typical fraud risk pattern.
     getStarted: "はじめる",
     startTutorial: "📖 チュートリアル開始",
     aiAnalysis: "AI分析",
-    aiAnalysisDesc: "LLMによるセマンティックなトランザクション分析で意図を理解しリスクを評価",
+    aiAnalysisDesc: "意図ベースのトランザクション分析で『何をしようとしているか』を説明",
     policyEngine: "ポリシーエンジン",
     policyEngineDesc: "支出制限、KYC要件、プロトコル制限を強制",
     onChainGuards: "オンチェーンガード",

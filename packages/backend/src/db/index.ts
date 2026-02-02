@@ -253,42 +253,38 @@ export function initializeDatabase(): void {
   );
   ensureColumn("providers", "ens_name", "ALTER TABLE providers ADD COLUMN ens_name TEXT");
 
-  // Seed demo providers if table is empty
-  const count = sqlite.prepare("SELECT COUNT(*) as count FROM providers").get() as {
-    count: number;
-  };
-  if (count.count === 0) {
-    const now = new Date().toISOString();
-    const insert = sqlite.prepare(`
-      INSERT INTO providers (id, name, endpoint, services, price_per_unit, unit, trust_score, total_transactions, is_active, wallet_address, ens_name, created_at, updated_at)
+  const now = new Date().toISOString();
+
+  // Seed demo providers idempotently.
+  // CI/tests may initialize the DB multiple times; INSERT OR IGNORE prevents UNIQUE violations.
+  const insert = sqlite.prepare(`
+      INSERT OR IGNORE INTO providers (id, name, endpoint, services, price_per_unit, unit, trust_score, total_transactions, is_active, wallet_address, ens_name, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    for (const provider of DEMO_PROVIDERS) {
-      insert.run(
-        provider.id,
-        provider.name,
-        provider.endpoint,
-        provider.services,
-        provider.price_per_unit,
-        provider.unit,
-        provider.trust_score,
-        provider.total_transactions,
-        provider.is_active,
-        provider.wallet_address,
-        provider.ens_name,
-        now,
-        now
-      );
-    }
-    console.log(`Seeded ${DEMO_PROVIDERS.length} demo providers with ENS support`);
-  } else {
-    // Update existing providers with wallet addresses if missing
-    const update = sqlite.prepare(`
+  for (const provider of DEMO_PROVIDERS) {
+    insert.run(
+      provider.id,
+      provider.name,
+      provider.endpoint,
+      provider.services,
+      provider.price_per_unit,
+      provider.unit,
+      provider.trust_score,
+      provider.total_transactions,
+      provider.is_active,
+      provider.wallet_address,
+      provider.ens_name,
+      now,
+      now
+    );
+  }
+
+  // Ensure existing providers get wallet/ENS metadata.
+  const update = sqlite.prepare(`
       UPDATE providers SET wallet_address = ?, ens_name = ? WHERE id = ? AND wallet_address IS NULL
     `);
-    for (const provider of DEMO_PROVIDERS) {
-      update.run(provider.wallet_address, provider.ens_name, provider.id);
-    }
+  for (const provider of DEMO_PROVIDERS) {
+    update.run(provider.wallet_address, provider.ens_name, provider.id);
   }
 }
 
