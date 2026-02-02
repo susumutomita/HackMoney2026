@@ -253,10 +253,6 @@ export function initializeDatabase(): void {
   );
   ensureColumn("providers", "ens_name", "ALTER TABLE providers ADD COLUMN ens_name TEXT");
 
-  // Seed demo providers if table is empty
-  const count = sqlite.prepare("SELECT COUNT(*) as count FROM providers").get() as {
-    count: number;
-  };
   const now = new Date().toISOString();
 
   // Seed demo providers idempotently.
