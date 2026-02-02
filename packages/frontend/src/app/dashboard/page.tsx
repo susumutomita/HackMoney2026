@@ -73,7 +73,7 @@ function StatusIndicator() {
   );
 }
 
-function AnimatedOrb() {
+function _AnimatedOrb() {
   return (
     <div className="orb-container">
       <div className="orb-glow" />
@@ -89,51 +89,28 @@ function AnimatedOrb() {
   );
 }
 
-function HeroSection() {
+function WalletBanner() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center relative">
-      {/* Animated Orb */}
-      <div className="mb-12 animate-fade-in">
-        <AnimatedOrb />
-      </div>
-
-      {/* Text Content */}
-      <div className="space-y-6 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-        <h1 className="text-5xl sm:text-6xl font-bold">
-          <span className="gradient-text">ZeroKey</span>
-          <span className="text-white"> Treasury</span>
-        </h1>
-        <p className="text-lg text-slate-400 max-w-lg mx-auto leading-relaxed">
-          Policy-first execution firewall for autonomous finance.
-          <span className="text-cyan-400"> Protect</span>,
-          <span className="text-purple-400"> analyze</span>, and
-          <span className="text-amber-400"> govern</span> your on-chain operations.
-        </p>
-      </div>
-
-      {/* Connect Button */}
-      <div className="mt-10 animate-slide-up" style={{ animationDelay: "0.4s" }}>
-        <ConnectButton />
-      </div>
-
-      {/* Feature Pills */}
-      <div
-        className="mt-16 flex flex-wrap justify-center gap-4 animate-slide-up"
-        style={{ animationDelay: "0.6s" }}
-      >
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full glass-card border border-cyan-500/20">
-          <div className="w-2 h-2 rounded-full bg-cyan-400" />
-          <span className="text-sm text-slate-300">Multi-chain Security</span>
+    <div className="mb-6 p-4 bg-slate-800/50 border border-slate-700 rounded-xl flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-cyan-500/10 flex items-center justify-center">
+          <svg
+            className="w-4 h-4 text-cyan-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full glass-card border border-purple-500/20">
-          <div className="w-2 h-2 rounded-full bg-purple-400" />
-          <span className="text-sm text-slate-300">AI Analysis</span>
-        </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full glass-card border border-amber-500/20">
-          <div className="w-2 h-2 rounded-full bg-amber-400" />
-          <span className="text-sm text-slate-300">On-chain Governance</span>
-        </div>
+        <p className="text-sm text-slate-300">Connect wallet to execute transactions</p>
       </div>
+      <ConnectButton />
     </div>
   );
 }
@@ -169,9 +146,8 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {!isConnected ? (
-          <HeroSection />
-        ) : (
+        {!isConnected && <WalletBanner />}
+        {
           <div className="space-y-8 animate-fade-in">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4">
@@ -218,7 +194,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        )}
+        }
       </main>
 
       {/* Footer */}
