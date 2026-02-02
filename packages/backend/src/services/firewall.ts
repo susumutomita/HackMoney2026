@@ -12,6 +12,10 @@ export interface FirewallCheckInput {
     /** Price hint for the provider (same units as tx.value). Optional. */
     priceWei?: string;
     service?: string;
+    /** Verified recipient (from registry) for recipient-invariant checks. */
+    expectedRecipient?: string;
+    /** Recipient presented by marketplace/provider listing. */
+    recipient?: string;
   };
   /** Override current time (useful for tests). */
   now?: Date;
@@ -136,6 +140,25 @@ export async function checkFirewall(input: FirewallCheckInput): Promise<Firewall
 
   let risk: 1 | 2 | 3 = 1;
   let hardReject = false;
+
+  // --- Provider recipient invariants (demo-focused, high-signal) ---
+  if (input.provider?.expectedRecipient && input.provider.recipient) {
+    const expected = input.provider.expectedRecipient.toLowerCase();
+    const got = input.provider.recipient.toLowerCase();
+    if (expected !== got) {
+      risk = maxRisk(risk, 3);
+      hardReject = true;
+      reasons.push(`Recipient mismatch (expected ${input.provider.expectedRecipient})`);
+      reasons.push(`Got ${input.provider.recipient}`);
+      reasons.push("Potential recipient substitution / fraud risk");
+      warnings.push("Action: choose a verified provider or request manual approval");
+    }
+  } else if (input.provider?.recipient && !input.provider.expectedRecipient) {
+    // Unverified provider recipient: warn, but do not hard block.
+    risk = maxRisk(risk, 2);
+    reasons.push("Provider recipient not verified (registry missing)");
+    warnings.push("Proceed with caution or use a verified provider");
+  }
 
   // --- Provider trust score heuristics (demo-focused) ---
   if (input.provider) {

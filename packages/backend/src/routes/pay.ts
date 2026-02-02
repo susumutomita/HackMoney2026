@@ -20,7 +20,7 @@ import { randomUUID } from "node:crypto";
  */
 
 const USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as Address;
-const RECIPIENT = (process.env.PROVIDER_WALLET_ADDRESS ||
+const FALLBACK_RECIPIENT = (process.env.PROVIDER_WALLET_ADDRESS ||
   "0x0000000000000000000000000000000000000000") as Address;
 
 export const payRouter = new Hono();
@@ -37,6 +37,13 @@ const requestSchema = z.object({
 payRouter.post("/request", zValidator("json", requestSchema), async (c) => {
   const { amountUsdc, serviceId } = c.req.valid("json");
 
+  // Resolve recipient from provider listing (marketplace)
+  const provider = (
+    await db.select().from(schema.providers).where(eq(schema.providers.id, serviceId)).limit(1)
+  )[0];
+
+  const recipient = (provider?.walletAddress || FALLBACK_RECIPIENT) as Address;
+
   return c.json(
     {
       error: "Payment Required",
@@ -44,7 +51,7 @@ payRouter.post("/request", zValidator("json", requestSchema), async (c) => {
       payment: {
         chainId: baseSepolia.id,
         token: USDC_BASE_SEPOLIA,
-        recipient: RECIPIENT,
+        recipient,
         amountUsdc,
         serviceId,
         expiresAt: Date.now() + 5 * 60 * 1000,
@@ -87,7 +94,12 @@ payRouter.post("/submit", zValidator("json", submitSchema), async (c) => {
     );
   }
 
-  const res = await verifyUsdcTransfer(txHash as Hex, RECIPIENT, expectedAmountUsdc);
+  const providerRow = (
+    await db.select().from(schema.providers).where(eq(schema.providers.id, providerId)).limit(1)
+  )[0];
+  const expectedRecipient = (providerRow?.walletAddress || FALLBACK_RECIPIENT) as Address;
+
+  const res = await verifyUsdcTransfer(txHash as Hex, expectedRecipient, expectedAmountUsdc);
 
   if (!res.valid) {
     return c.json(
@@ -104,11 +116,7 @@ payRouter.post("/submit", zValidator("json", submitSchema), async (c) => {
   const now = new Date().toISOString();
   const record = res.record;
   if (record) {
-    const provider = await db
-      .select()
-      .from(schema.providers)
-      .where(eq(schema.providers.id, providerId))
-      .get();
+    const provider = providerRow;
 
     await db
       .insert(schema.purchases)
