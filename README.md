@@ -13,6 +13,32 @@ ZeroKey Treasury is an **execution firewall** for AI agents autonomously discove
 
 **Live Demo**: [https://zerokey.exe.xyz:8000](https://zerokey.exe.xyz:8000)
 
+### Firewall before execution (30-second mental model)
+
+```mermaid
+sequenceDiagram
+    participant Agent as 🤖 AI Agent
+    participant Firewall as 🛡️ ZeroKey Firewall
+    participant Chain as ⛓️ USDC / Blockchain
+
+    Note over Agent,Firewall: Agent attempts a risky payment
+    Agent->>Firewall: Request: Pay USDC to recipient X
+
+    Note over Firewall: Policy checks (automatic)
+    Firewall->>Firewall: Check recipient invariants / allowlist
+
+    alt Recipient mismatch / allowlist fail
+        Firewall-->>Agent: ⛔ REJECTED (explainable reason)
+        Firewall->>Firewall: 📝 Write audit event (money never moved)
+        Note right of Chain: Funds are safe
+    else Passed checks
+        Firewall-->>Agent: ✅ APPROVED
+        Agent->>Chain: Send USDC
+        Agent->>Firewall: Submit txHash
+        Firewall->>Firewall: Verify receipt + persist purchase log
+    end
+```
+
 ```
 [AI Assistant] "Translate this contract to English"
         │
