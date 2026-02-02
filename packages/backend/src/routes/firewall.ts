@@ -11,6 +11,7 @@ import { randomUUID } from "node:crypto";
 import { a2aAuth } from "../middleware/a2aAuth.js";
 import { config } from "../config.js";
 import { parseA2AAllowlist, parseA2AKeys } from "../middleware/a2aAuthConfig.js";
+import { guardService } from "../services/guard.js";
 
 export const firewallRouter = new Hono();
 
@@ -225,11 +226,34 @@ firewallRouter.post("/check", zValidator("json", checkSchema), async (c) => {
       timestamp: new Date().toISOString(),
     });
 
+    // Submit decision to on-chain ZeroKeyGuard contract
+    let onChainResult = null;
+    if (guardService.isConfigured(tx.chainId)) {
+      const reasonText = combinedApproved
+        ? `Approved: ${analysis.reason.slice(0, 200)}`
+        : `Rejected: ${firewall.reasons[0] || analysis.reason}`.slice(0, 200);
+
+      onChainResult = await guardService.submitDecision(
+        tx.chainId,
+        stored.txHash as `0x${string}`,
+        combinedApproved,
+        analysis.riskLevel,
+        reasonText
+      );
+
+      if (onChainResult.success) {
+        console.log(`On-chain decision recorded: ${onChainResult.txHash}`);
+      } else {
+        console.error(`On-chain submission failed: ${onChainResult.error}`);
+      }
+    }
+
     return c.json({
       txHash: stored.txHash,
       approved: combinedApproved,
       firewall,
       analysis,
+      onChain: onChainResult,
     });
   } catch (error) {
     console.error("Firewall check error:", error);
