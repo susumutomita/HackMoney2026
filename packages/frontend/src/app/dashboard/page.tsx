@@ -10,6 +10,7 @@ import {
   PolicyList,
   StatsCards,
   PurchaseLogCard,
+  BlockedAuditLogCard,
 } from "@/components";
 
 function Logo() {
@@ -192,6 +193,11 @@ export default function DashboardPage() {
             {/* Purchase Log (proof of agent economy) */}
             <div className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
               <PurchaseLogCard />
+            </div>
+
+            {/* Blocked Audit Log (proof of intervention) */}
+            <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
+              <BlockedAuditLogCard />
             </div>
 
             {/* Grid Layout */}

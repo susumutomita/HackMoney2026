@@ -132,8 +132,20 @@ const CREATE_TABLES_SQL = `
     created_at TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS firewall_events (
+    id TEXT PRIMARY KEY,
+    provider_id TEXT,
+    provider_name TEXT,
+    decision TEXT NOT NULL,
+    reason TEXT NOT NULL,
+    attempted_recipient TEXT,
+    amount_usdc TEXT,
+    created_at TEXT NOT NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_analysis_tx_hash ON analysis_results(tx_hash);
   CREATE INDEX IF NOT EXISTS idx_purchases_created_at ON purchases(created_at);
+  CREATE INDEX IF NOT EXISTS idx_firewall_events_created_at ON firewall_events(created_at);
   CREATE INDEX IF NOT EXISTS idx_audit_tx_hash ON audit_logs(tx_hash);
   CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp);
   CREATE INDEX IF NOT EXISTS idx_providers_services ON providers(services);

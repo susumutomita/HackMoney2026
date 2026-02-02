@@ -137,6 +137,21 @@ export const purchases = sqliteTable("purchases", {
   createdAt: text("created_at").notNull(),
 });
 
+/**
+ * Firewall events table
+ * Stores blocked-before-payment events (no txHash because money never moved).
+ */
+export const firewallEvents = sqliteTable("firewall_events", {
+  id: text("id").primaryKey(),
+  providerId: text("provider_id"),
+  providerName: text("provider_name"),
+  decision: text("decision").notNull(), // 'APPROVED' | 'WARNING' | 'REJECTED'
+  reason: text("reason").notNull(),
+  attemptedRecipient: text("attempted_recipient"),
+  amountUsdc: text("amount_usdc"),
+  createdAt: text("created_at").notNull(),
+});
+
 export type PolicyRow = typeof policies.$inferSelect;
 export type NewPolicyRow = typeof policies.$inferInsert;
 export type AnalysisResultRow = typeof analysisResults.$inferSelect;
@@ -153,3 +168,5 @@ export type ConversationEventRow = typeof conversationEvents.$inferSelect;
 export type NewConversationEventRow = typeof conversationEvents.$inferInsert;
 export type PurchaseRow = typeof purchases.$inferSelect;
 export type NewPurchaseRow = typeof purchases.$inferInsert;
+export type FirewallEventRow = typeof firewallEvents.$inferSelect;
+export type NewFirewallEventRow = typeof firewallEvents.$inferInsert;

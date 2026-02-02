@@ -174,6 +174,31 @@ firewallRouter.post("/check", zValidator("json", checkSchema), async (c) => {
   try {
     const firewall = await checkFirewall({ tx, provider: providerForFirewall });
 
+    // If blocked before payment, write an audit event without txHash (money never moved).
+    if (firewall.decision === "REJECTED") {
+      const amountUsdc = (() => {
+        try {
+          const v = BigInt(tx.value);
+          const whole = v / 1_000_000n;
+          const frac = (v % 1_000_000n).toString().padStart(6, "0");
+          return `${whole.toString()}.${frac}`.replace(/\.0+$/, "");
+        } catch {
+          return undefined;
+        }
+      })();
+
+      await db.insert(schema.firewallEvents).values({
+        id: randomUUID(),
+        providerId: providerRow?.id ?? providerId ?? null,
+        providerName: providerRow?.name ?? null,
+        decision: firewall.decision,
+        reason: firewall.reasons.join("\n"),
+        attemptedRecipient: tx.to,
+        amountUsdc,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
     const analysis = await analyzeTransaction(tx, {
       provider: providerForAnalyzer,
       budget: {
