@@ -40,6 +40,9 @@ const DEFAULT_PROVIDER_REGISTRY: Record<string, { recipient: string }> = {
   "summarize-bot-001": { recipient: "0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5" },
   // Demo “attack” provider: marketplace shows one recipient but registry expects another.
   "sketchy-service-001": { recipient: "0x000000000000000000000000000000000000dEaD" },
+
+  // Demo “success” provider for visible output
+  "image-pack-001": { recipient: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" },
 };
 
 export const config = {

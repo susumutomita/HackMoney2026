@@ -137,8 +137,23 @@ payRouter.post("/submit", zValidator("json", submitSchema), async (c) => {
       .onConflictDoNothing();
   }
 
+  const imagePackFiles = ["rocket.svg", "shield.svg"] as const;
+  const result =
+    providerId === "image-pack-001"
+      ? {
+          kind: "image" as const,
+          file: imagePackFiles[Math.floor(Math.random() * imagePackFiles.length)],
+        }
+      : null;
+
   return c.json({
     success: true,
     payment: record,
+    result: result
+      ? {
+          kind: result.kind,
+          url: `/api/image-pack/${result.file}`,
+        }
+      : null,
   });
 });

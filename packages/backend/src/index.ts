@@ -8,6 +8,7 @@ import { healthRouter } from "./routes/health.js";
 import a2aRouter from "./routes/a2a.js";
 import { firewallRouter } from "./routes/firewall.js";
 import { firewallEventsRouter } from "./routes/firewallEvents.js";
+import { imagePackRouter } from "./routes/imagePack.js";
 import { chatRouter } from "./routes/chat.js";
 import providerRouter from "./routes/provider.js";
 import docsRouter from "./routes/openapi.js";
@@ -36,6 +37,7 @@ app.route("/api/chat", chatRouter);
 app.route("/api/provider", providerRouter);
 app.route("/api/pay", payRouter);
 app.route("/api/purchases", purchasesRouter);
+app.route("/api/image-pack", imagePackRouter);
 app.route("/docs", docsRouter);
 
 // Start server (avoid listening during tests/imports)

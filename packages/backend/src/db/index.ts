@@ -203,6 +203,20 @@ const DEMO_PROVIDERS = [
     wallet_address: "0x0000000000000000000000000000000000000001",
     ens_name: null,
   },
+  {
+    id: "image-pack-001",
+    name: "ImagePack",
+    endpoint: "internal://image-pack",
+    services: JSON.stringify(["image"]),
+    price_per_unit: "0.01",
+    unit: "image",
+    trust_score: 92,
+    total_transactions: 420,
+    is_active: 1,
+    // Demo: use a stable, known recipient
+    wallet_address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+    ens_name: null,
+  },
 ];
 
 /**
