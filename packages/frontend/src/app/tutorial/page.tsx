@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 interface StepResult {
   success: boolean;
@@ -19,29 +19,29 @@ export default function TutorialPage() {
 
   const steps = [
     {
-      title: "👋 はじめに",
+      title: "👋 Welcome",
       description:
-        "ZeroKey Treasuryは、AIエージェントがAPIサービスを安全に購入するためのマーケットプレイスです。",
+        "ZeroKey Treasury is a marketplace where AI agents can safely purchase API services.",
       details: `
-**主要機能:**
-- 🔍 **A2A Gateway**: AIエージェント間のサービス検索・価格交渉
-- 🛡️ **Firewall**: LLMによるリスク分析とポリシーチェック
-- 💳 **x402 Payment**: USDCによるAPI決済
+**Key Features:**
+- 🔍 **A2A Gateway**: Service discovery & price negotiation between AI agents
+- 🛡️ **Firewall**: LLM-powered risk analysis and policy checks
+- 💳 **x402 Payment**: USDC-based API payments
 
-「次へ」をクリックしてチュートリアルを開始しましょう！
+Click "Next" to start the tutorial!
       `,
       action: null,
     },
     {
-      title: "🔍 Step 1: プロバイダ検索",
-      description: "翻訳サービスを提供するプロバイダを検索します。",
+      title: "🔍 Step 1: Search Providers",
+      description: "Search for providers offering translation services.",
       details: `
-**APIリクエスト:**
+**API Request:**
 \`\`\`
 GET /api/a2a/discover?service=translation
 \`\`\`
 
-これは企業AI秘書が「この契約書を翻訳して」と依頼されたときの最初のステップです。
+This is the first step when a corporate AI assistant is asked to "translate this contract."
       `,
       action: async () => {
         const res = await fetch(`${API_URL}/api/a2a/discover?service=translation`);
@@ -49,10 +49,10 @@ GET /api/a2a/discover?service=translation
       },
     },
     {
-      title: "🤝 Step 2: 交渉開始",
-      description: "信頼できるプロバイダ(TranslateAI Pro)と交渉を開始します。",
+      title: "🤝 Step 2: Start Negotiation",
+      description: "Start negotiation with a trusted provider (TranslateAI Pro).",
       details: `
-**APIリクエスト:**
+**API Request:**
 \`\`\`
 POST /api/a2a/negotiate
 {
@@ -63,7 +63,7 @@ POST /api/a2a/negotiate
 }
 \`\`\`
 
-プロバイダの希望価格$0.03に対して$0.025をオファーします。
+Offering $0.025 against the provider's asking price of $0.03.
       `,
       action: async () => {
         const res = await fetch(`${API_URL}/api/a2a/negotiate`, {
@@ -84,10 +84,10 @@ POST /api/a2a/negotiate
       },
     },
     {
-      title: "💬 Step 3: 価格交渉",
-      description: "オファーを送信して合意に達します。",
+      title: "💬 Step 3: Price Negotiation",
+      description: "Submit an offer and reach an agreement.",
       details: `
-**APIリクエスト:**
+**API Request:**
 \`\`\`
 POST /api/a2a/negotiate/{sessionId}/offer
 {
@@ -96,11 +96,11 @@ POST /api/a2a/negotiate/{sessionId}/offer
 }
 \`\`\`
 
-$0.028はプロバイダ価格の90%以上なので、承認されるはずです。
+$0.028 is 90%+ of the provider's price, so it should be accepted.
       `,
       action: async () => {
         if (!sessionId) {
-          return { error: "先にStep 2を実行してください" };
+          return { error: "Please run Step 2 first" };
         }
         const res = await fetch(`${API_URL}/api/a2a/negotiate/${sessionId}/offer`, {
           method: "POST",
@@ -114,10 +114,10 @@ $0.028はプロバイダ価格の90%以上なので、承認されるはずで�
       },
     },
     {
-      title: "🛡️ Step 4: Firewallチェック",
-      description: "Firewallが取引のリスクを分析します。",
+      title: "🛡️ Step 4: Firewall Check",
+      description: "The Firewall analyzes transaction risk.",
       details: `
-**APIリクエスト:**
+**API Request:**
 \`\`\`
 POST /api/firewall/check
 {
@@ -125,14 +125,16 @@ POST /api/firewall/check
 }
 \`\`\`
 
-Firewallは以下をチェック:
-- プロバイダの信頼スコア
-- 取引金額と予算
-- 異常パターン
+Firewall checks:
+- Provider trust score
+- Transaction amount vs budget
+- Anomaly patterns
+
+**On-chain recording:** Decision is recorded on Base Sepolia (ZeroKeyGuard contract).
       `,
       action: async () => {
         if (!sessionId) {
-          return { error: "先にStep 2を実行してください" };
+          return { error: "Please run Step 2 first" };
         }
         const res = await fetch(`${API_URL}/api/firewall/check`, {
           method: "POST",
@@ -143,10 +145,10 @@ Firewallは以下をチェック:
       },
     },
     {
-      title: "💳 Step 5: x402決済",
-      description: "決済なしでAPIを呼ぶと402エラーが返ります。",
+      title: "💳 Step 5: x402 Payment",
+      description: "Calling the API without payment returns a 402 error.",
       details: `
-**APIリクエスト (決済なし):**
+**API Request (no payment):**
 \`\`\`
 POST /api/provider/translate
 {
@@ -155,10 +157,10 @@ POST /api/provider/translate
 }
 \`\`\`
 
-402 Payment Requiredレスポンスには:
-- 必要な決済金額
-- USDCトークンアドレス
-- 支払い先アドレス
+The 402 Payment Required response includes:
+- Required payment amount
+- USDC token address
+- Recipient address
       `,
       action: async () => {
         const res = await fetch(`${API_URL}/api/provider/translate`, {
@@ -173,15 +175,15 @@ POST /api/provider/translate
       },
     },
     {
-      title: "⚠️ Step 6: 低信頼プロバイダの警告",
-      description: "怪しいプロバイダ(CheapTranslate)を選ぶとFirewallが警告します。",
+      title: "⚠️ Step 6: Low-Trust Provider Warning",
+      description: "Selecting a suspicious provider (CheapTranslate) triggers a Firewall warning.",
       details: `
-CheapTranslateの特徴:
-- 信頼スコア: 15/100 (非常に低い)
-- 価格: $0.005 (市場平均の1/6)
-- 取引数: 3件のみ
+CheapTranslate characteristics:
+- Trust score: 15/100 (very low)
+- Price: $0.005 (1/6 of market average)
+- Transactions: only 3
 
-これは詐欺リスクの典型的なパターンです。
+This is a typical scam risk pattern.
       `,
       action: async () => {
         // Start negotiation with sketchy provider
@@ -211,20 +213,20 @@ CheapTranslateの特徴:
       },
     },
     {
-      title: "🎉 完了！",
-      description: "ZeroKey Treasuryの基本フローを理解しました！",
+      title: "🎉 Complete!",
+      description: "You now understand the basic ZeroKey Treasury flow!",
       details: `
-**学んだこと:**
+**What you learned:**
 
-1. ✅ プロバイダ検索 - A2A Gatewayでサービスを見つける
-2. ✅ 価格交渉 - エージェント間で価格を交渉
-3. ✅ Firewallチェック - リスク分析と承認/拒否
-4. ✅ x402決済 - USDCでAPI利用料を支払い
-5. ✅ 低信頼警告 - 怪しいプロバイダをブロック
+1. ✅ Provider Search - Find services via A2A Gateway
+2. ✅ Price Negotiation - Negotiate prices between agents
+3. ✅ Firewall Check - Risk analysis and approve/reject
+4. ✅ x402 Payment - Pay API fees with USDC
+5. ✅ Low-Trust Warning - Block suspicious providers
 
-**次のステップ:**
-- [Marketplace](/marketplace)で実際に試す
-- [Swagger UI](/docs)でAPIを探索
+**Next Steps:**
+- Try it out in the [Marketplace](/marketplace)
+- Explore the API in [Swagger UI](/docs)
       `,
       action: null,
     },
@@ -255,61 +257,59 @@ CheapTranslateの特徴:
   const result = results[currentStep];
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white">
-      <nav className="flex items-center justify-between p-6 border-b border-gray-700">
-        <Link href="/">
-          <span className="text-2xl font-bold text-primary-400">ZeroKey</span>
-          <span className="text-gray-400"> Treasury</span>
+    <main className="min-h-screen bg-[#0a0a0f] text-white">
+      <nav className="flex items-center justify-between p-6 border-b border-white/10">
+        <Link href="/" className="flex items-center gap-2">
+          <span className="text-xl font-bold text-cyan-400">ZeroKey</span>
+          <span className="text-slate-400">Treasury</span>
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/marketplace" className="text-gray-300 hover:text-white">
+          <Link href="/marketplace" className="text-slate-400 hover:text-white text-sm">
             Marketplace
           </Link>
-          <Link href="/docs" className="text-gray-300 hover:text-white">
+          <Link href="/docs" className="text-slate-400 hover:text-white text-sm">
             API Docs
           </Link>
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-3xl mx-auto px-6 py-8">
         {/* Progress */}
         <div className="mb-8">
-          <div className="flex justify-between text-sm text-gray-400 mb-2">
+          <div className="flex justify-between text-sm text-slate-500 mb-2">
             <span>Tutorial Progress</span>
             <span>
               {currentStep + 1} / {steps.length}
             </span>
           </div>
-          <div className="h-2 bg-gray-700 rounded-full">
+          <div className="h-1.5 bg-white/5 rounded-full">
             <div
-              className="h-2 bg-primary-500 rounded-full transition-all"
+              className="h-1.5 bg-cyan-500 rounded-full transition-all"
               style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
             />
           </div>
         </div>
 
         {/* Step Card */}
-        <div className="bg-gray-800/50 rounded-xl border border-gray-700 overflow-hidden">
-          <div className="p-6 border-b border-gray-700">
-            <h1 className="text-2xl font-bold mb-2">{step.title}</h1>
-            <p className="text-gray-400">{step.description}</p>
+        <div className="bg-[#12121a] rounded-xl border border-white/10 overflow-hidden">
+          <div className="p-6 border-b border-white/10">
+            <h1 className="text-xl font-semibold mb-2">{step.title}</h1>
+            <p className="text-slate-400 text-sm">{step.description}</p>
           </div>
 
           <div className="p-6">
-            <div className="prose prose-invert max-w-none">
-              <pre className="whitespace-pre-wrap text-sm text-gray-300 bg-gray-900 p-4 rounded-lg">
-                {step.details}
-              </pre>
-            </div>
+            <pre className="whitespace-pre-wrap text-sm text-slate-300 bg-black/30 p-4 rounded-lg font-mono">
+              {step.details}
+            </pre>
 
             {step.action && (
               <div className="mt-6">
                 <button
                   onClick={runAction}
                   disabled={loading}
-                  className="px-6 py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 rounded-lg font-medium transition-colors"
+                  className="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-600 disabled:bg-slate-700 rounded-lg text-sm font-medium transition-colors"
                 >
-                  {loading ? "実行中..." : "🚀 APIを実行"}
+                  {loading ? "Running..." : "🚀 Run API"}
                 </button>
               </div>
             )}
@@ -318,12 +318,14 @@ CheapTranslateの特徴:
               <div
                 className={`mt-6 p-4 rounded-lg ${
                   result.success
-                    ? "bg-green-900/30 border border-green-700"
-                    : "bg-red-900/30 border border-red-700"
+                    ? "bg-emerald-500/10 border border-emerald-500/30"
+                    : "bg-red-500/10 border border-red-500/30"
                 }`}
               >
-                <h3 className="font-semibold mb-2">{result.success ? "✅ 成功" : "❌ エラー"}</h3>
-                <pre className="text-xs overflow-x-auto">
+                <h3 className="font-medium mb-2 text-sm">
+                  {result.success ? "✅ Success" : "❌ Error"}
+                </h3>
+                <pre className="text-xs overflow-x-auto text-slate-300">
                   {JSON.stringify(result.data || result.error, null, 2)}
                 </pre>
               </div>
@@ -331,20 +333,20 @@ CheapTranslateの特徴:
           </div>
 
           {/* Navigation */}
-          <div className="p-6 border-t border-gray-700 flex justify-between">
+          <div className="p-6 border-t border-white/10 flex justify-between">
             <button
               onClick={() => setCurrentStep((s) => Math.max(0, s - 1))}
               disabled={currentStep === 0}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500 rounded-lg transition-colors"
+              className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 rounded-lg text-sm transition-colors"
             >
-              ← 戻る
+              ← Back
             </button>
             <button
               onClick={() => setCurrentStep((s) => Math.min(steps.length - 1, s + 1))}
               disabled={currentStep === steps.length - 1}
-              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-800 disabled:text-gray-500 rounded-lg transition-colors"
+              className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 disabled:opacity-30 rounded-lg text-sm font-medium transition-colors"
             >
-              次へ →
+              Next →
             </button>
           </div>
         </div>
@@ -353,26 +355,26 @@ CheapTranslateの特徴:
         <div className="mt-8 grid grid-cols-3 gap-4">
           <Link
             href="/marketplace"
-            className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-primary-500 text-center"
+            className="p-4 bg-[#12121a] rounded-xl border border-white/10 hover:border-cyan-500/50 text-center transition-colors"
           >
             <div className="text-2xl mb-2">🛍️</div>
-            <div className="font-medium">Marketplace</div>
+            <div className="text-sm font-medium">Marketplace</div>
           </Link>
           <Link
             href="/docs"
-            className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-primary-500 text-center"
+            className="p-4 bg-[#12121a] rounded-xl border border-white/10 hover:border-cyan-500/50 text-center transition-colors"
           >
             <div className="text-2xl mb-2">📚</div>
-            <div className="font-medium">API Docs</div>
+            <div className="text-sm font-medium">API Docs</div>
           </Link>
           <a
             href="https://github.com/susumutomita/HackMoney2026"
             target="_blank"
             rel="noopener noreferrer"
-            className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-primary-500 text-center"
+            className="p-4 bg-[#12121a] rounded-xl border border-white/10 hover:border-cyan-500/50 text-center transition-colors"
           >
             <div className="text-2xl mb-2">🐙</div>
-            <div className="font-medium">GitHub</div>
+            <div className="text-sm font-medium">GitHub</div>
           </a>
         </div>
       </div>
