@@ -49,6 +49,7 @@ export default function NegotiatePage() {
   const [payStatus, setPayStatus] = useState<"idle" | "processing" | "success" | "failed">("idle");
   const [payError, setPayError] = useState<string | undefined>(undefined);
   const [payResultUrl, setPayResultUrl] = useState<string | undefined>(undefined);
+  const [payTxHash, setPayTxHash] = useState<`0x${string}` | undefined>(undefined);
   const [agreedPrice, setAgreedPrice] = useState<string | null>(null);
 
   const { data: walletClient } = useWalletClient();
@@ -259,6 +260,119 @@ export default function NegotiatePage() {
 
             {/* Controls */}
             <div className="space-y-4">
+              {/* Demo rail UI (judges should never wonder "where are we?") */}
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="text-xs uppercase tracking-widest text-gray-400">Demo Flow</div>
+                <div className="mt-3 space-y-3">
+                  {/* Step 1 */}
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border ${
+                        negotiationStatus !== "idle"
+                          ? "bg-cyan-500/20 border-cyan-400 text-cyan-200"
+                          : "bg-gray-800 border-gray-600 text-gray-300"
+                      }`}
+                    >
+                      1
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold text-white">Negotiate</div>
+                      <div className="text-xs text-gray-400">
+                        {negotiationStatus === "idle"
+                          ? "Start a session and agree on a price"
+                          : negotiationStatus === "agreed"
+                            ? `Agreed: ${agreedPrice ?? offerAmount} USDC`
+                            : "In progress"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border ${
+                        firewallResult
+                          ? firewallResult.decision === "APPROVED"
+                            ? "bg-emerald-500/20 border-emerald-400 text-emerald-200"
+                            : firewallResult.decision === "WARNING"
+                              ? "bg-yellow-500/20 border-yellow-400 text-yellow-200"
+                              : "bg-red-500/20 border-red-400 text-red-200"
+                          : "bg-gray-800 border-gray-600 text-gray-300"
+                      }`}
+                    >
+                      2
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm font-semibold text-white">Firewall</div>
+                        {firewallResult && (
+                          <span
+                            className={`text-[11px] px-2 py-1 rounded-md border ${
+                              firewallResult.decision === "APPROVED"
+                                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-200"
+                                : firewallResult.decision === "WARNING"
+                                  ? "bg-yellow-500/15 border-yellow-500/30 text-yellow-200"
+                                  : "bg-red-500/15 border-red-500/30 text-red-200"
+                            }`}
+                          >
+                            {firewallResult.decision === "APPROVED"
+                              ? "APPROVED"
+                              : firewallResult.decision === "WARNING"
+                                ? "WARNING"
+                                : "BLOCKED"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {firewallResult
+                          ? "Recipient invariants + policy checks"
+                          : "Run the firewall check before payment"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border ${
+                        payStatus === "success"
+                          ? "bg-purple-500/20 border-purple-400 text-purple-200"
+                          : payStatus === "processing"
+                            ? "bg-blue-500/20 border-blue-400 text-blue-200"
+                            : "bg-gray-800 border-gray-600 text-gray-300"
+                      }`}
+                    >
+                      3
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold text-white">Pay & Output</div>
+                      <div className="text-xs text-gray-400">
+                        {payStatus === "idle"
+                          ? "Pay only after APPROVED"
+                          : payStatus === "processing"
+                            ? "Waiting for wallet + on-chain verification"
+                            : payStatus === "failed"
+                              ? "Payment failed"
+                              : "Verified (receipt)"}
+                      </div>
+                      {(payTxHash || payResultUrl) && (
+                        <div className="mt-2 text-[11px] text-gray-300 space-y-1">
+                          {payTxHash && (
+                            <div>
+                              txHash: <span className="text-gray-200">{payTxHash}</span>
+                            </div>
+                          )}
+                          {payResultUrl && (
+                            <div>
+                              output: <span className="text-gray-200">shown</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
               {negotiationStatus === "idle" && (
                 <div className="bg-[#12121a] rounded-xl p-4 border border-white/5">
                   <label className="block text-sm text-gray-400 mb-2">Your Offer (USDC)</label>
@@ -466,6 +580,7 @@ export default function NegotiatePage() {
 
                       setPayError(undefined);
                       setPayResultUrl(undefined);
+                      setPayTxHash(undefined);
                       setPayStatus("processing");
                       setPayStatusOpen(true);
                       addMessage("system", "Processing payment…");
@@ -499,6 +614,7 @@ export default function NegotiatePage() {
                           args: [payment.recipient, value],
                         });
 
+                        setPayTxHash(txHash);
                         await publicClient.waitForTransactionReceipt({ hash: txHash });
 
                         // Submit txHash for verification
@@ -522,6 +638,10 @@ export default function NegotiatePage() {
                         const resultUrl = submitJson.result?.url as string | undefined;
                         if (resultUrl) {
                           setPayResultUrl(`${API_URL}${resultUrl}`);
+                        }
+
+                        if (submitJson.payment?.txHash) {
+                          setPayTxHash(submitJson.payment.txHash as `0x${string}`);
                         }
 
                         setPayStatus("success");
@@ -558,6 +678,7 @@ export default function NegotiatePage() {
                       setPayStatus("idle");
                       setPayError(undefined);
                       setPayResultUrl(undefined);
+                      setPayTxHash(undefined);
                     }}
                     onRetry={() => {
                       setPayStatus("idle");
