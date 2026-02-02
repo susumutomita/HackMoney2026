@@ -232,7 +232,7 @@ firewallRouter.post("/check", zValidator("json", checkSchema), async (c) => {
       const reasonText = combinedApproved
         ? `Approved: ${analysis.reason.slice(0, 200)}`
         : `Rejected: ${firewall.reasons[0] || analysis.reason}`.slice(0, 200);
-      
+
       onChainResult = await guardService.submitDecision(
         tx.chainId,
         stored.txHash as `0x${string}`,
@@ -240,7 +240,7 @@ firewallRouter.post("/check", zValidator("json", checkSchema), async (c) => {
         analysis.riskLevel,
         reasonText
       );
-      
+
       if (onChainResult.success) {
         console.log(`On-chain decision recorded: ${onChainResult.txHash}`);
       } else {
