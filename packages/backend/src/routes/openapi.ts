@@ -446,7 +446,7 @@ const openApiSpec = {
     { name: "A2A Gateway", description: "Agent-to-Agent service discovery and negotiation" },
     { name: "Firewall", description: "Execution firewall and risk analysis" },
     { name: "Payments", description: "USDC payment request/verification + purchase log" },
-    { name: "Provider", description: "Mock service provider endpoints (x402 payment)" },
+    { name: "Provider", description: "Service provider endpoints (x402 payment)" },
   ],
 };
 
