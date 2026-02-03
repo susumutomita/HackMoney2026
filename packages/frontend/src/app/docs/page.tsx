@@ -1,15 +1,57 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+declare global {
+  interface Window {
+    SwaggerUIBundle: {
+      (config: unknown): void;
+      presets: {
+        apis: unknown;
+      };
+    };
+  }
+}
 
 export default function ApiDocsPage() {
-  const docsUrl = `${API_URL}/docs`;
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (initialized.current) return;
+
+    const initSwagger = () => {
+      if (window.SwaggerUIBundle) {
+        window.SwaggerUIBundle({
+          url: "/api/openapi",
+          dom_id: "#swagger-ui",
+          presets: [window.SwaggerUIBundle.presets.apis],
+          layout: "BaseLayout",
+        });
+        initialized.current = true;
+      }
+    };
+
+    // Load CSS
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui.css";
+    document.head.appendChild(link);
+
+    // Load JS
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui-bundle.js";
+    script.onload = initSwagger;
+    document.body.appendChild(script);
+
+    return () => {
+      // Cleanup
+    };
+  }, []);
 
   return (
-    <main className="min-h-screen bg-[#0a0a0f] text-white">
-      <nav className="flex items-center justify-between p-6 border-b border-white/5">
+    <main className="min-h-screen bg-white">
+      <nav className="flex items-center justify-between p-6 border-b bg-[#0a0a0f]">
         <Link href="/">
           <span className="text-2xl font-bold text-cyan-400">ZeroKey</span>
           <span className="text-gray-400"> Treasury</span>
@@ -27,26 +69,7 @@ export default function ApiDocsPage() {
         </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 py-6">
-        <h1 className="text-2xl font-bold">API Docs</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Swagger UI served by the backend. If it doesn’t load, open it directly:{" "}
-          <a href={docsUrl} target="_blank" rel="noreferrer" className="text-cyan-300">
-            {docsUrl}
-          </a>
-        </p>
-      </div>
-
-      <div className="px-6 pb-8">
-        <div className="rounded-xl overflow-hidden border border-white/10 bg-white/5">
-          <iframe
-            title="ZeroKey Treasury API Docs"
-            src={docsUrl}
-            className="w-full"
-            style={{ height: "calc(100vh - 220px)" }}
-          />
-        </div>
-      </div>
+      <div id="swagger-ui" className="p-4" />
     </main>
   );
 }
