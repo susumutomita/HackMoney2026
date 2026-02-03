@@ -34,7 +34,7 @@ export default function Home() {
             <div className="hidden md:flex items-center gap-1">
               <NavLink href="/marketplace">Marketplace</NavLink>
               <NavLink href="/dashboard">Dashboard</NavLink>
-              <NavLink href="/tutorial">Docs</NavLink>
+              <NavLink href="/docs">API Docs</NavLink>
             </div>
 
             <div className="flex items-center gap-3">
