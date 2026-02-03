@@ -32,7 +32,7 @@ export default function MarketplacePage() {
     setLoading(true);
     setError(null);
     try {
-      const searchService = service || "translation";
+      const searchService = service || "*";
       const url = `${API_URL}/api/a2a/discover?service=${encodeURIComponent(searchService)}`;
       const res = await fetch(url);
       const data = await res.json();

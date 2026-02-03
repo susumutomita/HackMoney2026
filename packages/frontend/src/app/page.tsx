@@ -115,10 +115,9 @@ export default function Home() {
       <section className="py-20 px-4 sm:px-6 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4">What judges should see</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">How it works</h2>
             <p className="text-gray-400 max-w-xl mx-auto">
-              A demo that proves “not a mock”: txHash on BaseScan, plus audit evidence when we block
-              before payment.
+              Real on-chain verification: txHash on BaseScan, plus audit evidence when transactions are blocked.
             </p>
           </div>
 
@@ -230,7 +229,7 @@ export default function Home() {
               Documentation
             </Link>
             <a
-              href="https://github.com"
+              href="https://github.com/susumutomita/HackMoney2026"
               target="_blank"
               rel="noopener"
               className="hover:text-white transition-colors"
