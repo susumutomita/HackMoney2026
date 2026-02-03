@@ -20,6 +20,7 @@ Optional sanity checks:
 
 - [ ] Dashboard loads (Stats + Purchase Log + Blocked Audit Log render)
 - [ ] Purchase Log shows existing entries (or “No purchases yet”)
+- [ ] (Optional) ERC-8004 Identity viewer shows onchain identity signals for a provider (Base Sepolia)
 
 ---
 
