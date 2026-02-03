@@ -7,6 +7,13 @@
 [![Arc Network](https://img.shields.io/badge/Arc-Ready-00D4FF)](https://arc.network)
 [![Base Sepolia](https://img.shields.io/badge/Base-Sepolia-0052FF)](https://base.org)
 
+### The bigger shift (Internet → Agents)
+
+- **Internet era:** moved information online.
+- **Agent era:** moves decisions and execution off humans.
+
+So we need a new standard layer that enforces policy **before money moves**.
+
 ### The premise we break (Before / After)
 
 **Before:** In DeFi, if you sign, money moves. There is no second chance.
