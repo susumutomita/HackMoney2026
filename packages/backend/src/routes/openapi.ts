@@ -13,8 +13,12 @@ const openApiSpec = {
   },
   servers: [
     {
+      url: "https://zerokey.exe.xyz:8000",
+      description: "Live demo (frontend + reverse-proxied API)",
+    },
+    {
       url: "http://localhost:3001",
-      description: "Development server",
+      description: "Backend dev server",
     },
   ],
   paths: {
@@ -237,6 +241,93 @@ const openApiSpec = {
         },
       },
     },
+
+    "/api/firewall/events": {
+      get: {
+        summary: "List blocked-before-payment firewall events",
+        tags: ["Firewall"],
+        responses: {
+          "200": {
+            description: "Blocked events (money never moved)",
+          },
+        },
+      },
+    },
+
+    "/api/purchases": {
+      get: {
+        summary: "List verified purchases (txHash proof)",
+        tags: ["Payments"],
+        responses: {
+          "200": {
+            description: "Purchase log entries",
+          },
+        },
+      },
+    },
+
+    "/api/pay/request": {
+      post: {
+        summary: "Request payment instructions (always returns HTTP 402)",
+        tags: ["Payments"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  amountUsdc: { type: "string", example: "0.03" },
+                  serviceId: { type: "string", example: "image-pack-001" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "402": {
+            description: "Payment Required",
+          },
+        },
+      },
+    },
+
+    "/api/pay/submit": {
+      post: {
+        summary: "Submit txHash for on-chain receipt verification",
+        tags: ["Payments"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: [
+                  "txHash",
+                  "expectedAmountUsdc",
+                  "providerId",
+                  "firewallDecision",
+                  "firewallReason",
+                ],
+                properties: {
+                  txHash: { type: "string", example: "0x..." },
+                  expectedAmountUsdc: { type: "string", example: "0.03" },
+                  providerId: { type: "string", example: "image-pack-001" },
+                  firewallDecision: { type: "string", enum: ["APPROVED", "WARNING", "REJECTED"] },
+                  firewallReason: { type: "string", example: "Recipient allowlist passed" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Payment verified" },
+          "402": { description: "Verification failed / Payment required" },
+          "403": { description: "Firewall not approved" },
+        },
+      },
+    },
+
     "/api/provider/prices": {
       get: {
         summary: "Get service prices",
@@ -354,6 +445,7 @@ const openApiSpec = {
     { name: "System", description: "System endpoints" },
     { name: "A2A Gateway", description: "Agent-to-Agent service discovery and negotiation" },
     { name: "Firewall", description: "Execution firewall and risk analysis" },
+    { name: "Payments", description: "USDC payment request/verification + purchase log" },
     { name: "Provider", description: "Mock service provider endpoints (x402 payment)" },
   ],
 };
