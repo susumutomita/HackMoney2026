@@ -34,9 +34,9 @@ Show:
 Actions:
 
 1. Go to **Marketplace**
-2. Pick a provider (example: TranslateAI Pro)
+2. Pick **ImagePack** (success flow)
 3. Start negotiation
-4. Send an offer / accept a price
+4. Accept price
 
 Say:
 
@@ -44,7 +44,8 @@ Say:
 
 Show:
 
-- Provider price + trust score (why an agent chooses it)
+- Provider price + trust score
+- (Optional) **ERC-8004 Identity** viewer: on-chain identity + endpoint (read-only)
 
 ---
 
@@ -53,18 +54,17 @@ Show:
 Actions:
 
 1. After agreement, run **Firewall check**
-2. Show the **3-state** result UI:
-   - APPROVED / WARNING / REJECTED
-   - The reason
-   - Next step guidance
+2. Show the decision (APPROVED / REJECTED) and the reason
 
 Say:
 
-- “This is the control layer. The Firewall explains why it’s safe or risky _before_ we pay.”
+- “The Firewall explains why it’s safe or risky _before_ we pay.”
 
-If WARNING/REJECTED, say:
+Note:
 
-- “Without this, an agent could blindly pay a suspicious provider.”
+- For the full narrative, we run **Success → Blocked → Success**.
+  - Success: ImagePack (APPROVED)
+  - Blocked: CheapTranslate (REJECTED, money never moved)
 
 ---
 
@@ -76,15 +76,16 @@ Actions:
 2. Show the **Confirm Payment** modal (amount/recipient/network/firewall summary)
 3. Confirm
 4. Show the **PaymentStatus** flow (processing → success)
+5. Click the txHash / open BaseScan
 
 Say:
 
-- “This endpoint uses an x402-style flow: server responds Payment Required, then the agent pays in USDC, and retries/continues once verified.”
-- “We verify the USDC transfer on Base Sepolia (txHash receipt verification).”
+- “This endpoint uses an x402-style flow: server responds Payment Required, then the agent pays in USDC.”
+- “The backend verifies the USDC transfer by **waiting for the on-chain receipt** and decoding the Transfer event.”
 
-Optional proof:
+Proof (important):
 
-- Show txHash (and/or block explorer) if time
+- Show the **txHash** and open it on BaseScan Sepolia.
 
 ---
 
@@ -108,5 +109,17 @@ Say:
 
 ## Backup plan (if wallet/USDC not available)
 
+- Run the **Blocked** flow (CheapTranslate) and emphasize:
+  - “Money never moved” (audit log proof)
 - Show the 402 response payload from `/api/pay/request` and explain how the wallet step works.
-- Still show Firewall decision UI and the pay confirmation UX.
+
+## Dev-only reliability check (optional)
+
+If you need a quick sanity check before a demo:
+
+```bash
+pnpm dev:backend
+pnpm --filter backend exec tsx ../../scripts/smoke-demo.ts
+```
+
+This prints a fresh BaseScan txHash you can keep as backup proof.

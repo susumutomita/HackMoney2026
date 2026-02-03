@@ -17,7 +17,14 @@
 
 AI agents are overconfident interns. **ZeroKey is the CFO standing between your agent and your wallet.**
 
-ZeroKey Treasury is an **execution firewall** for agent-to-agent commerce: agents discover providers, negotiate, run a policy check (recipient invariants, spend limits, anomaly checks), then pay in USDC using an HTTP 402 flow. All outcomes are auditable: we persist txHash for successful settlement, and we log blocked events as “money never moved”.
+ZeroKey Treasury is an **execution firewall** for agent-to-agent commerce: agents discover providers, negotiate, run a policy check (recipient invariants, spend limits, anomaly checks), then pay in USDC using an HTTP 402 flow.
+
+All outcomes are auditable:
+
+- **APPROVED** → we verify the USDC transfer by on-chain receipt (txHash) and persist a Purchase Log
+- **REJECTED** → we write a Blocked Audit Log event (“money never moved”)
+
+Bonus (read-only): we also show **ERC-8004 Identity Registry** signals on Base Sepolia as an on-chain trust signal source (not claiming full compliance).
 
 ## 🎬 Demo
 
