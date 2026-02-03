@@ -38,13 +38,19 @@ export async function verifyUsdcTransfer(
   expectedAmountUsdc: string
 ): Promise<{ valid: boolean; reason?: string; record?: PaymentRecord }> {
   try {
+    const rpcUrl = process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org";
+
     const client = createPublicClient({
       chain: baseSepolia,
-      transport: http(),
+      transport: http(rpcUrl),
     });
 
-    // Get transaction receipt
-    const receipt = await client.getTransactionReceipt({ hash: txHash });
+    // Get transaction receipt (RPCs can be slightly behind; wait a bit for reliability)
+    const receipt = await client.waitForTransactionReceipt({
+      hash: txHash,
+      confirmations: 1,
+      timeout: 60_000,
+    });
 
     if (!receipt) {
       return { valid: false, reason: "Transaction not found or not confirmed" };
@@ -84,8 +90,14 @@ export async function verifyUsdcTransfer(
       return { valid: false, reason: `Insufficient amount: expected ${expectedAmountUsdc} USDC` };
     }
 
-    // Get block timestamp
-    const block = await client.getBlock({ blockNumber: receipt.blockNumber });
+    // Get block timestamp (optional; some public RPCs can lag on block lookup)
+    let timestampMs = Date.now();
+    try {
+      const block = await client.getBlock({ blockNumber: receipt.blockNumber });
+      timestampMs = Number(block.timestamp) * 1000;
+    } catch {
+      // keep fallback
+    }
 
     const record: PaymentRecord = {
       txHash,
@@ -94,7 +106,7 @@ export async function verifyUsdcTransfer(
       recipient: to,
       amount: amount.toString(),
       amountUsdc: (Number(amount) / 10 ** USDC_DECIMALS).toFixed(USDC_DECIMALS),
-      timestamp: Number(block.timestamp) * 1000,
+      timestamp: timestampMs,
       serviceId: "verified",
       verified: true,
     };
