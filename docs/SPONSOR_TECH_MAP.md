@@ -51,6 +51,22 @@ This document lists **exact code locations (file + line ranges)** for sponsor / 
 
 ---
 
+## ERC-8004 (Trustless Agents) — on-chain identity signals (read-only)
+
+> We do **not** claim full ERC-8004 compliance in this project.
+> We integrate the ERC-8004 **Identity Registry as a read-only trust signal source**.
+
+- `packages/frontend/src/components/Erc8004IdentityCard.tsx`
+  - Reads Identity Registry on Base Sepolia:
+    - registry: `0x4102F9b209796b53a18B063A438D05C7C9Af31A2`
+    - chainId: `84532`
+  - Displays: registered?, tokenId, (name/endpoint/active)
+
+- `packages/frontend/src/app/negotiate/[providerId]/page.tsx`
+  - Renders the ERC-8004 Identity viewer in the demo side-rail
+
+---
+
 ## Notes
 
 - This project uses **real on-chain settlement on Base Sepolia** (not a mock): we verify tx receipts and persist txHash in logs.
