@@ -139,3 +139,7 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 .DS_Store
+
+# Foundry
+packages/contracts/broadcast/
+packages/contracts/cache/

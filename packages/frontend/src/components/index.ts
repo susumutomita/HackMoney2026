@@ -5,6 +5,7 @@ export { PaymentStatusModal } from "./PaymentStatusModal";
 export { PurchaseLogCard } from "./PurchaseLogCard";
 export { BlockedAuditLogCard } from "./BlockedAuditLogCard";
 export { DemoBalanceGuard } from "./DemoBalanceGuard";
+export { Erc8004IdentityCard } from "./Erc8004IdentityCard";
 export { PolicyList } from "./PolicyList";
 export { StatsCards } from "./StatsCards";
 export { EnsProfileCard, EnsName } from "./EnsProfile";
