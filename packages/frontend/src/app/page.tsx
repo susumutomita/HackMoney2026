@@ -83,14 +83,15 @@ export default function Home() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-            Execution firewall for
+            Policy decides
             <br />
-            <span className="text-cyan-400">autonomous agents</span>
+            <span className="text-cyan-400">before money moves</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Protect AI agents from malicious transactions. Analyze intent, enforce policies, and
-            approve payments—all before execution.
+            AI agents can discover services, negotiate, and pay. ZeroKey is the CFO between your
+            agent and your wallet: it blocks recipient substitution, enforces policy, and leaves an
+            audit trail.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -98,13 +99,13 @@ export default function Home() {
               href="/marketplace"
               className="px-6 py-3 text-sm font-medium bg-white text-black rounded-lg hover:bg-white/90 transition-colors"
             >
-              Explore Marketplace
+              Launch Demo
             </Link>
             <Link
               href="/dashboard"
               className="px-6 py-3 text-sm font-medium bg-white/5 text-white rounded-lg hover:bg-white/10 transition-colors border border-white/10"
             >
-              Open Dashboard
+              View Audit Logs
             </Link>
           </div>
         </div>
@@ -114,27 +115,28 @@ export default function Home() {
       <section className="py-20 px-4 sm:px-6 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4">How it works</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">What judges should see</h2>
             <p className="text-gray-400 max-w-xl mx-auto">
-              Three layers of protection for every autonomous transaction
+              A demo that proves “not a mock”: txHash on BaseScan, plus audit evidence when we block
+              before payment.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             <FeatureCard
               step="01"
-              title="Semantic Analysis"
-              description="Intent detection understands what the transaction is trying to do, not just the raw data."
+              title="Blocked before payment"
+              description="Recipient mismatch → REJECTED. We write an audit event: “money never moved”."
             />
             <FeatureCard
               step="02"
-              title="Policy Enforcement"
-              description="Check against spending limits, rate limits, and protocol allowlists before any funds move."
+              title="Verified USDC settlement"
+              description="APPROVED → USDC transfer on Base Sepolia → receipt verification by txHash."
             />
             <FeatureCard
               step="03"
-              title="On-chain Proof"
-              description="Every approval is recorded on-chain for transparent audit trails and compliance."
+              title="Audit trail by default"
+              description="Purchase Log stores txHash + firewall reason. Blocked Audit Log stores attempted recipient + reason."
             />
           </div>
         </div>
@@ -145,30 +147,26 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold mb-6">AI agents need guardrails</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-6">The CFO mental model</h2>
               <p className="text-gray-400 mb-6 leading-relaxed">
-                When AI agents autonomously discover, negotiate, and pay for services, they need
-                protection from scams, budget overruns, and malicious providers.
+                Treat AI agents like overconfident interns. ZeroKey enforces hard constraints before
+                any signature becomes a transfer.
               </p>
               <ul className="space-y-4">
-                <CheckItem>Block transactions to low-trust providers</CheckItem>
-                <CheckItem>Enforce daily spending limits</CheckItem>
-                <CheckItem>Rate limit to prevent abuse</CheckItem>
-                <CheckItem>Fail-safe: reject when analysis fails</CheckItem>
+                <CheckItem>Block recipient substitution (registry / invariants)</CheckItem>
+                <CheckItem>Enforce spend limits and policy gates</CheckItem>
+                <CheckItem>Produce audit evidence (txHash or “money never moved”)</CheckItem>
+                <CheckItem>Keep the demo honest: BaseScan proof</CheckItem>
               </ul>
             </div>
 
             <div className="bg-[#12121a] rounded-2xl p-6 border border-white/5">
               <div className="font-mono text-sm">
-                <div className="text-gray-500 mb-4">// Firewall decision</div>
+                <div className="text-gray-500 mb-4">// ZeroKey decision summary</div>
                 <div className="space-y-2">
                   <div>
-                    <span className="text-purple-400">provider</span>:{" "}
-                    <span className="text-green-400">"TranslateAI Pro"</span>
-                  </div>
-                  <div>
-                    <span className="text-purple-400">trustScore</span>:{" "}
-                    <span className="text-cyan-400">85</span>
+                    <span className="text-purple-400">recipientInvariant</span>:{" "}
+                    <span className="text-green-400">"pass"</span>
                   </div>
                   <div>
                     <span className="text-purple-400">amount</span>:{" "}
@@ -180,9 +178,8 @@ export default function Home() {
                     <span className="text-green-400">"APPROVED"</span>
                   </div>
                   <div>
-                    <span className="text-purple-400">riskLevel</span>:{" "}
-                    <span className="text-cyan-400">1</span>{" "}
-                    <span className="text-gray-500">// LOW</span>
+                    <span className="text-purple-400">proof</span>:{" "}
+                    <span className="text-cyan-400">"txHash"</span>
                   </div>
                 </div>
               </div>
@@ -194,20 +191,30 @@ export default function Home() {
       {/* CTA */}
       <section className="py-20 px-4 sm:px-6 border-t border-white/5">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to get started?</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4">Run the demo</h2>
           <p className="text-gray-400 mb-8">
-            Connect your wallet and explore the AI agent marketplace.
+            Start in the marketplace, negotiate, run the firewall, then pay USDC and verify on
+            BaseScan.
           </p>
-          <ConnectButton.Custom>
-            {({ openConnectModal }) => (
-              <button
-                onClick={openConnectModal}
-                className="px-8 py-3 text-sm font-medium bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg hover:opacity-90 transition-opacity"
-              >
-                Connect Wallet
-              </button>
-            )}
-          </ConnectButton.Custom>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/marketplace"
+              className="px-8 py-3 text-sm font-medium bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg hover:opacity-90 transition-opacity"
+            >
+              Launch Demo
+            </Link>
+            <Link
+              href="/dashboard"
+              className="px-8 py-3 text-sm font-medium bg-white/5 text-white rounded-lg hover:bg-white/10 transition-colors border border-white/10"
+            >
+              View Audit Logs
+            </Link>
+          </div>
+
+          <div className="mt-6 text-xs text-gray-500">
+            Optional: connect wallet for live USDC settlement. Blocked flow works without moving
+            funds.
+          </div>
         </div>
       </section>
 
