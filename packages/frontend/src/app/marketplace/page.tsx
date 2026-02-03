@@ -86,7 +86,7 @@ export default function MarketplacePage() {
                 Marketplace
               </NavLink>
               <NavLink href="/dashboard">Dashboard</NavLink>
-              <NavLink href="/tutorial">Docs</NavLink>
+              <NavLink href="/docs">API Docs</NavLink>
             </div>
 
             <div className="hidden sm:block">
