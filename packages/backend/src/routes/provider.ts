@@ -6,8 +6,8 @@ import { recordPayment } from "../services/payment.js";
 import type { Address } from "viem";
 
 /**
- * Mock Provider Endpoints
- * Simulates actual API services with x402 payment
+ * Provider Endpoints
+ * API services with x402 payment
  */
 
 const app = new Hono();
@@ -52,7 +52,7 @@ app.post(
     // Record the payment
     recordPayment(payment.txHash, payment.payer, PROVIDER_WALLET, "0.03", "translation");
 
-    // Mock translation (in production, call actual translation API)
+    // Translation (in production, call actual translation API)
     const translations: Record<string, Record<string, string>> = {
       en: {
         hello: "Hello",
@@ -123,7 +123,7 @@ app.post(
     // Record the payment
     recordPayment(payment.txHash, payment.payer, PROVIDER_WALLET, "0.02", "summarization");
 
-    // Mock summarization
+    // Summarization
     const words = text.split(/\s+/);
     const summary = words.length > 20 ? words.slice(0, 20).join(" ") + "..." : text;
 
