@@ -6,7 +6,12 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import Link from "next/link";
 import { erc20Abi, parseUnits } from "viem";
-import { PayConfirmModal, PaymentStatusModal, DemoBalanceGuard } from "@/components";
+import {
+  PayConfirmModal,
+  PaymentStatusModal,
+  DemoBalanceGuard,
+  Erc8004IdentityCard,
+} from "@/components";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -17,6 +22,8 @@ interface Provider {
   pricePerUnit: string;
   unit: string;
   trustScore: number;
+  walletAddress?: string;
+  ensName?: string;
 }
 
 interface NegotiationMessage {
@@ -262,6 +269,9 @@ export default function NegotiatePage() {
             <div className="space-y-4">
               {/* Demo rail UI (judges should never wonder "where are we?") */}
               <DemoBalanceGuard />
+
+              {/* ERC-8004 (read-only) identity signals */}
+              <Erc8004IdentityCard agentAddress={provider.walletAddress} />
 
               <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                 <div className="text-xs uppercase tracking-widest text-gray-400">Demo Flow</div>
