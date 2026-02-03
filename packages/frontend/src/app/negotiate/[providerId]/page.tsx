@@ -13,7 +13,7 @@ import {
   Erc8004IdentityCard,
 } from "@/components";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface Provider {
   id: string;

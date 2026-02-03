@@ -17,7 +17,7 @@ type Purchase = {
   createdAt: string;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 function shortHash(h: string) {
   if (!h || h.length < 10) return h;
