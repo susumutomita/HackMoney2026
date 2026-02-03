@@ -51,7 +51,7 @@ export default function Home() {
                             : "bg-white text-black hover:bg-white/90"
                         }`}
                       >
-                        {connected ? `${account.displayName}` : "Connect"}
+                        {connected ? `${account.displayName}` : "Connect payer wallet"}
                       </button>
                     );
                   }}
@@ -117,7 +117,8 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">How it works</h2>
             <p className="text-gray-400 max-w-xl mx-auto">
-              Real on-chain verification: txHash on BaseScan, plus audit evidence when transactions are blocked.
+              Real on-chain verification: txHash on BaseScan, plus audit evidence when transactions
+              are blocked.
             </p>
           </div>
 
@@ -211,8 +212,8 @@ export default function Home() {
           </div>
 
           <div className="mt-6 text-xs text-gray-500">
-            Optional: connect wallet for live USDC settlement. Blocked flow works without moving
-            funds.
+            Note: In production, the payer is an agent wallet (MPC/AA). This demo uses WalletConnect
+            for signing. Blocked flow works without moving funds.
           </div>
         </div>
       </section>
