@@ -41,6 +41,8 @@ Quick links:
 
 - Demo script: `docs/DEMO_SCRIPT.md`
 - Demo checklist: `docs/DEMO_CHECKLIST.md`
+- API Docs (Swagger): `/docs`
+- A2A Payment Router spec: `docs/spec/AGENT_PAYMENT_ROUTER.md`
 - Sponsor tech map: `docs/SPONSOR_TECH_MAP.md`
 - Trust score model: `docs/TRUST_SCORE_MODEL.md`
 
