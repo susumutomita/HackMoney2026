@@ -113,9 +113,9 @@ A demo is considered valid when both are shown:
 
 Recommended proof tx (example):
 
-- BaseScan: https://sepolia.basescan.org
+- BaseScan: https://sepolia.basescan.org/tx/0xc7f228732a86ebcba106be4b34e36a765b9bee69bc67faac1093efcb9f6b3d5d
 
 ## Non-goals (for this demo)
 
-- Full agent wallet implementation (MPC/AA) — signer is swappable.
+- Full agent wallet implementation (MPC/AA) — signer is swappable. (Demo uses WalletConnect for signing.)
 - Full ERC-8004 compliance — we only consume Identity Registry signals read-only.
