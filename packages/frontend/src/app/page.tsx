@@ -51,7 +51,7 @@ export default function Home() {
                             : "bg-white text-black hover:bg-white/90"
                         }`}
                       >
-                        {connected ? `${account.displayName}` : "Connect"}
+                        {connected ? `${account.displayName}` : "Connect payer wallet"}
                       </button>
                     );
                   }}
@@ -212,8 +212,8 @@ export default function Home() {
           </div>
 
           <div className="mt-6 text-xs text-gray-500">
-            Optional: connect wallet for live USDC settlement. Blocked flow works without moving
-            funds.
+            Note: In production, the payer is an agent wallet (MPC/AA). This demo uses WalletConnect
+            for signing. Blocked flow works without moving funds.
           </div>
         </div>
       </section>

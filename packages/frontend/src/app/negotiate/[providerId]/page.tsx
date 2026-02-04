@@ -230,7 +230,13 @@ export default function NegotiatePage() {
 
         {!isConnected ? (
           <div className="bg-[#12121a] rounded-xl p-8 border border-white/5 text-center">
-            <p className="text-gray-400 mb-4">Connect your wallet to start negotiating</p>
+            <p className="text-gray-400 mb-4">
+              Connect payer wallet (agent or human) to start negotiating
+            </p>
+            <p className="text-xs text-gray-500">
+              Note: In production, the payer is an agent wallet (MPC/AA). This demo uses
+              WalletConnect for signing.
+            </p>
             <ConnectButton />
           </div>
         ) : (

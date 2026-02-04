@@ -102,7 +102,7 @@ export default function MarketplacePage() {
                           : "bg-white text-black hover:bg-white/90"
                       }`}
                     >
-                      {connected ? account.displayName : "Connect"}
+                      {connected ? account.displayName : "Connect payer wallet"}
                     </button>
                   );
                 }}
