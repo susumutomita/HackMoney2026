@@ -27,12 +27,13 @@ app.get("/discover", zValidator("query", discoverQuerySchema), async (c) => {
 
     // Filter by service (services is stored as JSON array)
     // Use "*" to get all providers
-    const matchingProviders = service === "*"
-      ? allProviders
-      : allProviders.filter((p) => {
-          const services = p.services as string[];
-          return services.some((s) => s.toLowerCase().includes(service.toLowerCase()));
-        });
+    const matchingProviders =
+      service === "*"
+        ? allProviders
+        : allProviders.filter((p) => {
+            const services = p.services as string[];
+            return services.some((s) => s.toLowerCase().includes(service.toLowerCase()));
+          });
 
     // Filter by max price if specified
     const filtered = maxPrice
