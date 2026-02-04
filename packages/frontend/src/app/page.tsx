@@ -89,9 +89,9 @@ export default function Home() {
           </h1>
 
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            AI agents can discover services, negotiate, and pay. ZeroKey is the CFO between your
-            agent and your wallet: it blocks recipient substitution, enforces policy, and leaves an
-            audit trail.
+            The internet moved workflows online. The agent era moves decisions and execution off
+            humans. ZeroKey is the CFO between your agent and your wallet: it blocks recipient
+            substitution, enforces policy, and leaves an audit trail.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -117,7 +117,8 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">How it works</h2>
             <p className="text-gray-400 max-w-xl mx-auto">
-              Real on-chain verification: txHash on BaseScan, plus audit evidence when transactions are blocked.
+              Real on-chain verification: txHash on BaseScan, plus audit evidence when transactions
+              are blocked.
             </p>
           </div>
 
