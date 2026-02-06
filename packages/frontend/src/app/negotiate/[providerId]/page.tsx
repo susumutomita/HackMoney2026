@@ -161,17 +161,34 @@ export default function NegotiatePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId }),
       });
-      const data = await res.json();
 
-      if (data.success) {
-        setFirewallResult(data.firewall);
-        if (data.firewall.decision === "APPROVED") {
-          addMessage("system", `✅ Firewall APPROVED: ${data.firewall.reason}`);
-        } else if (data.firewall.decision === "WARNING") {
-          addMessage("system", `⚠️ Firewall WARNING: ${data.firewall.reason}`);
-        } else {
-          addMessage("system", `❌ Firewall REJECTED: ${data.firewall.reason}`);
-        }
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        addMessage(
+          "system",
+          `Failed to run Firewall check (HTTP ${res.status})${text ? `: ${text}` : ""}`
+        );
+        return;
+      }
+
+      const data: { firewall?: { decision: string; reason?: string; reasons?: string[] } } =
+        await res.json();
+
+      const firewall = data.firewall;
+      if (!firewall) {
+        addMessage("system", "Failed to run Firewall check: missing firewall result");
+        return;
+      }
+
+      setFirewallResult(firewall as never);
+
+      const reason = firewall.reason ?? firewall.reasons?.join("; ") ?? "";
+      if (firewall.decision === "APPROVED") {
+        addMessage("system", `✅ Firewall APPROVED${reason ? `: ${reason}` : ""}`);
+      } else if (firewall.decision === "WARNING") {
+        addMessage("system", `⚠️ Firewall WARNING${reason ? `: ${reason}` : ""}`);
+      } else {
+        addMessage("system", `❌ Firewall REJECTED${reason ? `: ${reason}` : ""}`);
       }
     } catch {
       addMessage("system", "Failed to run Firewall check");
