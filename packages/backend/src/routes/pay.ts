@@ -70,7 +70,7 @@ const submitSchema = z.object({
   txHash: z.string().startsWith("0x").min(10),
   expectedAmountUsdc: z.string().min(1),
   providerId: z.string().min(1),
-  firewallDecision: z.enum(["APPROVED", "WARNING", "REJECTED"]),
+  firewallDecision: z.enum(["APPROVED", "CONFIRM_REQUIRED", "REJECTED"]),
   firewallReason: z.string().min(1),
 });
 
