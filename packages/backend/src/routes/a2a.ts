@@ -3,6 +3,7 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { db, schema } from "../db/index.js";
 import { eq } from "drizzle-orm";
+import { calculateTrustScore, type TrustScoreResult } from "../services/trustScore.js";
 
 const app = new Hono();
 
@@ -40,21 +41,44 @@ app.get("/discover", zValidator("query", discoverQuerySchema), async (c) => {
       ? matchingProviders.filter((p) => parseFloat(p.pricePerUnit) <= parseFloat(maxPrice))
       : matchingProviders;
 
-    // Sort by trust score (descending)
-    const sorted = filtered.sort((a, b) => b.trustScore - a.trustScore);
+    // Calculate on-chain trust scores for all providers
+    const providersWithScores = await Promise.all(
+      filtered.map(async (p) => {
+        let trustResult: TrustScoreResult | null = null;
+        if (p.walletAddress) {
+          try {
+            trustResult = await calculateTrustScore(p.walletAddress);
+          } catch (e) {
+            console.error(`Trust score calc failed for ${p.id}:`, e);
+          }
+        }
+        return {
+          ...p,
+          // Use on-chain score if available, otherwise fall back to DB value
+          calculatedTrustScore: trustResult?.score ?? p.trustScore,
+          trustBreakdown: trustResult?.breakdown ?? null,
+        };
+      })
+    );
 
-    // Return formatted response with ENS data
+    // Sort by calculated trust score (descending)
+    const sorted = providersWithScores.sort(
+      (a, b) => b.calculatedTrustScore - a.calculatedTrustScore
+    );
+
+    // Return formatted response with ENS data and trust breakdown
     const response = sorted.map((p) => ({
       id: p.id,
       name: p.name,
       services: p.services,
       price: p.pricePerUnit,
       unit: p.unit,
-      trustScore: p.trustScore,
+      trustScore: p.calculatedTrustScore,
+      trustBreakdown: p.trustBreakdown,
       totalTransactions: p.totalTransactions,
       // ENS integration fields
       walletAddress: p.walletAddress || undefined,
-      ensName: p.ensName || undefined,
+      ensName: p.trustBreakdown?.ensName || p.ensName || undefined,
     }));
 
     return c.json({
