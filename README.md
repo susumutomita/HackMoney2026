@@ -72,6 +72,24 @@ sequenceDiagram
     end
 ```
 
+## Agent integration (API-first)
+
+The UI is just a demo shell. In production, **an agent uses ZeroKey by calling the API**.
+
+Minimal flow:
+
+1. `POST /api/a2a/negotiate` (create session)
+2. `POST /api/a2a/negotiate/:sessionId/offer` (reach agreement)
+3. `POST /api/firewall/check` (execution gate)
+4. If approved: `POST /api/pay/request` → (HTTP 402) → send USDC → `POST /api/pay/submit` with `txHash`
+
+## Cost model (why routing is worth it)
+
+Routing adds a small governance/audit overhead (like fraud detection / 3DS), but prevents catastrophic loss:
+
+- **Cost:** tiny % fee or subscription (future pricing)
+- **Benefit:** prevents recipient swap / malicious provider / overcharge **before** money moves, with audit-grade proof
+
 ```
 [AI Assistant] "Translate this contract to English"
         │
