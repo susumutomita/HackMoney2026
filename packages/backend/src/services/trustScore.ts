@@ -34,9 +34,18 @@ export interface TrustScoreResult {
 
 // Known trusted addresses with their ENS names
 const KNOWN_ADDRESSES: Record<string, { ens: string; description?: string }> = {
-  "0xd8da6bf26964af9d7eed9e03e53415d37aa96045": { ens: "vitalik.eth", description: "Vitalik Buterin" },
-  "0xb8c2c29ee19d8307cb7255e1cd9cbde883a267d5": { ens: "nick.eth", description: "Nick Johnson (ENS)" },
-  "0xab5801a7d398351b8be11c439e05c5b3259aec9b": { ens: "vitalik.eth", description: "Vitalik (old)" },
+  "0xd8da6bf26964af9d7eed9e03e53415d37aa96045": {
+    ens: "vitalik.eth",
+    description: "Vitalik Buterin",
+  },
+  "0xb8c2c29ee19d8307cb7255e1cd9cbde883a267d5": {
+    ens: "nick.eth",
+    description: "Nick Johnson (ENS)",
+  },
+  "0xab5801a7d398351b8be11c439e05c5b3259aec9b": {
+    ens: "vitalik.eth",
+    description: "Vitalik (old)",
+  },
 };
 
 // In-memory cache for trust scores (TTL: 5 minutes)
@@ -88,11 +97,11 @@ async function getWalletStats(address: Address): Promise<{ ageMonths: number; tx
   try {
     // Get transaction count on Base Sepolia
     const txCount = await baseSepoliaClient.getTransactionCount({ address });
-    
+
     // For wallet age, we'd need to scan historical data
     // Simplified: use tx count as proxy (more tx = older wallet)
     const estimatedAgeMonths = Math.min(Math.floor(txCount / 10), 36);
-    
+
     return { ageMonths: estimatedAgeMonths, txCount };
   } catch {
     return { ageMonths: 0, txCount: 0 };
@@ -112,14 +121,14 @@ function checkKnownAddress(address: Address): { isKnown: boolean; ensName: strin
 
 /**
  * Calculate trust score from on-chain data
- * 
+ *
  * Scoring:
  * - Has ENS name: +25 points
  * - Verified contract: +25 points
  * - Wallet age > 6 months: +15 points
  * - Transaction count > 50: +15 points
  * - Known address: +20 points
- * 
+ *
  * Base score: 0
  * Max score: 100
  */
@@ -141,17 +150,17 @@ export async function calculateTrustScore(address: string): Promise<TrustScoreRe
 
   const addr = address as Address;
   const cacheKey = addr.toLowerCase();
-  
+
   // Check cache first
   const cached = trustScoreCache.get(cacheKey);
   if (cached && cached.expiry > Date.now()) {
     return cached.result;
   }
-  
+
   // Parallel fetch all on-chain data with timeout
   const timeoutPromise = <T>(p: Promise<T>, ms: number, fallback: T): Promise<T> =>
     Promise.race([p, new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))]);
-  
+
   const [ensResult, isVerified, walletStats] = await Promise.all([
     timeoutPromise(checkEns(addr), 3000, { hasEns: false, ensName: null }),
     timeoutPromise(checkContractVerified(addr), 3000, false),
@@ -159,14 +168,14 @@ export async function calculateTrustScore(address: string): Promise<TrustScoreRe
   ]);
 
   const knownCheck = checkKnownAddress(addr);
-  
+
   // Use known ENS name if available, otherwise use on-chain result
   const finalEnsName = knownCheck.ensName || ensResult.ensName;
   const finalHasEns = !!finalEnsName;
 
   // Calculate score
   let score = 0;
-  
+
   if (finalHasEns) score += 25;
   if (isVerified) score += 25;
   if (walletStats.ageMonths >= 6) score += 15;
@@ -190,10 +199,10 @@ export async function calculateTrustScore(address: string): Promise<TrustScoreRe
     },
     calculatedAt: new Date().toISOString(),
   };
-  
+
   // Cache the result
   trustScoreCache.set(cacheKey, { result, expiry: Date.now() + CACHE_TTL_MS });
-  
+
   return result;
 }
 
@@ -204,7 +213,7 @@ export async function calculateTrustScoreBatch(
   addresses: string[]
 ): Promise<Map<string, TrustScoreResult>> {
   const results = new Map<string, TrustScoreResult>();
-  
+
   // Process in parallel with concurrency limit
   const BATCH_SIZE = 5;
   for (let i = 0; i < addresses.length; i += BATCH_SIZE) {
