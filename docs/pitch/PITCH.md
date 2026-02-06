@@ -106,6 +106,16 @@ ZeroKey is the missing safety layer for agent commerce:
 - **Explainable decisions** (fact-based reasons)
 - **Auditable proof** (txHash or “money never moved”)
 
+### How an agent uses it (API-first)
+
+The UI is a demo shell. In production, an agent calls:
+
+- `discover → negotiate → firewall.check → pay.request (402) → pay.submit (txHash)`
+
+### Cost story
+
+Routing adds a small governance/audit overhead, but prevents high-impact failures (recipient swap / malicious provider / runaway spend) **before money moves**.
+
 ---
 
 ## Sponsor tech (where we use it)
