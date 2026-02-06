@@ -5,6 +5,15 @@ import { useState, useEffect } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
 
+interface ProviderTrustBreakdown {
+  hasEns?: boolean;
+  ensName?: string | null;
+  isVerifiedContract?: boolean;
+  walletAgeMonths?: number;
+  transactionCount?: number;
+  isKnownAddress?: boolean;
+}
+
 interface Provider {
   id: string;
   name: string;
@@ -12,6 +21,7 @@ interface Provider {
   price: string;
   unit: string;
   trustScore: number;
+  trustBreakdown?: ProviderTrustBreakdown | null;
   totalTransactions: number;
   walletAddress?: string;
 }
@@ -242,6 +252,7 @@ function NavLink({
 }
 
 function ProviderCard({ provider }: { provider: Provider }) {
+  const [showTrustDetails, setShowTrustDetails] = useState(false);
   const isLowTrust = provider.trustScore < 40;
   const isTrusted = provider.trustScore >= 70;
 
@@ -288,6 +299,34 @@ function ProviderCard({ provider }: { provider: Provider }) {
             {provider.trustScore}/100
           </span>
         </div>
+
+        {provider.trustBreakdown ? (
+          <button
+            type="button"
+            className="text-left text-xs text-cyan-400/90 hover:text-cyan-300"
+            onClick={() => setShowTrustDetails((v) => !v)}
+          >
+            {showTrustDetails ? "Hide trust breakdown" : "Show trust breakdown"}
+          </button>
+        ) : (
+          <div className="text-xs text-gray-600">Trust breakdown unavailable</div>
+        )}
+
+        {showTrustDetails && provider.trustBreakdown && (
+          <div className="mt-2 rounded-lg border border-white/5 bg-white/5 p-3 text-xs text-gray-300 space-y-1">
+            <div>
+              ENS: {provider.trustBreakdown.hasEns ? "Yes" : "No"}
+              {provider.trustBreakdown.ensName ? ` (${provider.trustBreakdown.ensName})` : ""}
+            </div>
+            <div>
+              Verified contract: {provider.trustBreakdown.isVerifiedContract ? "Yes" : "No"}
+            </div>
+            <div>Wallet age: {provider.trustBreakdown.walletAgeMonths ?? 0} months</div>
+            <div>Tx count: {provider.trustBreakdown.transactionCount ?? 0}</div>
+            <div>Known address: {provider.trustBreakdown.isKnownAddress ? "Yes" : "No"}</div>
+          </div>
+        )}
+
         <div className="flex justify-between text-sm">
           <span className="text-gray-500">Transactions</span>
           <span className="text-gray-300">{provider.totalTransactions.toLocaleString()}</span>
