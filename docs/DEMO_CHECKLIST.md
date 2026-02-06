@@ -6,6 +6,35 @@ This checklist matches the **Success → Blocked → Success** demo narrative.
 
 ---
 
+## Agent-to-Agent demo (no UI) (2–4 min)
+
+This is the most reliable live judging demo: it produces hard proof without clicking UI.
+
+- Requires: backend healthy + a funded Base Sepolia wallet (USDC + gas)
+
+Run (hosted):
+
+```bash
+NEXT_PUBLIC_API_URL=https://zerokey.exe.xyz:8000 \
+PRIVATE_KEY=0x... \
+pnpm tsx scripts/agent2agent-demo.ts
+```
+
+Run (local backend):
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:3001 \
+PRIVATE_KEY=0x... \
+pnpm tsx scripts/agent2agent-demo.ts
+```
+
+Expected outputs:
+
+- DEMO 1: REJECTED + proof via `/api/firewall/events` (money never moved)
+- DEMO 2: APPROVED + txHash (BaseScan) + receipt verification via `pay/submit`
+
+---
+
 ## Prerequisites (2 min)
 
 - [ ] Backend is running (health check): `GET /health` returns 200
