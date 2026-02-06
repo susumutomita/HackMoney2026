@@ -226,7 +226,7 @@ const openApiSpec = {
                       properties: {
                         decision: {
                           type: "string",
-                          enum: ["APPROVED", "WARNING", "REJECTED"],
+                          enum: ["APPROVED", "CONFIRM_REQUIRED", "REJECTED"],
                         },
                         riskLevel: { type: "integer", minimum: 1, maximum: 3 },
                         reason: { type: "string" },
@@ -313,7 +313,10 @@ const openApiSpec = {
                   txHash: { type: "string", example: "0x..." },
                   expectedAmountUsdc: { type: "string", example: "0.03" },
                   providerId: { type: "string", example: "image-pack-001" },
-                  firewallDecision: { type: "string", enum: ["APPROVED", "WARNING", "REJECTED"] },
+                  firewallDecision: {
+                    type: "string",
+                    enum: ["APPROVED", "CONFIRM_REQUIRED", "REJECTED"],
+                  },
                   firewallReason: { type: "string", example: "Recipient allowlist passed" },
                 },
               },

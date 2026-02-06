@@ -1,7 +1,7 @@
 import type { Policy, PolicyConfig, TransactionInput } from "../types/index.js";
 import { policyRepository } from "../repositories/index.js";
 
-export type FirewallDecision = "APPROVED" | "WARNING" | "REJECTED";
+export type FirewallDecision = "APPROVED" | "CONFIRM_REQUIRED" | "REJECTED";
 
 export interface FirewallCheckInput {
   tx: TransactionInput;
@@ -78,7 +78,7 @@ function maxRisk(a: 1 | 2 | 3, b: 1 | 2 | 3): 1 | 2 | 3 {
 
 function decisionFrom(risk: 1 | 2 | 3, hardReject: boolean): FirewallDecision {
   if (hardReject || risk === 3) return "REJECTED";
-  if (risk === 2) return "WARNING";
+  if (risk === 2) return "CONFIRM_REQUIRED";
   return "APPROVED";
 }
 
@@ -154,10 +154,10 @@ export async function checkFirewall(input: FirewallCheckInput): Promise<Firewall
       warnings.push("Action: choose a verified provider or request manual approval");
     }
   } else if (input.provider?.recipient && !input.provider.expectedRecipient) {
-    // Unverified provider recipient: warn, but do not hard block.
+    // Recipient is not verified by registry: require manual confirmation (CFO step-up) rather than auto-block.
     risk = maxRisk(risk, 2);
-    reasons.push("Provider recipient not verified (registry missing)");
-    warnings.push("Proceed with caution or use a verified provider");
+    reasons.push("Recipient is unverified (not in registry/allowlist)");
+    warnings.push("Action: request manual approval (CFO) or choose a verified provider");
   }
 
   // --- Provider trust score heuristics (demo-focused) ---
@@ -241,7 +241,7 @@ export async function checkFirewall(input: FirewallCheckInput): Promise<Firewall
       // NOTE: Other policy types are intentionally ignored in this demo firewall.
     }
   } catch (err) {
-    // Fail closed? For demo, fail to WARNING but do not hard reject on policy load failure.
+    // Fail closed? For demo, fail to CONFIRM_REQUIRED but do not hard reject on policy load failure.
     risk = maxRisk(risk, 2);
     warnings.push("Failed to load policies - proceeding with caution");
     reasons.push("Policy repository unavailable");

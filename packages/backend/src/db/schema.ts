@@ -145,7 +145,7 @@ export const firewallEvents = sqliteTable("firewall_events", {
   id: text("id").primaryKey(),
   providerId: text("provider_id"),
   providerName: text("provider_name"),
-  decision: text("decision").notNull(), // 'APPROVED' | 'WARNING' | 'REJECTED'
+  decision: text("decision").notNull(), // 'APPROVED' | 'CONFIRM_REQUIRED' | 'REJECTED'
   reason: text("reason").notNull(),
   attemptedRecipient: text("attempted_recipient"),
   amountUsdc: text("amount_usdc"),

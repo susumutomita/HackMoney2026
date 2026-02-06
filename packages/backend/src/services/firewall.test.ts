@@ -9,7 +9,7 @@ vi.mock("../repositories/index.js", () => {
 });
 
 describe("checkFirewall", () => {
-  it("returns WARNING for low-trust provider on small spend", async () => {
+  it("returns CONFIRM_REQUIRED for low-trust provider on small spend", async () => {
     const { checkFirewall } = await import("./firewall.js");
 
     const res = await checkFirewall({
@@ -23,7 +23,7 @@ describe("checkFirewall", () => {
       now: new Date("2026-01-01T00:00:00Z"),
     });
 
-    expect(res.decision).toBe("WARNING");
+    expect(res.decision).toBe("CONFIRM_REQUIRED");
     expect(res.riskLevel).toBe(2);
     expect(res.warnings.join(" ")).toMatch(/Low provider trust score/i);
   });

@@ -33,7 +33,7 @@ interface NegotiationMessage {
 }
 
 interface FirewallResult {
-  decision: "APPROVED" | "WARNING" | "REJECTED";
+  decision: "APPROVED" | "CONFIRM_REQUIRED" | "REJECTED";
   riskLevel: number;
   reason: string;
   warnings: string[];
@@ -51,6 +51,7 @@ export default function NegotiatePage() {
   const [offerAmount, setOfferAmount] = useState("");
   const [negotiationStatus, setNegotiationStatus] = useState<string>("idle");
   const [firewallResult, setFirewallResult] = useState<FirewallResult | null>(null);
+  const [manualApprovalGranted, setManualApprovalGranted] = useState(false);
   const [payConfirmOpen, setPayConfirmOpen] = useState(false);
   const [payStatusOpen, setPayStatusOpen] = useState(false);
   const [payStatus, setPayStatus] = useState<"idle" | "processing" | "success" | "failed">("idle");
@@ -180,13 +181,14 @@ export default function NegotiatePage() {
         return;
       }
 
+      setManualApprovalGranted(false);
       setFirewallResult(firewall as never);
 
       const reason = firewall.reason ?? firewall.reasons?.join("; ") ?? "";
       if (firewall.decision === "APPROVED") {
         addMessage("system", `✅ Firewall APPROVED${reason ? `: ${reason}` : ""}`);
-      } else if (firewall.decision === "WARNING") {
-        addMessage("system", `⚠️ Firewall WARNING${reason ? `: ${reason}` : ""}`);
+      } else if (firewall.decision === "CONFIRM_REQUIRED") {
+        addMessage("system", `🧾 Confirm required${reason ? `: ${reason}` : ""}`);
       } else {
         addMessage("system", `❌ Firewall REJECTED${reason ? `: ${reason}` : ""}`);
       }
@@ -329,7 +331,7 @@ export default function NegotiatePage() {
                         firewallResult
                           ? firewallResult.decision === "APPROVED"
                             ? "bg-emerald-500/20 border-emerald-400 text-emerald-200"
-                            : firewallResult.decision === "WARNING"
+                            : firewallResult.decision === "CONFIRM_REQUIRED"
                               ? "bg-yellow-500/20 border-yellow-400 text-yellow-200"
                               : "bg-red-500/20 border-red-400 text-red-200"
                           : "bg-gray-800 border-gray-600 text-gray-300"
@@ -345,15 +347,15 @@ export default function NegotiatePage() {
                             className={`text-[11px] px-2 py-1 rounded-md border ${
                               firewallResult.decision === "APPROVED"
                                 ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-200"
-                                : firewallResult.decision === "WARNING"
+                                : firewallResult.decision === "CONFIRM_REQUIRED"
                                   ? "bg-yellow-500/15 border-yellow-500/30 text-yellow-200"
                                   : "bg-red-500/15 border-red-500/30 text-red-200"
                             }`}
                           >
                             {firewallResult.decision === "APPROVED"
                               ? "APPROVED"
-                              : firewallResult.decision === "WARNING"
-                                ? "WARNING"
+                              : firewallResult.decision === "CONFIRM_REQUIRED"
+                                ? "CONFIRM"
                                 : "BLOCKED"}
                           </span>
                         )}
@@ -463,7 +465,7 @@ export default function NegotiatePage() {
                   className={`rounded-xl p-4 border ${
                     firewallResult.decision === "APPROVED"
                       ? "bg-green-900/30 border-green-700"
-                      : firewallResult.decision === "WARNING"
+                      : firewallResult.decision === "CONFIRM_REQUIRED"
                         ? "bg-yellow-900/30 border-yellow-700"
                         : "bg-red-950/60 border-red-600 shadow-[0_0_0_1px_rgba(239,68,68,0.25)]"
                   }`}
@@ -541,10 +543,32 @@ export default function NegotiatePage() {
                       <h3 className="font-semibold mb-2">
                         {firewallResult.decision === "APPROVED"
                           ? "✅ Firewall APPROVED"
-                          : "⚠️ Firewall WARNING"}
+                          : "🧾 Confirm required"}
                       </h3>
 
                       <p className="text-sm text-gray-200 mb-3">{firewallResult.reason}</p>
+
+                      {firewallResult.decision === "CONFIRM_REQUIRED" && !manualApprovalGranted && (
+                        <button
+                          type="button"
+                          className="w-full mb-3 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/40 text-yellow-100 py-2 rounded-lg text-sm"
+                          onClick={() => {
+                            setManualApprovalGranted(true);
+                            addMessage(
+                              "system",
+                              "✅ Manual approval granted (CFO). You can proceed to payment."
+                            );
+                          }}
+                        >
+                          Confirm (CFO approval)
+                        </button>
+                      )}
+
+                      {firewallResult.decision === "CONFIRM_REQUIRED" && manualApprovalGranted && (
+                        <div className="mb-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-3 text-sm text-yellow-100">
+                          Manual approval granted. Proceed to payment.
+                        </div>
+                      )}
 
                       {firewallResult.warnings.length > 0 && (
                         <div className="mb-3">
@@ -567,10 +591,15 @@ export default function NegotiatePage() {
                           <span>
                             Proceed to payment. You can still double-check the provider and amount.
                           </span>
+                        ) : manualApprovalGranted ? (
+                          <span>
+                            Manual approval granted. Proceed to payment, but keep monitoring
+                            outcomes.
+                          </span>
                         ) : (
                           <span>
-                            We recommend proceeding only after verifying the provider identity and
-                            starting with a small test amount.
+                            Payment requires manual approval (CFO). Confirm only after verifying the
+                            provider identity and starting with a small test amount.
                           </span>
                         )}
                       </div>
@@ -583,15 +612,25 @@ export default function NegotiatePage() {
                 <div className="space-y-2">
                   <button
                     className={`w-full py-3 rounded-lg font-medium ${
-                      firewallResult?.decision === "APPROVED"
+                      firewallResult?.decision === "APPROVED" ||
+                      (firewallResult?.decision === "CONFIRM_REQUIRED" && manualApprovalGranted)
                         ? "bg-cyan-500 hover:bg-cyan-600"
                         : "bg-gray-700 text-gray-400 cursor-not-allowed"
                     }`}
-                    disabled={firewallResult?.decision !== "APPROVED"}
+                    disabled={
+                      !(
+                        firewallResult?.decision === "APPROVED" ||
+                        (firewallResult?.decision === "CONFIRM_REQUIRED" && manualApprovalGranted)
+                      )
+                    }
                     title={
                       firewallResult?.decision === "APPROVED"
                         ? "Ready to pay"
-                        : "Payment is only enabled after Firewall APPROVED"
+                        : firewallResult?.decision === "CONFIRM_REQUIRED"
+                          ? manualApprovalGranted
+                            ? "Manual approval granted"
+                            : "Payment requires manual approval"
+                          : "Payment is only enabled after Firewall APPROVED"
                     }
                     onClick={() => setPayConfirmOpen(true)}
                   >
@@ -687,7 +726,12 @@ export default function NegotiatePage() {
                         addMessage("system", "⛔ Payment failed.");
                       }
                     }}
-                    confirmDisabled={firewallResult?.decision !== "APPROVED"}
+                    confirmDisabled={
+                      !(
+                        firewallResult?.decision === "APPROVED" ||
+                        (firewallResult?.decision === "CONFIRM_REQUIRED" && manualApprovalGranted)
+                      )
+                    }
                     confirmText={`Confirm & Pay $${agreedPrice} USDC`}
                     amountLabel={`$${agreedPrice} USDC`}
                     recipientLabel={
