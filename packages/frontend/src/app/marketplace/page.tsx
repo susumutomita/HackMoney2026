@@ -255,17 +255,31 @@ function ProviderCard({ provider }: { provider: Provider }) {
   const [showTrustDetails, setShowTrustDetails] = useState(false);
   const isLowTrust = provider.trustScore < 40;
   const isTrusted = provider.trustScore >= 70;
+  const hasEns = provider.trustBreakdown?.hasEns;
+  const ensName = provider.trustBreakdown?.ensName;
 
   return (
     <div className="group bg-[#12121a] rounded-xl p-5 border border-white/5 hover:border-white/10 transition-all">
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-3">
         <div>
-          <h3 className="font-semibold mb-1">{provider.name}</h3>
-          {provider.walletAddress && (
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-semibold">{provider.name}</h3>
+            {hasEns && (
+              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/20 text-blue-400 rounded flex items-center gap-1">
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                ENS
+              </span>
+            )}
+          </div>
+          {ensName ? (
+            <p className="text-xs text-blue-400 font-medium">{ensName}</p>
+          ) : provider.walletAddress ? (
             <p className="text-xs text-gray-500 font-mono">
               {provider.walletAddress.slice(0, 6)}...{provider.walletAddress.slice(-4)}
             </p>
-          )}
+          ) : null}
         </div>
         <div
           className={`px-2 py-1 text-xs font-medium rounded-md ${
@@ -313,17 +327,25 @@ function ProviderCard({ provider }: { provider: Provider }) {
         )}
 
         {showTrustDetails && provider.trustBreakdown && (
-          <div className="mt-2 rounded-lg border border-white/5 bg-white/5 p-3 text-xs text-gray-300 space-y-1">
-            <div>
-              ENS: {provider.trustBreakdown.hasEns ? "Yes" : "No"}
-              {provider.trustBreakdown.ensName ? ` (${provider.trustBreakdown.ensName})` : ""}
+          <div className="mt-2 rounded-lg border border-white/5 bg-white/5 p-3 text-xs space-y-2">
+            <div className="text-gray-400 font-medium mb-2">Trust Score Breakdown</div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className={`flex items-center gap-1.5 ${provider.trustBreakdown.hasEns ? 'text-emerald-400' : 'text-gray-500'}`}>
+                {provider.trustBreakdown.hasEns ? '✓' : '✗'} ENS Name
+              </div>
+              <div className={`flex items-center gap-1.5 ${provider.trustBreakdown.isVerifiedContract ? 'text-emerald-400' : 'text-gray-500'}`}>
+                {provider.trustBreakdown.isVerifiedContract ? '✓' : '✗'} Verified Contract
+              </div>
+              <div className={`flex items-center gap-1.5 ${(provider.trustBreakdown.walletAgeMonths ?? 0) > 6 ? 'text-emerald-400' : 'text-gray-500'}`}>
+                {(provider.trustBreakdown.walletAgeMonths ?? 0) > 6 ? '✓' : '✗'} Wallet Age ({provider.trustBreakdown.walletAgeMonths ?? 0}mo)
+              </div>
+              <div className={`flex items-center gap-1.5 ${provider.trustBreakdown.isKnownAddress ? 'text-emerald-400' : 'text-gray-500'}`}>
+                {provider.trustBreakdown.isKnownAddress ? '✓' : '✗'} Known Address
+              </div>
             </div>
-            <div>
-              Verified contract: {provider.trustBreakdown.isVerifiedContract ? "Yes" : "No"}
+            <div className="text-gray-500 pt-1 border-t border-white/5">
+              Tx count: {provider.trustBreakdown.transactionCount ?? 0}
             </div>
-            <div>Wallet age: {provider.trustBreakdown.walletAgeMonths ?? 0} months</div>
-            <div>Tx count: {provider.trustBreakdown.transactionCount ?? 0}</div>
-            <div>Known address: {provider.trustBreakdown.isKnownAddress ? "Yes" : "No"}</div>
           </div>
         )}
 
