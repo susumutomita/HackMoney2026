@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Enum} from "safe-smart-account/contracts/libraries/Enum.sol";
+import {Enum} from "safe-smart-account/contracts/interfaces/Enum.sol";
 import {BaseTransactionGuard} from "safe-smart-account/contracts/base/GuardManager.sol";
 
 /**
  * @title SafeZeroKeyGuard
  * @notice A Safe Guard that enforces policies on Safe transactions
  * @dev Implements ITransactionGuard to hook into Safe's transaction flow
- * 
+ *
  * Architecture:
  * 1. User registers their Safe on ZeroKey dashboard
  * 2. User adds this Guard to their Safe via setGuard()
@@ -19,12 +19,12 @@ contract SafeZeroKeyGuard is BaseTransactionGuard {
     /// @notice Policy config for each Safe
     struct Policy {
         bool enabled;
-        uint256 maxTransferValue;  // 0 = no limit
-        bool allowArbitraryCalls;  // false = only allow ETH transfers
-        mapping(address => bool) allowedRecipients;  // whitelist (empty = all allowed)
-        mapping(address => bool) blockedRecipients;  // blacklist
-        uint256 dailyLimit;        // daily transfer limit (0 = no limit)
-        uint256 dailySpent;        // amount spent today
+        uint256 maxTransferValue; // 0 = no limit
+        bool allowArbitraryCalls; // false = only allow ETH transfers
+        mapping(address => bool) allowedRecipients; // whitelist (empty = all allowed)
+        mapping(address => bool) blockedRecipients; // blacklist
+        uint256 dailyLimit; // daily transfer limit (0 = no limit)
+        uint256 dailySpent; // amount spent today
         uint256 lastResetTimestamp;
     }
 
@@ -102,12 +102,10 @@ contract SafeZeroKeyGuard is BaseTransactionGuard {
      * @param dailyLimit Daily spending limit (0 = no limit)
      * @param allowArbitraryCalls Whether to allow contract calls
      */
-    function setPolicy(
-        address safe,
-        uint256 maxTransferValue,
-        uint256 dailyLimit,
-        bool allowArbitraryCalls
-    ) external onlySafeAdmin(safe) {
+    function setPolicy(address safe, uint256 maxTransferValue, uint256 dailyLimit, bool allowArbitraryCalls)
+        external
+        onlySafeAdmin(safe)
+    {
         Policy storage p = policies[safe];
         p.maxTransferValue = maxTransferValue;
         p.dailyLimit = dailyLimit;
@@ -172,7 +170,7 @@ contract SafeZeroKeyGuard is BaseTransactionGuard {
         bytes memory signatures,
         address msgSender
     ) external override {
-        address safe = msg.sender;  // The Safe contract calls this
+        address safe = msg.sender; // The Safe contract calls this
         Policy storage p = policies[safe];
 
         // If Safe is not registered, allow (non-intrusive default)
@@ -182,12 +180,14 @@ contract SafeZeroKeyGuard is BaseTransactionGuard {
 
         // Compute transaction hash for pre-approval check
         bytes32 txHash = keccak256(
-            abi.encodePacked(safe, to, value, keccak256(data), operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver)
+            abi.encodePacked(
+                safe, to, value, keccak256(data), operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver
+            )
         );
 
         // If transaction is pre-approved by oracle, allow immediately
         if (preApproved[txHash]) {
-            delete preApproved[txHash];  // One-time use
+            delete preApproved[txHash]; // One-time use
             emit TransactionApproved(safe, to, value);
             return;
         }
@@ -235,7 +235,7 @@ contract SafeZeroKeyGuard is BaseTransactionGuard {
      */
     function checkAfterExecution(bytes32 hash, bool success) external override {
         // Could add post-execution logging here
-        (hash, success);  // Suppress warnings
+        (hash, success); // Suppress warnings
     }
 
     /**
@@ -269,20 +269,18 @@ contract SafeZeroKeyGuard is BaseTransactionGuard {
     /**
      * @notice Get policy details for a Safe
      */
-    function getPolicy(address safe) external view returns (
-        bool enabled,
-        uint256 maxTransferValue,
-        uint256 dailyLimit,
-        uint256 dailySpent,
-        bool allowArbitraryCalls
-    ) {
+    function getPolicy(address safe)
+        external
+        view
+        returns (
+            bool enabled,
+            uint256 maxTransferValue,
+            uint256 dailyLimit,
+            uint256 dailySpent,
+            bool allowArbitraryCalls
+        )
+    {
         Policy storage p = policies[safe];
-        return (
-            p.enabled,
-            p.maxTransferValue,
-            p.dailyLimit,
-            p.dailySpent,
-            p.allowArbitraryCalls
-        );
+        return (p.enabled, p.maxTransferValue, p.dailyLimit, p.dailySpent, p.allowArbitraryCalls);
     }
 }

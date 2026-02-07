@@ -154,6 +154,56 @@ const CREATE_TABLES_SQL = `
   CREATE INDEX IF NOT EXISTS idx_conv_session_state ON conversation_sessions(state);
   CREATE INDEX IF NOT EXISTS idx_conv_events_session ON conversation_events(session_id);
   CREATE INDEX IF NOT EXISTS idx_conv_events_idem ON conversation_events(session_id, idempotency_key);
+
+  CREATE TABLE IF NOT EXISTS protected_wallets (
+    id TEXT PRIMARY KEY,
+    safe_address TEXT NOT NULL UNIQUE,
+    owner_address TEXT NOT NULL,
+    chain_id INTEGER NOT NULL,
+    guard_address TEXT NOT NULL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS wallet_policies (
+    id TEXT PRIMARY KEY,
+    safe_address TEXT NOT NULL UNIQUE,
+    max_transaction_usdc TEXT NOT NULL DEFAULT '100',
+    require_human_approval_above_usdc TEXT NOT NULL DEFAULT '50',
+    blocked_recipients TEXT NOT NULL DEFAULT '[]',
+    trusted_recipients TEXT NOT NULL DEFAULT '[]',
+    min_trust_score INTEGER NOT NULL DEFAULT 20,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS pending_approvals (
+    id TEXT PRIMARY KEY,
+    safe_address TEXT NOT NULL,
+    tx_hash TEXT,
+    "to" TEXT NOT NULL,
+    value TEXT NOT NULL,
+    data TEXT,
+    reason TEXT NOT NULL,
+    status TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    decided_at TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS guard_registrations (
+    id TEXT PRIMARY KEY,
+    safe_address TEXT NOT NULL UNIQUE,
+    chain_id INTEGER NOT NULL,
+    owner_address TEXT NOT NULL,
+    guard_contract_address TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_protected_wallets_safe ON protected_wallets(safe_address);
+  CREATE INDEX IF NOT EXISTS idx_wallet_policies_safe ON wallet_policies(safe_address);
+  CREATE INDEX IF NOT EXISTS idx_pending_approvals_safe ON pending_approvals(safe_address);
+  CREATE INDEX IF NOT EXISTS idx_guard_registrations_safe ON guard_registrations(safe_address);
 `;
 
 /**

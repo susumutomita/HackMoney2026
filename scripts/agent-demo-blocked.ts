@@ -46,7 +46,7 @@ async function main() {
 
   // Negotiate with scam provider
   console.log("=== Agent negotiates with CheapTranslate (SCAM) ===\n");
-  
+
   const negotiate = await postJson("/api/a2a/negotiate", {
     clientId: "naive-agent-001",
     providerId: "sketchy-service-001",
@@ -61,7 +61,7 @@ async function main() {
   console.log("=== ZeroKey Firewall intercepts ===\n");
 
   const firewall = await postJson("/api/firewall/check", { sessionId });
-  
+
   console.log(`Decision: ${firewall.json?.firewall?.decision}`);
   console.log(`Risk Level: ${firewall.json?.firewall?.riskLevel}`);
   console.log("\nReasons:");
@@ -75,7 +75,7 @@ async function main() {
 
   console.log("\n💰 Result: MONEY NEVER MOVED");
   console.log("Agent's wallet is protected from the scam.\n");
-  
+
   console.log("View blocked audit log:");
   console.log(`  ${API}/api/firewall/events`);
 }

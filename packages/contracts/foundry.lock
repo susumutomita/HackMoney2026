@@ -4,5 +4,8 @@
       "name": "v1.14.0",
       "rev": "1801b0541f4fda118a10798fd3486bb7051c5dd6"
     }
+  },
+  "lib/safe-smart-account": {
+    "rev": "8d6869a8fefeafc6bf62ed11c2f3c0f1f7f41844"
   }
 }

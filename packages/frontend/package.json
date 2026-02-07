@@ -14,15 +14,16 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@zerokey/shared": "workspace:*",
+    "@rainbow-me/rainbowkit": "^2.2.1",
+    "@react-native-async-storage/async-storage": "^1.23.1",
+    "@safe-global/api-kit": "^4.0.1",
     "@tanstack/react-query": "^5.60.5",
+    "@zerokey/shared": "workspace:*",
     "next": "^15.0.3",
     "react": "^19.0.0-rc.1",
     "react-dom": "^19.0.0-rc.1",
     "viem": "^2.21.40",
-    "wagmi": "^2.13.0",
-    "@rainbow-me/rainbowkit": "^2.2.1",
-    "@react-native-async-storage/async-storage": "^1.23.1"
+    "wagmi": "^2.13.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

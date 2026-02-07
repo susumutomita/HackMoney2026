@@ -225,3 +225,19 @@ export type WalletPolicyRow = typeof walletPolicies.$inferSelect;
 export type NewWalletPolicyRow = typeof walletPolicies.$inferInsert;
 export type PendingApprovalRow = typeof pendingApprovals.$inferSelect;
 export type NewPendingApprovalRow = typeof pendingApprovals.$inferInsert;
+
+/**
+ * Guard registrations table
+ * Stores Safe wallets registered with ZeroKey Guard
+ */
+export const guardRegistrations = sqliteTable("guard_registrations", {
+  id: text("id").primaryKey(),
+  safeAddress: text("safe_address").notNull().unique(),
+  chainId: integer("chain_id").notNull(),
+  ownerAddress: text("owner_address").notNull(),
+  guardContractAddress: text("guard_contract_address").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
+export type GuardRegistrationRow = typeof guardRegistrations.$inferSelect;
+export type NewGuardRegistrationRow = typeof guardRegistrations.$inferInsert;

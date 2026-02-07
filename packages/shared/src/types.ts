@@ -94,3 +94,34 @@ export interface TokenBalance {
   balance: string;
   valueUsd?: string;
 }
+
+/**
+ * Safe Guard registration
+ */
+export interface GuardRegistration {
+  id: string;
+  safeAddress: `0x${string}`;
+  chainId: number;
+  ownerAddress: `0x${string}`;
+  guardContractAddress: `0x${string}`;
+  createdAt: string;
+}
+
+/**
+ * Guard status response
+ */
+export interface GuardStatus {
+  isProtected: boolean;
+  guardAddress: `0x${string}` | null;
+  registeredAt: string | null;
+}
+
+/**
+ * Pre-approval result
+ */
+export interface PreApprovalResult {
+  approved: boolean;
+  txHash: `0x${string}`;
+  riskLevel: RiskLevel;
+  reason: string;
+}

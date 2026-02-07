@@ -11,6 +11,7 @@ import {
   StatsCards,
   PurchaseLogCard,
   BlockedAuditLogCard,
+  SafeGuardStatus,
 } from "@/components";
 
 function Logo() {
@@ -134,6 +135,7 @@ export default function DashboardPage() {
                 <NavLink href="/dashboard" active>
                   Dashboard
                 </NavLink>
+                <NavLink href="/setup">Setup</NavLink>
               </div>
             </div>
             <div className="flex items-center gap-6">
@@ -159,6 +161,11 @@ export default function DashboardPage() {
                   Analyze transactions and manage security policies
                 </p>
               </div>
+            </div>
+
+            {/* Safe Guard Status */}
+            <div className="animate-slide-up" style={{ animationDelay: "0.05s" }}>
+              <SafeGuardStatus />
             </div>
 
             {/* Stats Cards */}

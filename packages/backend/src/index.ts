@@ -15,6 +15,7 @@ import docsRouter from "./routes/openapi.js";
 import { payRouter } from "./routes/pay.js";
 import { purchasesRouter } from "./routes/purchases.js";
 import { safePolicyRouter } from "./routes/safe-policy.js";
+import { guardRouter } from "./routes/guard.js";
 import { config } from "./config.js";
 import { initializeDatabase } from "./db/index.js";
 
@@ -40,6 +41,7 @@ app.route("/api/pay", payRouter);
 app.route("/api/purchases", purchasesRouter);
 app.route("/api/image-pack", imagePackRouter);
 app.route("/api/safe-policy", safePolicyRouter);
+app.route("/api/guard", guardRouter);
 app.route("/docs", docsRouter);
 
 // Start server (avoid listening during tests/imports)
