@@ -44,3 +44,11 @@ demo-hosted: deps
 
 # Default: hosted (no local backend required)
 demo: demo-hosted
+
+# Agent demos (uses Claude API via OAuth token)
+
+agent-demo:
+	cd packages/backend && pnpm tsx ../../scripts/agent-demo.ts
+
+agent-demo-blocked:
+	cd packages/backend && pnpm tsx ../../scripts/agent-demo-blocked.ts
