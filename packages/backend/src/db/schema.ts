@@ -170,3 +170,58 @@ export type PurchaseRow = typeof purchases.$inferSelect;
 export type NewPurchaseRow = typeof purchases.$inferInsert;
 export type FirewallEventRow = typeof firewallEvents.$inferSelect;
 export type NewFirewallEventRow = typeof firewallEvents.$inferInsert;
+
+/**
+ * Protected wallets table
+ * Stores Safe wallets protected by ZeroKey Guard
+ */
+export const protectedWallets = sqliteTable("protected_wallets", {
+  id: text("id").primaryKey(),
+  safeAddress: text("safe_address").notNull().unique(),
+  ownerAddress: text("owner_address").notNull(),
+  chainId: integer("chain_id").notNull(),
+  guardAddress: text("guard_address").notNull(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+/**
+ * Wallet policies table
+ * Stores policy settings for each protected wallet
+ */
+export const walletPolicies = sqliteTable("wallet_policies", {
+  id: text("id").primaryKey(),
+  safeAddress: text("safe_address").notNull().unique(),
+  maxTransactionUsdc: text("max_transaction_usdc").notNull().default("100"),
+  requireHumanApprovalAboveUsdc: text("require_human_approval_above_usdc").notNull().default("50"),
+  blockedRecipients: text("blocked_recipients").notNull().default("[]"),
+  trustedRecipients: text("trusted_recipients").notNull().default("[]"),
+  minTrustScore: integer("min_trust_score").notNull().default(20),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+/**
+ * Pending approvals table
+ * Stores transactions requiring human approval
+ */
+export const pendingApprovals = sqliteTable("pending_approvals", {
+  id: text("id").primaryKey(),
+  safeAddress: text("safe_address").notNull(),
+  txHash: text("tx_hash"),
+  to: text("to").notNull(),
+  value: text("value").notNull(),
+  data: text("data"),
+  reason: text("reason").notNull(),
+  status: text("status").notNull(), // 'pending' | 'approved' | 'rejected'
+  createdAt: text("created_at").notNull(),
+  decidedAt: text("decided_at"),
+});
+
+export type ProtectedWalletRow = typeof protectedWallets.$inferSelect;
+export type NewProtectedWalletRow = typeof protectedWallets.$inferInsert;
+export type WalletPolicyRow = typeof walletPolicies.$inferSelect;
+export type NewWalletPolicyRow = typeof walletPolicies.$inferInsert;
+export type PendingApprovalRow = typeof pendingApprovals.$inferSelect;
+export type NewPendingApprovalRow = typeof pendingApprovals.$inferInsert;
