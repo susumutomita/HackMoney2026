@@ -243,9 +243,24 @@ async function main() {
     amountUsdc: s3.finalPriceUsdc,
     serviceId: "image-pack-001",
   });
+  console.log(`pay.request status=${req.status} (expected 402)`);
   if (req.status !== 402) {
     throw new Error(`expected 402 from /api/pay/request, got ${req.status}: ${req.text}`);
   }
+
+  console.log("402 payment instruction:");
+  console.log(
+    JSON.stringify(
+      {
+        recipient: req.json.payment.recipient,
+        token: req.json.payment.token,
+        chainId: req.json.payment.chainId,
+        amountUsdc: req.json.payment.amountUsdc,
+      },
+      null,
+      2
+    )
+  );
 
   const recipient = getAddress(req.json.payment.recipient);
   const amountUnits = parseUnits(req.json.payment.amountUsdc, 6);
