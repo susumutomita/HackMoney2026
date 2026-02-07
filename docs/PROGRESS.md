@@ -258,3 +258,48 @@ curl -X POST http://localhost:3001/api/firewall/check \
 2. **DBはSQLite** - `packages/backend/data/zerokey.db`
 3. **バックエンドポート**: 3001
 4. **フロントエンドポート**: 8000
+
+---
+
+## Safe Guard Integration ✅ (NEW)
+
+### 実装完了
+
+1. **SafeZeroKeyGuard.sol** - Safe Transaction Guard
+   - `checkTransaction()` - トランザクション前のポリシーチェック
+   - Max transfer value, daily limits, blacklist/whitelist
+   - Pre-approval mechanism for oracle
+
+2. **UI Pages**
+   - `/protect` - 簡易セットアップ (3 steps)
+   - `/setup` - 詳細セットアップウィザード (4 steps)
+   - Dashboard に "Safe Guard" セクション追加
+
+3. **Backend APIs**
+   - `POST /api/safe-policy/register` - Safe登録
+   - `GET /api/safe-policy/:chainId/:safeAddress` - ポリシー取得
+   - `POST /api/safe-policy/check` - トランザクション検証
+   - `POST /api/guard/register` - Guard API
+   - `POST /api/guard/check` - Guard検証API
+
+4. **Safe SDK Integration**
+   - `proposeSetGuard()` - setGuard tx提案
+   - `isSafeAddress()` - Safeアドレス検証
+   - Safe Transaction Service連携
+
+### User Flow
+
+```
+1. /setup or /protect にアクセス
+2. Safeアドレス入力（バリデーション付き）
+3. ポリシー設定（最大額、日次リミット等）
+4. setGuard() トランザクション提案
+5. Safe Appで署名・実行
+6. Guard有効化 → 以降全txがポリシーチェック通過
+```
+
+### 次のステップ
+
+- [ ] コントラクトをBase Sepoliaにデプロイ
+- [ ] デプロイ後のアドレスをフロントエンドに設定
+- [ ] E2Eテスト（実際のSafeで検証）
