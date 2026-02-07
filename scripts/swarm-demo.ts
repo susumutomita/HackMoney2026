@@ -193,7 +193,7 @@ async function main() {
   // NOTE: We simulate this by using a provider without registry expectedRecipient.
   // If no such provider exists in the demo DB, this scenario might not trigger.
   // It still demonstrates the decision type when it does.
-  const confirmProviderId = process.env.CONFIRM_PROVIDER_ID || "translate-ai-001";
+  const confirmProviderId = process.env.CONFIRM_PROVIDER_ID || "unverified-service-001";
   const s2 = await a2aNegotiateAndAccept({
     buyerAgentId: account.address,
     providerId: confirmProviderId,

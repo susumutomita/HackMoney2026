@@ -217,6 +217,20 @@ const DEMO_PROVIDERS = [
     wallet_address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
     ens_name: null,
   },
+  {
+    id: "unverified-service-001",
+    name: "UnverifiedPay",
+    endpoint: "https://unverified-pay.example/api",
+    services: JSON.stringify(["payments"]),
+    price_per_unit: "0.02",
+    unit: "request",
+    trust_score: 70,
+    total_transactions: 12,
+    is_active: 1,
+    // Intentionally NOT in provider registry: triggers CONFIRM_REQUIRED
+    wallet_address: "0x000000000000000000000000000000000000bEEF",
+    ens_name: null,
+  },
 ];
 
 /**
