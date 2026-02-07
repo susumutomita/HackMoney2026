@@ -3,7 +3,7 @@ import SafeApiKit from "@safe-global/api-kit";
 // Guard contract addresses per chain
 export const GUARD_ADDRESSES: Record<number, string> = {
   11155111: "0x0000000000000000000000000000000000000000", // Sepolia (TODO: deploy)
-  84532: "0x0000000000000000000000000000000000000000", // Base Sepolia
+  84532: "0x5fBdEEE03e76Bb0616060697D0d41300F3B2d3D2", // Base Sepolia - DEPLOYED
 };
 
 export interface PolicyConfig {
