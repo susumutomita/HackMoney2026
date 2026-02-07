@@ -61,7 +61,15 @@ backend:
 
 # Start frontend
 frontend:
-	cd packages/frontend && pnpm dev
+	cd packages/frontend && PORT=8000 pnpm dev
+
+# Start both backend and frontend (for local development)
+dev:
+	@echo "Starting backend on port 3001..."
+	@cd packages/backend && pnpm dev &
+	@sleep 2
+	@echo "Starting frontend on port 8000..."
+	@cd packages/frontend && PORT=8000 pnpm dev
 
 # Swarm demo (3 scenarios)
 demo: demo-local
