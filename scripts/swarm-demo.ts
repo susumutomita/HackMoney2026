@@ -164,7 +164,8 @@ async function main() {
 
   // --- Scenario 1: Blocked ---
   console.log("\n=== Swarm #1: REJECTED (recipient mismatch) ===");
-  console.log("Agent B:", '"Buy cheap translation for $0.01"');
+  console.log("Meaning: blocked before payment (money never moved)");
+  console.log("Agent B (buyer):", '"Buy cheap translation for $0.01"');
 
   const s1 = await a2aNegotiateAndAccept({
     buyerAgentId: account.address,
@@ -186,7 +187,8 @@ async function main() {
 
   // --- Scenario 2: Confirm required ---
   console.log("\n=== Swarm #2: CONFIRM_REQUIRED (CFO step-up) ===");
-  console.log("Agent C:", '"Buy from an unverified recipient; require CFO approval"');
+  console.log("Meaning: needs human OK (CFO) before payment");
+  console.log("Agent C (buyer):", '"Buy from an unverified recipient"');
 
   // NOTE: We simulate this by using a provider without registry expectedRecipient.
   // If no such provider exists in the demo DB, this scenario might not trigger.
@@ -216,7 +218,8 @@ async function main() {
 
   // --- Scenario 3: Approved + pay ---
   console.log("\n=== Swarm #3: APPROVED + txHash proof ===");
-  console.log("Agent A:", '"Buy ImagePack for $0.03"');
+  console.log("Meaning: router returns HTTP 402 payment info, then on-chain txHash proof");
+  console.log("Agent A (buyer):", '"Buy ImagePack for $0.03"');
 
   const s3 = await a2aNegotiateAndAccept({
     buyerAgentId: account.address,
@@ -275,6 +278,7 @@ async function main() {
   });
 
   console.log(`txHash=${hash}`);
+  console.log(`OPEN BaseScan: https://sepolia.basescan.org/tx/${hash}`);
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
   console.log(`mined in block=${receipt.blockNumber}`);
 
@@ -294,8 +298,10 @@ async function main() {
   const purchases = await getJson("/api/purchases");
 
   console.log("\n=== Proof summary ===");
-  console.log(`events: ${API}/api/firewall/events (status=${events.status})`);
-  console.log(`purchases: ${API}/api/purchases (status=${purchases.status})`);
+  console.log(
+    `OPEN events (money never moved): ${API}/api/firewall/events (status=${events.status})`
+  );
+  console.log(`OPEN purchases (txHash log): ${API}/api/purchases (status=${purchases.status})`);
 
   console.log("\nSwarm demo finished.");
 }
