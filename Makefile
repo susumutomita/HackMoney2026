@@ -1,5 +1,10 @@
 .PHONY: demo demo-local demo-hosted backend
 
+# Load env from .env if present.
+# Make does not read .env by default; this enables `make demo` with no extra exports.
+-include .env
+export
+
 # One-command demo entrypoint.
 # Usage:
 #   make demo               # defaults to hosted API unless NEXT_PUBLIC_API_URL is set
