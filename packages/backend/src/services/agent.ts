@@ -103,7 +103,7 @@ export async function callAgent(
     throw new Error(`API error ${res.status}: ${errorText}`);
   }
 
-  const data: AnthropicResponse = await res.json();
+  const data = (await res.json()) as AnthropicResponse;
 
   if (data.error) {
     throw new Error(`API error: ${data.error.message}`);

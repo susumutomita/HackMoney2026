@@ -45,7 +45,8 @@ export async function resolveEns(name: string): Promise<`0x${string}` | null> {
   const client = createMainnetClient();
   try {
     const normalizedName = normalize(name.trim().toLowerCase());
-    return await client.getEnsAddress({ name: normalizedName });
+    const result = await client.getEnsAddress({ name: normalizedName });
+    return result as `0x${string}` | null;
   } catch {
     return null;
   }
@@ -103,7 +104,8 @@ export async function getEnsProfile(nameOrAddress: string): Promise<EnsProfile |
     // Determine if input is name or address
     if (looksLikeEnsName(nameOrAddress)) {
       name = normalize(nameOrAddress.trim().toLowerCase());
-      address = await client.getEnsAddress({ name });
+      const resolved = await client.getEnsAddress({ name });
+      address = resolved as `0x${string}` | null;
       if (!address) return null;
     } else if (nameOrAddress.startsWith("0x")) {
       address = nameOrAddress as `0x${string}`;

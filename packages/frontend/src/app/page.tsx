@@ -32,6 +32,7 @@ export default function Home() {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-1">
+              <NavLink href="/protect">Protect Safe</NavLink>
               <NavLink href="/marketplace">Marketplace</NavLink>
               <NavLink href="/dashboard">Dashboard</NavLink>
               <NavLink href="/docs">API Docs</NavLink>
