@@ -1,5 +1,8 @@
 import type { Policy, PolicyConfig, TransactionInput } from "../types/index.js";
 import { policyRepository } from "../repositories/index.js";
+import { eq } from "drizzle-orm";
+import { db } from "../db/index.js";
+import { guardRegistrations } from "../db/schema.js";
 
 export type FirewallDecision = "APPROVED" | "CONFIRM_REQUIRED" | "REJECTED";
 
@@ -16,6 +19,11 @@ export interface FirewallCheckInput {
     expectedRecipient?: string;
     /** Recipient presented by marketplace/provider listing. */
     recipient?: string;
+  };
+  /** Safe wallet context (for Guard-aware checks). */
+  safe?: {
+    address: string;
+    chainId: number;
   };
   /** Override current time (useful for tests). */
   now?: Date;
@@ -219,6 +227,27 @@ export async function checkFirewall(input: FirewallCheckInput): Promise<Firewall
   } else if (remaining <= 10n * USDC_BASE) {
     risk = maxRisk(risk, 2);
     warnings.push(`Budget running low (remaining=${remaining.toString()})`);
+  }
+
+  // --- Safe Guard registration check ---
+  if (input.safe) {
+    try {
+      const reg = db
+        .select()
+        .from(guardRegistrations)
+        .where(eq(guardRegistrations.safeAddress, input.safe.address.toLowerCase()))
+        .get();
+      if (!reg) {
+        risk = maxRisk(risk, 2);
+        warnings.push("Safe wallet is not registered with ZeroKey Guard");
+        reasons.push("Unregistered Safe - requires confirmation");
+      } else {
+        reasons.push(`Safe registered with guard ${reg.guardContractAddress}`);
+      }
+    } catch {
+      risk = maxRisk(risk, 2);
+      warnings.push("Could not verify Safe Guard registration");
+    }
   }
 
   // --- Repository-backed policies ---

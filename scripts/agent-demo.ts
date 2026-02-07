@@ -2,7 +2,7 @@
 
 /**
  * Agent Demo - Real AI agent making payment decisions
- * 
+ *
  * This demo shows:
  * 1. AI Agent discovers providers via ZeroKey API
  * 2. Agent evaluates trust scores and decides to pay or not
@@ -143,7 +143,7 @@ async function main() {
   console.log("=== Step 1: Agent discovers providers ===\n");
   const discover = await getJson("/api/a2a/discover?service=*");
   const providers = discover.json?.results || [];
-  
+
   console.log("Agent: 'I found these providers:'\n");
   for (const p of providers) {
     console.log(`  - ${p.name} (Trust: ${p.trustScore}/100, Price: $${p.price})`);
@@ -159,9 +159,9 @@ Evaluate providers and decide: BUY, SKIP, or ASK_HUMAN.
 Respond with JSON only:
 {"decision": "BUY|SKIP|ASK_HUMAN", "reason": "brief explanation", "provider": "provider_id"}`;
 
-  const providerList = providers.map((p: any) => 
-    `- ${p.name} (id: ${p.id}): Trust ${p.trustScore}/100, $${p.price}/${p.unit}`
-  ).join("\n");
+  const providerList = providers
+    .map((p: any) => `- ${p.name} (id: ${p.id}): Trust ${p.trustScore}/100, $${p.price}/${p.unit}`)
+    .join("\n");
 
   const userMessage = `I need a translation service. Here are the available providers:
 
@@ -170,7 +170,7 @@ ${providerList}
 Which one should I use? Consider trust scores and prices.`;
 
   console.log("Agent thinking...\n");
-  
+
   const agentResponse = await callClaude(systemPrompt, userMessage);
   console.log("Agent response:", agentResponse, "\n");
 

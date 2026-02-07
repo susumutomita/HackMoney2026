@@ -184,7 +184,7 @@ guardRouter.post("/pre-approve", zValidator("json", preApproveSchema), async (c)
   }
 
   try {
-    // 1. Run firewall check
+    // 1. Run firewall check (with Safe context)
     const firewallResult = await checkFirewall({
       tx: {
         chainId: 84532, // Base Sepolia
@@ -192,6 +192,10 @@ guardRouter.post("/pre-approve", zValidator("json", preApproveSchema), async (c)
         to: input.to,
         value: input.value,
         data: input.data,
+      },
+      safe: {
+        address: input.safeAddress,
+        chainId: 84532,
       },
     });
 

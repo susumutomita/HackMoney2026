@@ -92,7 +92,7 @@ contract SafeZeroKeyGuardTest is Test {
 
         // Owner (deployer) can also set policy
         guard.setPolicy(safe, 5 ether, 25 ether, true);
-        (,uint256 maxVal,,,) = guard.getPolicy(safe);
+        (, uint256 maxVal,,,) = guard.getPolicy(safe);
         assertEq(maxVal, 5 ether);
     }
 
@@ -168,8 +168,7 @@ contract SafeZeroKeyGuardTest is Test {
         // Unregistered Safe → policy not enabled → transaction allowed
         vm.prank(safe);
         guard.checkTransaction(
-            recipient, 1 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 1 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
     }
 
@@ -181,8 +180,7 @@ contract SafeZeroKeyGuardTest is Test {
 
         vm.prank(safe);
         guard.checkTransaction(
-            recipient, 5 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 5 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
     }
 
@@ -195,8 +193,7 @@ contract SafeZeroKeyGuardTest is Test {
         vm.prank(safe);
         vm.expectRevert(SafeZeroKeyGuard.ExceedsMaxValue.selector);
         guard.checkTransaction(
-            recipient, 15 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 15 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
     }
 
@@ -209,8 +206,7 @@ contract SafeZeroKeyGuardTest is Test {
         vm.prank(safe);
         vm.expectRevert(SafeZeroKeyGuard.RecipientBlocked.selector);
         guard.checkTransaction(
-            recipient, 1 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 1 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
     }
 
@@ -225,8 +221,7 @@ contract SafeZeroKeyGuardTest is Test {
         vm.prank(safe);
         vm.expectRevert(SafeZeroKeyGuard.ArbitraryCallsNotAllowed.selector);
         guard.checkTransaction(
-            recipient, 0, calldata_, Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 0, calldata_, Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
     }
 
@@ -239,23 +234,20 @@ contract SafeZeroKeyGuardTest is Test {
         // First tx: 4 ETH - OK
         vm.prank(safe);
         guard.checkTransaction(
-            recipient, 4 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 4 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
 
         // Second tx: 4 ETH - OK (total 8)
         vm.prank(safe);
         guard.checkTransaction(
-            recipient, 4 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 4 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
 
         // Third tx: 4 ETH - BLOCKED (total would be 12 > 10)
         vm.prank(safe);
         vm.expectRevert(SafeZeroKeyGuard.ExceedsDailyLimit.selector);
         guard.checkTransaction(
-            recipient, 4 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 4 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
     }
 
@@ -268,8 +260,7 @@ contract SafeZeroKeyGuardTest is Test {
         // Spend 9 ETH
         vm.prank(safe);
         guard.checkTransaction(
-            recipient, 9 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 9 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
 
         // Warp 1 day + 1 second
@@ -278,8 +269,7 @@ contract SafeZeroKeyGuardTest is Test {
         // Should be allowed again after daily reset
         vm.prank(safe);
         guard.checkTransaction(
-            recipient, 9 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 9 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
     }
 
@@ -291,7 +281,18 @@ contract SafeZeroKeyGuardTest is Test {
 
         // Pre-approve a 100 ETH tx
         bytes32 txHash = keccak256(
-            abi.encodePacked(safe, recipient, uint256(100 ether), keccak256(bytes("")), Enum.Operation.Call, uint256(0), uint256(0), uint256(0), address(0), payable(address(0)))
+            abi.encodePacked(
+                safe,
+                recipient,
+                uint256(100 ether),
+                keccak256(bytes("")),
+                Enum.Operation.Call,
+                uint256(0),
+                uint256(0),
+                uint256(0),
+                address(0),
+                payable(address(0))
+            )
         );
 
         vm.prank(oracle);
@@ -300,8 +301,7 @@ contract SafeZeroKeyGuardTest is Test {
         // 100 ETH tx goes through because pre-approved
         vm.prank(safe);
         guard.checkTransaction(
-            recipient, 100 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 100 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
 
         // Pre-approval consumed (one-time use)
@@ -356,16 +356,14 @@ contract SafeZeroKeyGuardTest is Test {
         // 4. Transaction within limits - allowed
         vm.prank(safe);
         guard.checkTransaction(
-            recipient, 3 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 3 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
 
         // 5. Transaction over limit - blocked
         vm.prank(safe);
         vm.expectRevert(SafeZeroKeyGuard.ExceedsMaxValue.selector);
         guard.checkTransaction(
-            recipient, 6 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 6 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
     }
 
@@ -378,7 +376,18 @@ contract SafeZeroKeyGuardTest is Test {
 
         // 2. Oracle pre-approves a large tx
         bytes32 txHash = keccak256(
-            abi.encodePacked(safe, recipient, uint256(50 ether), keccak256(bytes("")), Enum.Operation.Call, uint256(0), uint256(0), uint256(0), address(0), payable(address(0)))
+            abi.encodePacked(
+                safe,
+                recipient,
+                uint256(50 ether),
+                keccak256(bytes("")),
+                Enum.Operation.Call,
+                uint256(0),
+                uint256(0),
+                uint256(0),
+                address(0),
+                payable(address(0))
+            )
         );
         vm.prank(oracle);
         guard.preApproveTransaction(txHash, safe);
@@ -386,8 +395,7 @@ contract SafeZeroKeyGuardTest is Test {
         // 3. Large tx goes through despite strict policy
         vm.prank(safe);
         guard.checkTransaction(
-            recipient, 50 ether, "", Enum.Operation.Call,
-            0, 0, 0, address(0), payable(address(0)), "", user
+            recipient, 50 ether, "", Enum.Operation.Call, 0, 0, 0, address(0), payable(address(0)), "", user
         );
     }
 }

@@ -12,7 +12,7 @@ interface SafePolicy {
   chainId: number;
   adminAddress: string;
   maxTransferValue: string; // wei
-  dailyLimit: string;       // wei
+  dailyLimit: string; // wei
   allowArbitraryCalls: boolean;
   whitelist: string[];
   blacklist: string[];
@@ -32,30 +32,26 @@ const registerSchema = z.object({
 /**
  * POST /api/safe-policy/register - Register a Safe for protection
  */
-safePolicyRouter.post(
-  "/register",
-  zValidator("json", registerSchema),
-  async (c) => {
-    const data = c.req.valid("json");
-    const key = `${data.chainId}:${data.safeAddress.toLowerCase()}`;
+safePolicyRouter.post("/register", zValidator("json", registerSchema), async (c) => {
+  const data = c.req.valid("json");
+  const key = `${data.chainId}:${data.safeAddress.toLowerCase()}`;
 
-    const policy: SafePolicy = {
-      safeAddress: data.safeAddress.toLowerCase(),
-      chainId: data.chainId,
-      adminAddress: data.adminAddress.toLowerCase(),
-      maxTransferValue: data.maxTransferValue,
-      dailyLimit: data.dailyLimit,
-      allowArbitraryCalls: data.allowArbitraryCalls,
-      whitelist: [],
-      blacklist: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+  const policy: SafePolicy = {
+    safeAddress: data.safeAddress.toLowerCase(),
+    chainId: data.chainId,
+    adminAddress: data.adminAddress.toLowerCase(),
+    maxTransferValue: data.maxTransferValue,
+    dailyLimit: data.dailyLimit,
+    allowArbitraryCalls: data.allowArbitraryCalls,
+    whitelist: [],
+    blacklist: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 
-    safePolicies.set(key, policy);
-    return c.json({ success: true, policy });
-  }
-);
+  safePolicies.set(key, policy);
+  return c.json({ success: true, policy });
+});
 
 /**
  * GET /api/safe-policy/:chainId/:safeAddress - Get policy for a Safe
@@ -82,29 +78,26 @@ const updateSchema = z.object({
   allowArbitraryCalls: z.boolean().optional(),
 });
 
-safePolicyRouter.put(
-  "/:chainId/:safeAddress",
-  zValidator("json", updateSchema),
-  async (c) => {
-    const chainId = parseInt(c.req.param("chainId"));
-    const safeAddress = c.req.param("safeAddress").toLowerCase();
-    const key = `${chainId}:${safeAddress}`;
-    const updates = c.req.valid("json");
+safePolicyRouter.put("/:chainId/:safeAddress", zValidator("json", updateSchema), async (c) => {
+  const chainId = parseInt(c.req.param("chainId"));
+  const safeAddress = c.req.param("safeAddress").toLowerCase();
+  const key = `${chainId}:${safeAddress}`;
+  const updates = c.req.valid("json");
 
-    const policy = safePolicies.get(key);
-    if (!policy) {
-      return c.json({ error: "Safe not registered" }, 404);
-    }
-
-    if (updates.maxTransferValue) policy.maxTransferValue = updates.maxTransferValue;
-    if (updates.dailyLimit) policy.dailyLimit = updates.dailyLimit;
-    if (updates.allowArbitraryCalls !== undefined) policy.allowArbitraryCalls = updates.allowArbitraryCalls;
-    policy.updatedAt = new Date().toISOString();
-
-    safePolicies.set(key, policy);
-    return c.json({ success: true, policy });
+  const policy = safePolicies.get(key);
+  if (!policy) {
+    return c.json({ error: "Safe not registered" }, 404);
   }
-);
+
+  if (updates.maxTransferValue) policy.maxTransferValue = updates.maxTransferValue;
+  if (updates.dailyLimit) policy.dailyLimit = updates.dailyLimit;
+  if (updates.allowArbitraryCalls !== undefined)
+    policy.allowArbitraryCalls = updates.allowArbitraryCalls;
+  policy.updatedAt = new Date().toISOString();
+
+  safePolicies.set(key, policy);
+  return c.json({ success: true, policy });
+});
 
 /**
  * POST /api/safe-policy/:chainId/:safeAddress/whitelist - Add to whitelist
@@ -169,43 +162,39 @@ const checkSchema = z.object({
   data: z.string().optional(),
 });
 
-safePolicyRouter.post(
-  "/check",
-  zValidator("json", checkSchema),
-  async (c) => {
-    const { safeAddress, chainId, to, value, data } = c.req.valid("json");
-    const key = `${chainId}:${safeAddress.toLowerCase()}`;
+safePolicyRouter.post("/check", zValidator("json", checkSchema), async (c) => {
+  const { safeAddress, chainId, to, value, data } = c.req.valid("json");
+  const key = `${chainId}:${safeAddress.toLowerCase()}`;
 
-    const policy = safePolicies.get(key);
-    if (!policy) {
-      // No policy = allow by default
-      return c.json({ allowed: true, reason: "No policy registered" });
-    }
-
-    const valueBigInt = BigInt(value);
-    const maxValue = BigInt(policy.maxTransferValue);
-
-    // Check blacklist
-    if (policy.blacklist.includes(to.toLowerCase())) {
-      return c.json({ allowed: false, reason: "Recipient is blacklisted" });
-    }
-
-    // Check max value
-    if (maxValue > 0n && valueBigInt > maxValue) {
-      return c.json({ 
-        allowed: false, 
-        reason: `Exceeds max transfer value (${policy.maxTransferValue} wei)` 
-      });
-    }
-
-    // Check arbitrary calls
-    if (!policy.allowArbitraryCalls && data && data !== "0x" && data.length > 2) {
-      return c.json({ allowed: false, reason: "Contract calls not allowed" });
-    }
-
-    return c.json({ allowed: true, reason: "Policy check passed" });
+  const policy = safePolicies.get(key);
+  if (!policy) {
+    // No policy = allow by default
+    return c.json({ allowed: true, reason: "No policy registered" });
   }
-);
+
+  const valueBigInt = BigInt(value);
+  const maxValue = BigInt(policy.maxTransferValue);
+
+  // Check blacklist
+  if (policy.blacklist.includes(to.toLowerCase())) {
+    return c.json({ allowed: false, reason: "Recipient is blacklisted" });
+  }
+
+  // Check max value
+  if (maxValue > 0n && valueBigInt > maxValue) {
+    return c.json({
+      allowed: false,
+      reason: `Exceeds max transfer value (${policy.maxTransferValue} wei)`,
+    });
+  }
+
+  // Check arbitrary calls
+  if (!policy.allowArbitraryCalls && data && data !== "0x" && data.length > 2) {
+    return c.json({ allowed: false, reason: "Contract calls not allowed" });
+  }
+
+  return c.json({ allowed: true, reason: "Policy check passed" });
+});
 
 /**
  * GET /api/safe-policy/all - List all registered Safes (for dashboard)

@@ -158,9 +158,7 @@ Rules:
 
 Should I approve this payment?`;
 
-  const response = await callAgent(systemPrompt, [
-    { role: "user", content: userMessage },
-  ]);
+  const response = await callAgent(systemPrompt, [{ role: "user", content: userMessage }]);
 
   // Parse JSON from response
   const jsonMatch = response.match(/\{[\s\S]*\}/);
