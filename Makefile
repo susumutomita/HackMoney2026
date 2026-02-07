@@ -1,32 +1,40 @@
 .PHONY: demo demo-local demo-hosted backend
 
-# Load env from .env if present.
-# Make does not read .env by default; this enables `make demo` with no extra exports.
--include .env
-export
-
-# One-command demo entrypoint.
-# Usage:
-#   make demo               # defaults to hosted API unless NEXT_PUBLIC_API_URL is set
-#   make demo-local         # use local backend (http://localhost:3001)
-#   make demo-hosted        # use hosted backend (https://zerokey.exe.xyz:8000)
-#
-# Required env for full run:
-#   PRIVATE_KEY=0x...  (Base Sepolia wallet with gas + USDC)
-# Optional:
-#   RPC_URL=...
-#   AUTO_CONFIRM=true
-
-NEXT_PUBLIC_API_URL ?= https://zerokey.exe.xyz:8000
+# Simple, memorable entrypoints for live judging / teammates.
+# Requires pnpm installed.
 
 backend:
-	pnpm dev:backend
+	cd packages/backend && pnpm dev
 
-demo:
-	NEXT_PUBLIC_API_URL=$(NEXT_PUBLIC_API_URL) pnpm demo
+# Runs the swarm demo against a locally running backend on :3001.
+# In another terminal, run: make backend
+# Usage:
+#   PRIVATE_KEY=0x... make demo-local
 
 demo-local:
-	NEXT_PUBLIC_API_URL=http://localhost:3001 pnpm demo
+	@if [ -z "$$PRIVATE_KEY" ]; then \
+		echo "Missing PRIVATE_KEY. Example:"; \
+		echo "  PRIVATE_KEY=0x... make demo-local"; \
+		exit 1; \
+	fi
+	NEXT_PUBLIC_API_URL=http://localhost:3001 \
+	PRIVATE_KEY=$$PRIVATE_KEY \
+	pnpm -C packages/backend tsx ../../scripts/swarm-demo.ts
+
+# Runs the swarm demo against the hosted demo backend.
+# Usage:
+#   PRIVATE_KEY=0x... make demo-hosted
 
 demo-hosted:
-	NEXT_PUBLIC_API_URL=https://zerokey.exe.xyz:8000 pnpm demo
+	@if [ -z "$$PRIVATE_KEY" ]; then \
+		echo "Missing PRIVATE_KEY. Example:"; \
+		echo "  PRIVATE_KEY=0x... make demo-hosted"; \
+		exit 1; \
+	fi
+	NEXT_PUBLIC_API_URL=https://zerokey.exe.xyz:8000 \
+	PRIVATE_KEY=$$PRIVATE_KEY \
+	pnpm -C packages/backend tsx ../../scripts/swarm-demo.ts
+
+# Default: hosted (no need to run backend locally)
+
+demo: demo-hosted
