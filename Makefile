@@ -6,6 +6,9 @@ ifneq (,$(wildcard .env))
 	export
 endif
 
+# Simple, memorable entrypoints for live judging / teammates.
+# Requires pnpm installed.
+
 # Install dependencies (safe to run repeatedly)
 deps:
 	pnpm -s install
@@ -39,5 +42,5 @@ demo-hosted: deps
 	PRIVATE_KEY=$$PRIVATE_KEY \
 	pnpm -C packages/backend tsx ../../scripts/swarm-demo.ts
 
-# Default: hosted (no need to run backend locally)
+# Default: hosted (no local backend required)
 demo: demo-hosted
