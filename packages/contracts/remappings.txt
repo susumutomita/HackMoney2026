@@ -1,0 +1,1 @@
+@safe/=lib/safe-smart-account/contracts/
