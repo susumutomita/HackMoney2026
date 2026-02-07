@@ -42,9 +42,23 @@ Quick links:
 - Demo script: `docs/DEMO_SCRIPT.md`
 - Demo checklist: `docs/DEMO_CHECKLIST.md`
 - API Docs (Swagger): `/docs`
+- **Safe Guard Setup**: `/setup` - Protect your Safe multisig
 - A2A Payment Router spec: `docs/spec/AGENT_PAYMENT_ROUTER.md`
 - Sponsor tech map: `docs/SPONSOR_TECH_MAP.md`
 - Trust score model: `docs/TRUST_SCORE_MODEL.md`
+
+### Safe Guard Protection (NEW)
+
+Protect your Safe multisig wallet with ZeroKey Guard:
+
+1. Go to `/setup` and enter your Safe address
+2. Configure policy (max transaction amount, daily limits)
+3. Sign the `setGuard()` transaction in Safe App
+4. All future transactions from this Safe go through ZeroKey policy checks
+
+```
+Safe Transaction → ZeroKey Guard → Policy Check → Execute or Block
+```
 
 ### Firewall before execution (30-second mental model)
 
