@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Enum} from "safe-smart-account/contracts/libraries/Enum.sol";
+import {Enum} from "safe-smart-account/contracts/interfaces/Enum.sol";
 import {BaseTransactionGuard} from "safe-smart-account/contracts/base/GuardManager.sol";
 
 /**

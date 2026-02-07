@@ -1,0 +1,774 @@
+"use client";
+
+import { useState } from "react";
+import type { ReactNode } from "react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import Link from "next/link";
+import { policyApi } from "@/lib/api";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+
+// ── Icons ────────────────────────────────────────────
+
+function LockIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+    </svg>
+  );
+}
+
+function ShieldCheckIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+    </svg>
+  );
+}
+
+function CheckCircleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+  );
+}
+
+function CogIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+    </svg>
+  );
+}
+
+function ArrowRightIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+    </svg>
+  );
+}
+
+function ClipboardCopyIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.75a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
+    </svg>
+  );
+}
+
+// ── Nav components (reused from dashboard) ───────────
+
+function Logo() {
+  return (
+    <Link href="/" className="flex items-center gap-3 group">
+      <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center group-hover:border-cyan-500/40 transition-colors">
+        <LockIcon className="w-5 h-5 text-cyan-400" />
+      </div>
+      <div className="flex flex-col">
+        <span className="text-lg font-bold text-cyan-400">ZeroKey</span>
+        <span className="text-xs font-light text-slate-500 tracking-widest uppercase">Treasury</span>
+      </div>
+    </Link>
+  );
+}
+
+function NavLink({ href, children, active }: { href: string; children: ReactNode; active?: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+        active
+          ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+          : "text-slate-400 hover:text-white hover:bg-white/5"
+      }`}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function StatusIndicator() {
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+      <div className="w-2 h-2 rounded-full bg-emerald-400 status-pulse" />
+      <span className="text-xs font-medium text-emerald-400">Online</span>
+    </div>
+  );
+}
+
+// ── Types ────────────────────────────────────────────
+
+interface GuardStatus {
+  safeAddress: string;
+  isProtected: boolean;
+  guardAddress: string | null;
+  registeredAt: string | null;
+  policyCount: number;
+}
+
+// ── Steps ────────────────────────────────────────────
+
+const STEPS = [
+  { label: "Enter Safe", icon: LockIcon },
+  { label: "Enable Guard", icon: ShieldCheckIcon },
+  { label: "Configure", icon: CogIcon },
+  { label: "Complete", icon: CheckCircleIcon },
+];
+
+// ── Stepper ──────────────────────────────────────────
+
+function Stepper({ currentStep }: { currentStep: number }) {
+  return (
+    <div className="flex items-center justify-center gap-2 mb-10">
+      {STEPS.map((step, idx) => {
+        const isCompleted = idx < currentStep;
+        const isCurrent = idx === currentStep;
+        const Icon = step.icon;
+        return (
+          <div key={step.label} className="flex items-center gap-2">
+            <div className="flex flex-col items-center gap-1.5">
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                  isCompleted
+                    ? "bg-emerald-500/20 border border-emerald-500/30"
+                    : isCurrent
+                      ? "bg-cyan-500/20 border border-cyan-500/30"
+                      : "bg-slate-800/50 border border-white/5"
+                }`}
+              >
+                <Icon
+                  className={`w-5 h-5 ${
+                    isCompleted ? "text-emerald-400" : isCurrent ? "text-cyan-400" : "text-slate-600"
+                  }`}
+                />
+              </div>
+              <span
+                className={`text-xs font-medium ${
+                  isCompleted ? "text-emerald-400" : isCurrent ? "text-cyan-400" : "text-slate-600"
+                }`}
+              >
+                {step.label}
+              </span>
+            </div>
+            {idx < STEPS.length - 1 && (
+              <div
+                className={`w-12 h-px mb-5 ${
+                  idx < currentStep ? "bg-emerald-500/40" : "bg-white/5"
+                }`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Step 1: Enter Safe Address ───────────────────────
+
+function StepEnterSafe({
+  onNext,
+  onStatusLoaded,
+}: {
+  onNext: () => void;
+  onStatusLoaded: (status: GuardStatus) => void;
+}) {
+  const [safeAddress, setSafeAddress] = useState("");
+  const [isChecking, setIsChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<GuardStatus | null>(null);
+
+  const isValidAddress = /^0x[a-fA-F0-9]{40}$/.test(safeAddress);
+
+  const checkStatus = async () => {
+    if (!isValidAddress) return;
+    setIsChecking(true);
+    setError(null);
+    setStatus(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/guard/status/${safeAddress}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ message: "Failed to check status" }));
+        throw new Error(body.message || body.error || "Failed to check status");
+      }
+      const data: GuardStatus = await res.json();
+      setStatus(data);
+      onStatusLoaded(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to check guard status");
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  return (
+    <div className="glass-card p-8 max-w-xl mx-auto">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+          <LockIcon className="w-5 h-5 text-cyan-400" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-white">Enter Safe Address</h2>
+          <p className="text-sm text-slate-500">Provide your Safe multisig wallet address</p>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-400 mb-2">Safe Address</label>
+          <input
+            type="text"
+            value={safeAddress}
+            onChange={(e) => {
+              setSafeAddress(e.target.value);
+              setStatus(null);
+              setError(null);
+            }}
+            placeholder="0x..."
+            className="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10 text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 font-mono text-sm"
+          />
+        </div>
+
+        <button
+          onClick={checkStatus}
+          disabled={!isValidAddress || isChecking}
+          className="w-full py-3 rounded-xl font-medium text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/25"
+        >
+          {isChecking ? "Checking..." : "Check Status"}
+        </button>
+
+        {error && (
+          <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+            <p className="text-rose-400 text-sm">{error}</p>
+          </div>
+        )}
+
+        {status && (
+          <div
+            className={`p-4 rounded-xl border ${
+              status.isProtected
+                ? "bg-emerald-500/10 border-emerald-500/20"
+                : "bg-amber-500/10 border-amber-500/20"
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              {status.isProtected ? (
+                <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
+              ) : (
+                <ShieldCheckIcon className="w-5 h-5 text-amber-400" />
+              )}
+              <span
+                className={`font-medium text-sm ${
+                  status.isProtected ? "text-emerald-400" : "text-amber-400"
+                }`}
+              >
+                {status.isProtected ? "Protected by ZeroKey Guard" : "Not Protected"}
+              </span>
+            </div>
+            {status.isProtected && (
+              <p className="text-xs text-slate-400">
+                Guard: <span className="font-mono">{status.guardAddress}</span>
+                {status.policyCount > 0 && ` | ${status.policyCount} active policies`}
+              </p>
+            )}
+            {!status.isProtected && (
+              <p className="text-xs text-slate-400">
+                This Safe does not have ZeroKey Guard enabled yet.
+              </p>
+            )}
+          </div>
+        )}
+
+        {status && (
+          <button
+            onClick={onNext}
+            className="w-full py-3 rounded-xl font-medium text-sm transition-all bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/25 flex items-center justify-center gap-2"
+          >
+            {status.isProtected ? "Configure Policies" : "Enable Protection"}
+            <ArrowRightIcon className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Step 2: Enable Protection ────────────────────────
+
+function StepEnableProtection({
+  guardStatus,
+  onNext,
+}: {
+  guardStatus: GuardStatus | null;
+  onNext: () => void;
+}) {
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [registered, setRegistered] = useState(guardStatus?.isProtected ?? false);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const safeAddress = guardStatus?.safeAddress ?? "";
+
+  // The Guard contract address -- shown to users for setGuard()
+  const guardContractAddress =
+    guardStatus?.guardAddress || process.env.NEXT_PUBLIC_GUARD_CONTRACT_ADDRESS || "TBD";
+
+  const registerSafe = async () => {
+    setIsRegistering(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/guard/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ safeAddress }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ message: "Registration failed" }));
+        throw new Error(body.message || body.error || "Registration failed");
+      }
+      setRegistered(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to register Safe");
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    void window.navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // If already protected, skip ahead
+  if (guardStatus?.isProtected) {
+    return (
+      <div className="glass-card p-8 max-w-xl mx-auto">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+            <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white">Already Protected</h2>
+            <p className="text-sm text-slate-500">ZeroKey Guard is active on this Safe</p>
+          </div>
+        </div>
+        <button
+          onClick={onNext}
+          className="w-full py-3 rounded-xl font-medium text-sm transition-all bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/25 flex items-center justify-center gap-2"
+        >
+          Configure Policies
+          <ArrowRightIcon className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass-card p-8 max-w-xl mx-auto">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+          <ShieldCheckIcon className="w-5 h-5 text-cyan-400" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-white">Enable ZeroKey Protection</h2>
+          <p className="text-sm text-slate-500">Two-step process to secure your Safe</p>
+        </div>
+      </div>
+
+      {/* What ZeroKey Guard does */}
+      <div className="p-4 rounded-xl bg-slate-800/30 border border-white/5 mb-6">
+        <h3 className="text-sm font-medium text-white mb-3">What ZeroKey Guard does:</h3>
+        <ul className="space-y-2 text-sm text-slate-400">
+          <li className="flex items-start gap-2">
+            <span className="text-cyan-400 mt-0.5">-</span>
+            AI-powered analysis of every transaction before execution
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-cyan-400 mt-0.5">-</span>
+            Blocks suspicious, high-risk, or policy-violating transactions
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-cyan-400 mt-0.5">-</span>
+            On-chain audit trail of all approval decisions
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-cyan-400 mt-0.5">-</span>
+            Configurable spending limits and policy rules
+          </li>
+        </ul>
+      </div>
+
+      {/* Step A: Register with backend */}
+      <div className="space-y-4">
+        <div className="p-4 rounded-xl bg-slate-800/30 border border-white/5">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 text-xs font-bold flex items-center justify-center">
+              1
+            </span>
+            <h3 className="text-sm font-medium text-white">Register your Safe</h3>
+          </div>
+          <p className="text-xs text-slate-500 mb-3 ml-8">
+            Register your Safe address with ZeroKey backend to enable monitoring.
+          </p>
+          <button
+            onClick={registerSafe}
+            disabled={isRegistering || registered}
+            className={`ml-8 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              registered
+                ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+                : "bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/25 disabled:opacity-40"
+            }`}
+          >
+            {registered ? "Registered" : isRegistering ? "Registering..." : "Register Safe"}
+          </button>
+        </div>
+
+        {error && (
+          <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+            <p className="text-rose-400 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Step B: Set Guard via Safe UI */}
+        <div
+          className={`p-4 rounded-xl border transition-all ${
+            registered
+              ? "bg-slate-800/30 border-white/5"
+              : "bg-slate-800/10 border-white/[0.02] opacity-50"
+          }`}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <span
+              className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center ${
+                registered ? "bg-cyan-500/20 text-cyan-400" : "bg-slate-700/50 text-slate-600"
+              }`}
+            >
+              2
+            </span>
+            <h3 className="text-sm font-medium text-white">Set Guard on your Safe</h3>
+          </div>
+          <div className="ml-8 space-y-3">
+            <p className="text-xs text-slate-500">
+              Add ZeroKey Guard through the Safe Transaction Builder:
+            </p>
+            <ol className="text-xs text-slate-400 space-y-1.5 list-decimal list-inside">
+              <li>Open your Safe at app.safe.global</li>
+              <li>Go to Transaction Builder (New Transaction &gt; Transaction Builder)</li>
+              <li>
+                Enter your Safe address as the &quot;to&quot; address
+              </li>
+              <li>
+                Use the <code className="px-1.5 py-0.5 rounded bg-slate-700/50 text-cyan-400">setGuard</code> function
+              </li>
+              <li>Paste the Guard contract address below as the parameter</li>
+              <li>Submit and confirm with required signers</li>
+            </ol>
+
+            <div className="flex items-center gap-2">
+              <div className="flex-1 px-3 py-2 rounded-lg bg-slate-900/50 border border-white/5 font-mono text-xs text-cyan-400 truncate">
+                {guardContractAddress}
+              </div>
+              <button
+                onClick={() => copyToClipboard(guardContractAddress)}
+                className="p-2 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
+                title="Copy guard address"
+              >
+                <ClipboardCopyIcon className="w-4 h-4" />
+              </button>
+            </div>
+            {copied && <p className="text-xs text-emerald-400">Copied to clipboard</p>}
+          </div>
+        </div>
+
+        {registered && (
+          <button
+            onClick={onNext}
+            className="w-full py-3 rounded-xl font-medium text-sm transition-all bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/25 flex items-center justify-center gap-2"
+          >
+            Continue to Policy Configuration
+            <ArrowRightIcon className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Step 3: Configure Policies ───────────────────────
+
+function StepConfigurePolicies({ onNext }: { onNext: () => void }) {
+  const [maxTxAmount, setMaxTxAmount] = useState("1000");
+  const [dailyLimit, setDailyLimit] = useState("5000");
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  const savePolicies = async () => {
+    setIsSaving(true);
+    setError(null);
+    try {
+      // Create spending limit per transaction
+      await policyApi.create({
+        name: `Max Transaction: ${maxTxAmount} USDC`,
+        config: {
+          type: "spending_limit",
+          maxAmountWei: (BigInt(Math.round(Number(maxTxAmount) * 1e6)) * BigInt(1e12)).toString(),
+          period: "per_transaction",
+        },
+        enabled: true,
+      });
+
+      // Create daily spending limit
+      await policyApi.create({
+        name: `Daily Limit: ${dailyLimit} USDC`,
+        config: {
+          type: "spending_limit",
+          maxAmountWei: (BigInt(Math.round(Number(dailyLimit) * 1e6)) * BigInt(1e12)).toString(),
+          period: "daily",
+        },
+        enabled: true,
+      });
+
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save policies");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="glass-card p-8 max-w-xl mx-auto">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+          <CogIcon className="w-5 h-5 text-amber-400" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-white">Configure Policies</h2>
+          <p className="text-sm text-slate-500">Set spending limits for your Safe</p>
+        </div>
+      </div>
+
+      <div className="space-y-5">
+        <div>
+          <label className="block text-sm font-medium text-slate-400 mb-2">
+            Max Transaction Amount (USDC)
+          </label>
+          <div className="relative">
+            <input
+              type="number"
+              value={maxTxAmount}
+              onChange={(e) => setMaxTxAmount(e.target.value)}
+              min="0"
+              step="100"
+              className="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10 text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 text-sm pr-16"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500">
+              USDC
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 mt-1">
+            Transactions exceeding this amount will be blocked
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-400 mb-2">
+            Daily Spending Limit (USDC)
+          </label>
+          <div className="relative">
+            <input
+              type="number"
+              value={dailyLimit}
+              onChange={(e) => setDailyLimit(e.target.value)}
+              min="0"
+              step="500"
+              className="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10 text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 text-sm pr-16"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500">
+              USDC
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 mt-1">
+            Total daily spending across all transactions
+          </p>
+        </div>
+
+        {error && (
+          <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+            <p className="text-rose-400 text-sm">{error}</p>
+          </div>
+        )}
+
+        {saved && (
+          <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+            <p className="text-emerald-400 text-sm">Policies saved successfully</p>
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          {!saved ? (
+            <button
+              onClick={savePolicies}
+              disabled={isSaving || !maxTxAmount || !dailyLimit}
+              className="flex-1 py-3 rounded-xl font-medium text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/25"
+            >
+              {isSaving ? "Saving..." : "Save Policies"}
+            </button>
+          ) : (
+            <button
+              onClick={onNext}
+              className="flex-1 py-3 rounded-xl font-medium text-sm transition-all bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 flex items-center justify-center gap-2"
+            >
+              Complete Setup
+              <ArrowRightIcon className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 4: Success ──────────────────────────────────
+
+function StepSuccess({ guardStatus }: { guardStatus: GuardStatus | null }) {
+  return (
+    <div className="glass-card p-8 max-w-xl mx-auto text-center">
+      <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-6">
+        <CheckCircleIcon className="w-8 h-8 text-emerald-400" />
+      </div>
+      <h2 className="text-2xl font-bold text-white mb-2">Setup Complete</h2>
+      <p className="text-slate-400 mb-2">
+        Your Safe is configured with ZeroKey Guard protection.
+      </p>
+      {guardStatus && (
+        <p className="text-xs text-slate-600 font-mono mb-8">
+          {guardStatus.safeAddress}
+        </p>
+      )}
+
+      <div className="p-4 rounded-xl bg-slate-800/30 border border-white/5 mb-8 text-left">
+        <h3 className="text-sm font-medium text-white mb-3">What happens next:</h3>
+        <ul className="space-y-2 text-sm text-slate-400">
+          <li className="flex items-start gap-2">
+            <span className="text-emerald-400 mt-0.5">-</span>
+            Every transaction proposed through your Safe will be analyzed by AI
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-emerald-400 mt-0.5">-</span>
+            Transactions that violate policies will be automatically blocked
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-emerald-400 mt-0.5">-</span>
+            View all activity on the Dashboard
+          </li>
+        </ul>
+      </div>
+
+      <Link
+        href="/dashboard"
+        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-sm bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/25 transition-all"
+      >
+        Go to Dashboard
+        <ArrowRightIcon className="w-4 h-4" />
+      </Link>
+    </div>
+  );
+}
+
+// ── Main Setup Page ──────────────────────────────────
+
+export default function SetupPage() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [guardStatus, setGuardStatus] = useState<GuardStatus | null>(null);
+
+  const handleNext = () => {
+    // If already protected, skip enable step
+    if (currentStep === 0 && guardStatus?.isProtected) {
+      setCurrentStep(2);
+    } else {
+      setCurrentStep((s) => Math.min(s + 1, 3));
+    }
+  };
+
+  return (
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background */}
+      <div className="mesh-gradient" />
+      <div className="noise-overlay" />
+
+      {/* Navigation */}
+      <nav className="relative z-20 border-b border-white/5 backdrop-blur-2xl bg-slate-950/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            <div className="flex items-center gap-10">
+              <Logo />
+              <div className="hidden sm:flex items-center gap-2">
+                <NavLink href="/dashboard">Dashboard</NavLink>
+                <NavLink href="/setup" active>Setup</NavLink>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <StatusIndicator />
+              <ConnectButton />
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="animate-fade-in">
+          {/* Header */}
+          <div className="text-center mb-8 pt-4">
+            <h1 className="text-3xl font-bold">
+              <span className="gradient-text">Protect Your Safe</span>
+            </h1>
+            <p className="text-slate-500 mt-2">
+              Set up ZeroKey Guard to secure your Safe multisig wallet
+            </p>
+          </div>
+
+          {/* Stepper */}
+          <Stepper currentStep={currentStep} />
+
+          {/* Step Content */}
+          <div className="animate-slide-up">
+            {currentStep === 0 && (
+              <StepEnterSafe onNext={handleNext} onStatusLoaded={setGuardStatus} />
+            )}
+            {currentStep === 1 && (
+              <StepEnableProtection guardStatus={guardStatus} onNext={handleNext} />
+            )}
+            {currentStep === 2 && <StepConfigurePolicies onNext={handleNext} />}
+            {currentStep === 3 && <StepSuccess guardStatus={guardStatus} />}
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-white/5 mt-auto backdrop-blur-xl bg-slate-950/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-slate-500">
+              Execution Governance Layer for Autonomous Finance
+            </p>
+            <div className="flex items-center gap-6 text-xs text-slate-600">
+              <span className="px-2 py-1 rounded-md bg-slate-800/50">v0.1.0</span>
+              <span className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                Base Sepolia
+              </span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
