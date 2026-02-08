@@ -75,7 +75,7 @@ Add to your MCP client configuration (e.g. `claude_desktop_config.json`):
       "command": "npx",
       "args": ["-y", "@zerokey/mcp-server@latest"],
       "env": {
-        "ZEROKEY_API_URL": "http://localhost:3001",
+        "ZEROKEY_API_URL": "https://zerokey.exe.xyz:8000",
         "ZEROKEY_API_KEY": "zk_your_key_here"
       }
     }
@@ -85,10 +85,10 @@ Add to your MCP client configuration (e.g. `claude_desktop_config.json`):
 
 ### 3. Environment Variables
 
-| Variable          | Required | Description                                        |
-| ----------------- | -------- | -------------------------------------------------- |
-| `ZEROKEY_API_URL` | Yes      | Backend API URL (default: `http://localhost:3001`) |
-| `ZEROKEY_API_KEY` | Yes      | Agent API key (starts with `zk_`)                  |
+| Variable          | Required | Description                                               |
+| ----------------- | -------- | --------------------------------------------------------- |
+| `ZEROKEY_API_URL` | Yes      | Backend API URL (default: `https://zerokey.exe.xyz:8000`) |
+| `ZEROKEY_API_KEY` | Yes      | Agent API key (starts with `zk_`)                         |
 
 ## Typical Agent Workflow
 

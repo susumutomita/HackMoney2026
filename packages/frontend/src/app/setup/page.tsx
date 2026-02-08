@@ -999,7 +999,7 @@ function StepConnectAgent({
   };
 
   const createAgent = async () => {
-    if (!agentName.trim() || !safeAddress) return;
+    if (!agentName.trim()) return;
     setIsCreating(true);
     setError(null);
     setGeneratedKey(null);
