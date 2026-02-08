@@ -66,6 +66,32 @@ const timeRestrictionConfigSchema = z.object({
 });
 
 /**
+ * Trust score threshold policy config schema
+ */
+const trustScoreThresholdConfigSchema = z.object({
+  type: z.literal("trust_score_threshold"),
+  minScore: z.number().min(0).max(100),
+  action: z.enum(["reject", "confirm_required"]),
+});
+
+/**
+ * ENS required policy config schema
+ */
+const ensRequiredConfigSchema = z.object({
+  type: z.literal("ens_required"),
+  requireEns: z.boolean(),
+});
+
+/**
+ * Category restriction policy config schema
+ */
+const categoryRestrictionConfigSchema = z.object({
+  type: z.literal("category_restriction"),
+  allowedCategories: z.array(z.string()).min(1, "At least one category required"),
+  blockUnknown: z.boolean(),
+});
+
+/**
  * Discriminated union schema for all policy configs
  * This ensures type-safe validation based on the 'type' field
  */
@@ -74,6 +100,9 @@ const policyConfigSchema = z.discriminatedUnion("type", [
   protocolAllowlistConfigSchema,
   kycRequirementConfigSchema,
   timeRestrictionConfigSchema,
+  trustScoreThresholdConfigSchema,
+  ensRequiredConfigSchema,
+  categoryRestrictionConfigSchema,
 ]);
 
 /**
