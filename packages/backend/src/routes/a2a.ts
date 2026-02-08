@@ -54,8 +54,8 @@ app.get("/discover", zValidator("query", discoverQuerySchema), async (c) => {
         }
         return {
           ...p,
-          // Use on-chain score if available, otherwise fall back to DB value
-          calculatedTrustScore: trustResult?.score ?? p.trustScore,
+          // Use the higher of on-chain score and DB seeded value
+          calculatedTrustScore: Math.max(trustResult?.score ?? 0, p.trustScore),
           trustBreakdown: trustResult?.breakdown ?? null,
         };
       })
