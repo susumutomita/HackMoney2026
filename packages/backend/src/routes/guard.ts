@@ -38,8 +38,8 @@ const ethereumAddress = z.string().refine(
 
 const registerSchema = z.object({
   safeAddress: ethereumAddress,
-  chainId: z.number().int().positive(),
-  ownerAddress: ethereumAddress,
+  chainId: z.number().int().positive().optional().default(84532), // Base Sepolia
+  ownerAddress: ethereumAddress.optional(),
 });
 
 guardRouter.post("/register", zValidator("json", registerSchema), async (c) => {
@@ -79,7 +79,7 @@ guardRouter.post("/register", zValidator("json", registerSchema), async (c) => {
     id,
     safeAddress: safeAddress.toLowerCase(),
     chainId,
-    ownerAddress: ownerAddress.toLowerCase(),
+    ownerAddress: ownerAddress?.toLowerCase() ?? safeAddress.toLowerCase(),
     guardContractAddress: guardAddress,
     createdAt: now,
   };

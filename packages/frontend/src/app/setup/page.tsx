@@ -450,7 +450,12 @@ function StepEnableProtection({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({ message: "Registration failed" }));
-        throw new Error(body.message || body.error || "Registration failed");
+        const msg =
+          body.message ||
+          body.error ||
+          (body.success === false && JSON.stringify(body)) ||
+          "Registration failed";
+        throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
       }
       setRegistered(true);
     } catch (err) {
