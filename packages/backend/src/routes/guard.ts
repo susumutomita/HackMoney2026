@@ -203,7 +203,8 @@ guardRouter.post("/pre-approve", zValidator("json", preApproveSchema), async (c)
     const riskLevel = firewallResult.riskLevel;
     const reason = firewallResult.reasons.join("; ");
 
-    // 2. Compute txHash off-chain (matches SafeZeroKeyGuard.computeTxHash)
+    // 2. Compute txHash off-chain (matches SafeZeroKeyGuard.checkTransaction)
+    // Contract hashes: safe, to, value, keccak256(data), operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver
     const dataHash = keccak256(input.data as `0x${string}`);
     const txHash = keccak256(
       encodePacked(
@@ -218,7 +219,6 @@ guardRouter.post("/pre-approve", zValidator("json", preApproveSchema), async (c)
           "uint256",
           "address",
           "address",
-          "address",
         ],
         [
           input.safeAddress as Address,
@@ -231,51 +231,54 @@ guardRouter.post("/pre-approve", zValidator("json", preApproveSchema), async (c)
           BigInt(input.gasPrice),
           input.gasToken as Address,
           input.refundReceiver as Address,
-          input.msgSender as Address,
         ]
       )
     );
 
-    // 3. Submit decision on-chain
-    const privateKey = config.policyOraclePrivateKey.startsWith("0x")
-      ? config.policyOraclePrivateKey
-      : `0x${config.policyOraclePrivateKey}`;
-    const account = privateKeyToAccount(privateKey as `0x${string}`);
+    // 3. If approved, pre-approve on-chain so Safe's checkTransaction() will pass
+    let onChainTxHash: `0x${string}` | undefined;
 
-    const transport = config.rpcUrl ? http(config.rpcUrl) : http();
-    const publicClient = createPublicClient({
-      chain: baseSepolia,
-      transport,
-    });
-    const walletClient = createWalletClient({
-      account,
-      chain: baseSepolia,
-      transport,
-    });
+    if (approved) {
+      const privateKey = config.policyOraclePrivateKey.startsWith("0x")
+        ? config.policyOraclePrivateKey
+        : `0x${config.policyOraclePrivateKey}`;
+      const account = privateKeyToAccount(privateKey as `0x${string}`);
 
-    const contractAddress = config.guardContractAddress as Address;
+      const transport = config.rpcUrl ? http(config.rpcUrl) : http();
+      const publicClient = createPublicClient({
+        chain: baseSepolia,
+        transport,
+      });
+      const walletClient = createWalletClient({
+        account,
+        chain: baseSepolia,
+        transport,
+      });
 
-    const { request } = await publicClient.simulateContract({
-      address: contractAddress,
-      abi: SafeZeroKeyGuardAbi,
-      functionName: "submitDecision",
-      args: [txHash, approved, BigInt(riskLevel), reason],
-      account,
-    });
+      const contractAddress = config.guardContractAddress as Address;
 
-    const onChainTxHash = await walletClient.writeContract(request);
+      const { request } = await publicClient.simulateContract({
+        address: contractAddress,
+        abi: SafeZeroKeyGuardAbi,
+        functionName: "preApproveTransaction",
+        args: [txHash, input.safeAddress as Address],
+        account,
+      });
 
-    await publicClient.waitForTransactionReceipt({
-      hash: onChainTxHash,
-      confirmations: 1,
-    });
+      onChainTxHash = await walletClient.writeContract(request);
+
+      await publicClient.waitForTransactionReceipt({
+        hash: onChainTxHash,
+        confirmations: 1,
+      });
+    }
 
     return c.json({
       approved,
       txHash,
       riskLevel,
       reason,
-      onChainTxHash,
+      onChainTxHash: onChainTxHash ?? null,
     });
   } catch (error) {
     console.error("Failed to pre-approve transaction:", error);
