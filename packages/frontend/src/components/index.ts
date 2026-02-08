@@ -11,3 +11,4 @@ export { StatsCards } from "./StatsCards";
 export { EnsProfileCard, EnsName } from "./EnsProfile";
 export { Layout } from "./Layout";
 export { SafeGuardStatus } from "./SafeGuardStatus";
+export { CrosschainPanel } from "./CrosschainPanel";
