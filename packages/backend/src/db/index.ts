@@ -370,12 +370,12 @@ export function initializeDatabase(): void {
     );
   }
 
-  // Ensure existing providers get wallet/ENS metadata.
+  // Ensure existing providers have correct wallet/ENS metadata.
   const update = sqlite.prepare(`
-      UPDATE providers SET wallet_address = ?, ens_name = ? WHERE id = ? AND wallet_address IS NULL
+      UPDATE providers SET wallet_address = ?, ens_name = ?, trust_score = ? WHERE id = ?
     `);
   for (const provider of DEMO_PROVIDERS) {
-    update.run(provider.wallet_address, provider.ens_name, provider.id);
+    update.run(provider.wallet_address, provider.ens_name, provider.trust_score, provider.id);
   }
 }
 
