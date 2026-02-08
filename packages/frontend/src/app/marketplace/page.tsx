@@ -267,7 +267,7 @@ function ProviderCard({ provider }: { provider: Provider }) {
             {hasEns && (
               <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500/20 text-blue-400 rounded flex items-center gap-1">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                 </svg>
                 ENS
               </span>
@@ -330,17 +330,26 @@ function ProviderCard({ provider }: { provider: Provider }) {
           <div className="mt-2 rounded-lg border border-white/5 bg-white/5 p-3 text-xs space-y-2">
             <div className="text-gray-400 font-medium mb-2">Trust Score Breakdown</div>
             <div className="grid grid-cols-2 gap-2">
-              <div className={`flex items-center gap-1.5 ${provider.trustBreakdown.hasEns ? 'text-emerald-400' : 'text-gray-500'}`}>
-                {provider.trustBreakdown.hasEns ? '✓' : '✗'} ENS Name
+              <div
+                className={`flex items-center gap-1.5 ${provider.trustBreakdown.hasEns ? "text-emerald-400" : "text-gray-500"}`}
+              >
+                {provider.trustBreakdown.hasEns ? "✓" : "✗"} ENS Name
               </div>
-              <div className={`flex items-center gap-1.5 ${provider.trustBreakdown.isVerifiedContract ? 'text-emerald-400' : 'text-gray-500'}`}>
-                {provider.trustBreakdown.isVerifiedContract ? '✓' : '✗'} Verified Contract
+              <div
+                className={`flex items-center gap-1.5 ${provider.trustBreakdown.isVerifiedContract ? "text-emerald-400" : "text-gray-500"}`}
+              >
+                {provider.trustBreakdown.isVerifiedContract ? "✓" : "✗"} Verified Contract
               </div>
-              <div className={`flex items-center gap-1.5 ${(provider.trustBreakdown.walletAgeMonths ?? 0) > 6 ? 'text-emerald-400' : 'text-gray-500'}`}>
-                {(provider.trustBreakdown.walletAgeMonths ?? 0) > 6 ? '✓' : '✗'} Wallet Age ({provider.trustBreakdown.walletAgeMonths ?? 0}mo)
+              <div
+                className={`flex items-center gap-1.5 ${(provider.trustBreakdown.walletAgeMonths ?? 0) > 6 ? "text-emerald-400" : "text-gray-500"}`}
+              >
+                {(provider.trustBreakdown.walletAgeMonths ?? 0) > 6 ? "✓" : "✗"} Wallet Age (
+                {provider.trustBreakdown.walletAgeMonths ?? 0}mo)
               </div>
-              <div className={`flex items-center gap-1.5 ${provider.trustBreakdown.isKnownAddress ? 'text-emerald-400' : 'text-gray-500'}`}>
-                {provider.trustBreakdown.isKnownAddress ? '✓' : '✗'} Known Address
+              <div
+                className={`flex items-center gap-1.5 ${provider.trustBreakdown.isKnownAddress ? "text-emerald-400" : "text-gray-500"}`}
+              >
+                {provider.trustBreakdown.isKnownAddress ? "✓" : "✗"} Known Address
               </div>
             </div>
             <div className="text-gray-500 pt-1 border-t border-white/5">

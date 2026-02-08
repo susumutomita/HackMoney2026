@@ -13,7 +13,7 @@ import { baseSepolia } from "viem/chains";
 
 /**
  * Safe Guard Oracle Service
- * 
+ *
  * This service:
  * 1. Monitors Safe wallets for pending transactions
  * 2. Evaluates transactions against ZeroKey policies
@@ -59,7 +59,7 @@ export class SafeGuardOracle {
 
   constructor(config: OracleConfig) {
     this.guardAddress = config.guardAddress;
-    
+
     const account = privateKeyToAccount(config.oraclePrivateKey);
     const rpcUrl = config.rpcUrl || "https://sepolia.base.org";
 
@@ -79,10 +79,7 @@ export class SafeGuardOracle {
    * Compute transaction hash (same as contract)
    */
   computeTxHash(tx: TransactionRequest): Hex {
-    return keccak256(encodePacked(
-      ["address", "uint256", "bytes"],
-      [tx.to, tx.value, tx.data]
-    ));
+    return keccak256(encodePacked(["address", "uint256", "bytes"], [tx.to, tx.value, tx.data]));
   }
 
   /**
@@ -112,10 +109,10 @@ export class SafeGuardOracle {
   ): Promise<PolicyDecision> {
     // Parse ERC20 transfer if applicable
     const isErc20Transfer = tx.data.startsWith(ERC20_TRANSFER_SELECTOR);
-    
+
     let recipient = tx.to;
     let amount = tx.value;
-    
+
     if (isErc20Transfer && tx.data.length >= 138) {
       // Decode ERC20 transfer(address, uint256)
       recipient = ("0x" + tx.data.slice(34, 74)) as Address;
@@ -228,7 +225,7 @@ export class SafeGuardOracle {
 
     // Submit to contract
     let txHash: Hex | undefined;
-    
+
     switch (decision.decision) {
       case "APPROVED":
         txHash = await this.approveTransaction(tx, decision.reason);
@@ -250,20 +247,22 @@ let oracleInstance: SafeGuardOracle | null = null;
 
 export function getOracle(): SafeGuardOracle | null {
   if (oracleInstance) return oracleInstance;
-  
+
   const guardAddress = process.env.GUARD_CONTRACT_ADDRESS as Address;
   const oracleKey = process.env.POLICY_ORACLE_PRIVATE_KEY as Hex;
-  
+
   if (!guardAddress || !oracleKey) {
-    console.warn("SafeGuardOracle not configured: missing GUARD_CONTRACT_ADDRESS or POLICY_ORACLE_PRIVATE_KEY");
+    console.warn(
+      "SafeGuardOracle not configured: missing GUARD_CONTRACT_ADDRESS or POLICY_ORACLE_PRIVATE_KEY"
+    );
     return null;
   }
-  
+
   oracleInstance = new SafeGuardOracle({
     guardAddress,
     oraclePrivateKey: oracleKey,
     rpcUrl: process.env.BASE_SEPOLIA_RPC_URL,
   });
-  
+
   return oracleInstance;
 }
