@@ -130,7 +130,8 @@ async function fetchApi<T>(endpoint: string, options?: globalThis.RequestInit): 
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: "Unknown error" }));
-    throw new ApiError(response.status, error.message || error.error || "Request failed");
+    const errorMessage = error.message || (typeof error.error === 'string' ? error.error : JSON.stringify(error.error)) || "Request failed";
+    throw new ApiError(response.status, errorMessage);
   }
 
   return response.json();
