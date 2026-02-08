@@ -228,7 +228,7 @@ export const agentsApi = {
 
   create: (params: {
     name: string;
-    safeAddress: string;
+    safeAddress?: string;
     allowedCategories?: string[];
     dailyBudgetUsd?: string;
   }) =>

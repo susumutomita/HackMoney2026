@@ -105,7 +105,7 @@ Connect any MCP-compatible AI agent (Claude Desktop, OpenClaw, etc.) to ZeroKey 
 
 ```bash
 # Via API
-curl -X POST http://localhost:3001/api/agents \
+curl -X POST https://zerokey.exe.xyz:8000/api/agents \
   -H "Content-Type: application/json" \
   -d '{"name":"my-agent","safeAddress":"0xYourSafe..."}'
 # → { "apiKey": "zk_abc123...", "agent": { ... } }
@@ -124,7 +124,7 @@ Add to `claude_desktop_config.json` (or any MCP client):
       "command": "npx",
       "args": ["-y", "@zerokey/mcp-server@latest"],
       "env": {
-        "ZEROKEY_API_URL": "http://localhost:3001",
+        "ZEROKEY_API_URL": "https://zerokey.exe.xyz:8000",
         "ZEROKEY_API_KEY": "zk_your_key_here"
       }
     }

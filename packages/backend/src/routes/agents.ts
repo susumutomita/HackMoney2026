@@ -19,7 +19,7 @@ function generateApiKey(): string {
 
 const createSchema = z.object({
   name: z.string().min(1),
-  safeAddress: z.string().min(1),
+  safeAddress: z.string().optional().default(""),
   allowedCategories: z.array(z.string()).default(["translation", "summarization"]),
   dailyBudgetUsd: z.string().default("10"),
 });
