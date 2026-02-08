@@ -134,14 +134,15 @@ Add to `claude_desktop_config.json` (or any MCP client):
 
 ### 3. Use the Tools
 
-| Tool | Description |
-|---|---|
+| Tool               | Description                                    |
+| ------------------ | ---------------------------------------------- |
 | `zerokey_discover` | Search marketplace for API services by keyword |
-| `zerokey_pay` | Pay a provider through the execution firewall |
-| `zerokey_balance` | Check agent budget and spending status |
-| `zerokey_history` | View purchase audit trail |
+| `zerokey_pay`      | Pay a provider through the execution firewall  |
+| `zerokey_balance`  | Check agent budget and spending status         |
+| `zerokey_history`  | View purchase audit trail                      |
 
 **Example conversation:**
+
 ```
 User: "Translate this contract to English"
 Agent: → zerokey_discover(service: "translation")

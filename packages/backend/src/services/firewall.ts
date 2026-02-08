@@ -216,9 +216,7 @@ function enforceCategoryRestrictionPolicy(
     matchedPolicyIds.push(policy.id);
     state.risk = maxRisk(state.risk, 3);
     state.hardReject = true;
-    reasons.push(
-      `Policy '${policy.name}' blocks: category '${category}' not in allowed list`
-    );
+    reasons.push(`Policy '${policy.name}' blocks: category '${category}' not in allowed list`);
     warnings.push(`Service category '${category}' is restricted`);
   }
 }
