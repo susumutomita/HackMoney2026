@@ -42,6 +42,7 @@ This document lists **exact code locations (file + line ranges)** for sponsor / 
 POST /api/gateway/transfer → Gateway API 400: "Insufficient balance for depositor 0x...
   available 0, required 1.01005"
 ```
+
 This proves: BurnIntent signed correctly, Gateway validated signature, checked real balances.
 
 ---

@@ -312,9 +312,7 @@ async function submitToGatewayApi(
   }
 
   if (!res.ok) {
-    const errorMsg = data
-      ? JSON.stringify(data)
-      : text;
+    const errorMsg = data ? JSON.stringify(data) : text;
     return { success: false, error: `Gateway API ${res.status}: ${errorMsg}` };
   }
 

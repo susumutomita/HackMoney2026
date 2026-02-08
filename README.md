@@ -293,14 +293,14 @@ POST /api/gateway/transfer
 
 ### Prize Summary
 
-| Prize                         | Amount      | Status                   | Key Endpoint / File                |
-| ----------------------------- | ----------- | ------------------------ | ---------------------------------- |
-| Arc Track 1: Chain Abstracted | $5,000      | Real API (needs deposit) | `POST /api/gateway/transfer`       |
-| Arc Track 2: Treasury/Payouts | $2,500      | Real API (needs deposit) | `POST /api/gateway/payout`         |
-| Arc Track 3: Agentic Commerce | $2,500      | Real API (needs deposit) | `POST /api/gateway/agent-commerce` |
-| ENS Integration               | $3,500 pool | Real (mainnet resolution)| `lib/ens.ts`, `EnsProfile.tsx`     |
-| ENS Creative DeFi             | $1,500      | Implemented              | AI agent text records              |
-| Safe Guard                    | $2,500      | Deployed on Base Sepolia | `SafeZeroKeyGuard.sol`             |
+| Prize                         | Amount      | Status                    | Key Endpoint / File                |
+| ----------------------------- | ----------- | ------------------------- | ---------------------------------- |
+| Arc Track 1: Chain Abstracted | $5,000      | Real API (needs deposit)  | `POST /api/gateway/transfer`       |
+| Arc Track 2: Treasury/Payouts | $2,500      | Real API (needs deposit)  | `POST /api/gateway/payout`         |
+| Arc Track 3: Agentic Commerce | $2,500      | Real API (needs deposit)  | `POST /api/gateway/agent-commerce` |
+| ENS Integration               | $3,500 pool | Real (mainnet resolution) | `lib/ens.ts`, `EnsProfile.tsx`     |
+| ENS Creative DeFi             | $1,500      | Implemented               | AI agent text records              |
+| Safe Guard                    | $2,500      | Deployed on Base Sepolia  | `SafeZeroKeyGuard.sol`             |
 
 > **"Real API (needs deposit)"** means: EIP-712 BurnIntent signing is correct, Gateway API validates the signature and checks real balances. Transfers will succeed once USDC is deposited to the GatewayWallet contract.
 

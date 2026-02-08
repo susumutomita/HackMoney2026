@@ -48,9 +48,24 @@ interface Eip712Config {
 }
 
 const DOMAINS: GatewayDomain[] = [
-  { name: "Base Sepolia", domainId: 6, chainId: 84532, usdc: "0x036CbD53842c5426634e7929541eC2318f3dCF7e" },
-  { name: "Arc Testnet", domainId: 26, chainId: 412, usdc: "0x3600000000000000000000000000000000000000" },
-  { name: "Ethereum Sepolia", domainId: 0, chainId: 11155111, usdc: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" },
+  {
+    name: "Base Sepolia",
+    domainId: 6,
+    chainId: 84532,
+    usdc: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  },
+  {
+    name: "Arc Testnet",
+    domainId: 26,
+    chainId: 412,
+    usdc: "0x3600000000000000000000000000000000000000",
+  },
+  {
+    name: "Ethereum Sepolia",
+    domainId: 0,
+    chainId: 11155111,
+    usdc: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+  },
 ];
 
 const ERC20_ABI = [
@@ -142,10 +157,13 @@ export function CrosschainPanel() {
       // Generate random salt
       const saltBytes = new Uint8Array(32);
       globalThis.crypto.getRandomValues(saltBytes);
-      const salt = `0x${Array.from(saltBytes, (b) => b.toString(16).padStart(2, "0")).join("")}` as Hex;
+      const salt =
+        `0x${Array.from(saltBytes, (b) => b.toString(16).padStart(2, "0")).join("")}` as Hex;
 
       const burnIntent = {
-        maxBlockHeight: BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"),
+        maxBlockHeight: BigInt(
+          "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        ),
         maxFee: BigInt(1_010000), // 1.01 USDC
         spec: {
           version: 1,
@@ -243,7 +261,8 @@ export function CrosschainPanel() {
     }
   };
 
-  const executeTransfer = signingMode === "wallet" ? executeWalletSignedTransfer : executeBackendTransfer;
+  const executeTransfer =
+    signingMode === "wallet" ? executeWalletSignedTransfer : executeBackendTransfer;
 
   /** Approve USDC spending by GatewayWallet */
   const approveUsdc = async () => {
