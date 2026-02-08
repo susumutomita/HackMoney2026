@@ -85,10 +85,10 @@ Add to your MCP client configuration (e.g. `claude_desktop_config.json`):
 
 ### 3. Environment Variables
 
-| Variable          | Required | Description                                        |
-| ----------------- | -------- | -------------------------------------------------- |
+| Variable          | Required | Description                                               |
+| ----------------- | -------- | --------------------------------------------------------- |
 | `ZEROKEY_API_URL` | Yes      | Backend API URL (default: `https://zerokey.exe.xyz:8000`) |
-| `ZEROKEY_API_KEY` | Yes      | Agent API key (starts with `zk_`)                  |
+| `ZEROKEY_API_KEY` | Yes      | Agent API key (starts with `zk_`)                         |
 
 ## Typical Agent Workflow
 
