@@ -12,6 +12,7 @@ import {
   PurchaseLogCard,
   BlockedAuditLogCard,
   SafeGuardStatus,
+  CrosschainPanel,
 } from "@/components";
 
 function Logo() {
@@ -181,6 +182,11 @@ export default function DashboardPage() {
             {/* Blocked Audit Log (proof of intervention) */}
             <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
               <BlockedAuditLogCard />
+            </div>
+
+            {/* Crosschain USDC via Arc Gateway */}
+            <div className="animate-slide-up" style={{ animationDelay: "0.25s" }}>
+              <CrosschainPanel />
             </div>
 
             {/* Grid Layout */}

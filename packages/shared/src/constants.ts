@@ -60,18 +60,38 @@ export const SUPPORTED_CHAINS: Record<number, ChainConfig> = {
 } as const;
 
 /**
+ * Circle Gateway configuration
+ * Routes USDC cross-chain using Arc as the liquidity hub
+ */
+export const GATEWAY_CONFIG = {
+  /** Gateway Wallet contract (deposit USDC here) */
+  walletContract: "0x0077777d7EBA4688BDeF3E311b846F25870A19B9" as const,
+  /** Gateway Minter contract (mint USDC on destination) */
+  minterContract: "0x0022222ABE238Cc2C7Bb1f21003F0a260052475B" as const,
+  /** Gateway API (testnet) */
+  apiUrl: "https://gateway-api-testnet.circle.com" as const,
+  /** Supported domains with USDC addresses */
+  domains: {
+    ethereumSepolia: { domainId: 0, usdc: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" as const },
+    avalancheFuji: { domainId: 1, usdc: "0x5425890298aed601595a70ab815c96711a31bc65" as const },
+    baseSepolia: { domainId: 6, usdc: "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const },
+    arcTestnet: { domainId: 26, usdc: "0x3600000000000000000000000000000000000000" as const },
+  },
+} as const;
+
+/**
  * Arc Network specific configuration
- * For HackMoney 2026 Arc Prize: "Build Global Payouts and Treasury Systems with USDC on Arc"
+ * Arc is Circle's purpose-built L1 - the Economic OS for the internet
  */
 export const ARC_CONFIG = {
   /** Arc mainnet chain ID */
   chainId: 411,
   /** Arc testnet chain ID */
   testnetChainId: 412,
-  /** Native USDC on Arc */
-  usdcAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as const,
-  /** Circle Gateway API endpoint */
-  circleGatewayUrl: "https://api.circle.com/v1/w3s",
+  /** Native USDC on Arc Testnet (Gateway domain 26) */
+  usdcAddress: "0x3600000000000000000000000000000000000000" as const,
+  /** Gateway domain ID for Arc */
+  gatewayDomainId: 26,
   /** Default gas settings for Arc */
   defaultGas: {
     maxFeePerGas: "1000000000", // 1 gwei
