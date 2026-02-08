@@ -1,25 +1,52 @@
 /**
- * Gateway Routes
- * Exposes Circle Gateway / CCTP endpoints for Arc Liquidity Hub integration
+ * Circle Gateway Routes
+ *
+ * Exposes crosschain USDC routing via Arc as a liquidity hub.
+ * Covers all 3 Circle/Arc prize tracks:
+ *  - Track 1: Chain Abstracted USDC via Arc Hub (/transfer)
+ *  - Track 2: Global Payouts and Treasury Systems (/payout)
+ *  - Track 3: Agentic Commerce powered by RWA   (/agent-commerce)
  */
-
 import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
+import { isAddress, type Address } from "viem";
 import {
-  createGatewayTransfer,
-  getGatewayTransfer,
+  getGatewayBalances,
+  depositToGateway,
+  transferViaGateway,
+  executeMultiPayout,
+  getGatewayInfo,
+  GATEWAY_DOMAINS,
+  type PayoutRecipient,
+} from "../services/gateway.js";
+import {
   getGatewayStatus,
-  isGatewayConfigured,
+  getGatewayTransfer,
   CCTP_CHAINS,
   USDC_ADDRESSES,
 } from "../services/circleGateway.js";
+import { checkFirewall } from "../services/firewall.js";
 
 export const gatewayRouter = new Hono();
 
-// ============================================
-// GET /status - Check Gateway configuration
-// ============================================
+const ethAddress = z.string().refine(
+  (v) => isAddress(v),
+  (v) => ({ message: `Invalid address: ${v}` })
+);
+
+// ──────────────────────────────────────────────
+// GET /info - Gateway service information
+// ──────────────────────────────────────────────
+
+gatewayRouter.get("/info", async (c) => {
+  const info = await getGatewayInfo();
+  return c.json(info);
+});
+
+// ──────────────────────────────────────────────
+// GET /status - Circle configuration status
+// ──────────────────────────────────────────────
 
 gatewayRouter.get("/status", (c) => {
   const status = getGatewayStatus();
@@ -30,140 +57,238 @@ gatewayRouter.get("/status", (c) => {
   });
 });
 
-// ============================================
-// POST /transfer - Create crosschain transfer
-// ============================================
+// ──────────────────────────────────────────────
+// POST /balances - Check unified USDC balances
+// ──────────────────────────────────────────────
 
-const transferSchema = z.object({
-  sourceChain: z.string().min(1),
-  sourceAddress: z.string().min(1),
-  destinationChain: z.string().min(1),
-  destinationAddress: z.string().min(1),
+const balancesSchema = z.object({
+  depositor: ethAddress,
+});
+
+gatewayRouter.post("/balances", zValidator("json", balancesSchema), async (c) => {
+  const { depositor } = c.req.valid("json");
+  const balances = await getGatewayBalances(depositor as Address);
+  return c.json({
+    depositor,
+    balances,
+    totalUnified: balances.reduce((sum, b) => sum + parseFloat(b.balance), 0).toFixed(6),
+    arcHubDomain: GATEWAY_DOMAINS.arcTestnet.domainId,
+  });
+});
+
+// ──────────────────────────────────────────────
+// POST /deposit - Deposit USDC to Gateway
+// ──────────────────────────────────────────────
+
+const depositSchema = z.object({
   amount: z.string().min(1),
 });
 
-gatewayRouter.post("/transfer", zValidator("json", transferSchema), async (c) => {
-  if (!isGatewayConfigured()) {
-    return c.json(
-      {
-        error: "Gateway not configured",
-        message: "CIRCLE_API_KEY is not set. Add it to .env file.",
-      },
-      503
-    );
-  }
+gatewayRouter.post("/deposit", zValidator("json", depositSchema), async (c) => {
+  const { amount } = c.req.valid("json");
+  const amountBigInt = BigInt(Math.round(parseFloat(amount) * 1_000_000));
 
-  const body = c.req.valid("json");
+  const result = await depositToGateway(amountBigInt);
 
-  try {
-    const result = await createGatewayTransfer({
-      idempotencyKey: `zk_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-      ...body,
-    });
-
-    return c.json({
-      success: true,
-      transfer: result,
-      arcIntegration: {
-        usedAsHub: true,
-        description: "USDC routed through Arc Liquidity Hub",
-        benefits: ["Chain-abstracted payment", "Unified liquidity pool", "Cross-chain settlement"],
-      },
-    });
-  } catch (error) {
-    console.error("Gateway transfer error:", error);
-    return c.json(
-      {
-        error: "Transfer failed",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      500
-    );
-  }
+  return c.json(result, result.success ? 200 : 500);
 });
 
-// ============================================
-// GET /transfer/:id - Get transfer status
-// ============================================
+// ──────────────────────────────────────────────
+// POST /transfer - Cross-chain USDC transfer
+// Track 1: Chain Abstracted USDC via Arc Hub
+// ──────────────────────────────────────────────
+
+const transferSchema = z.object({
+  sourceDomain: z.number().int().min(0),
+  destinationDomain: z.number().int().min(0),
+  sender: ethAddress,
+  recipient: ethAddress,
+  amountUsdc: z.string().min(1),
+});
+
+gatewayRouter.post("/transfer", zValidator("json", transferSchema), async (c) => {
+  const { sourceDomain, destinationDomain, sender, recipient, amountUsdc } = c.req.valid("json");
+
+  // Firewall check before routing
+  const firewallResult = await checkFirewall({
+    tx: {
+      chainId: 84532,
+      from: sender,
+      to: recipient,
+      value: (parseFloat(amountUsdc) * 1_000_000).toString(),
+    },
+  });
+
+  if (firewallResult.decision === "REJECTED") {
+    return c.json(
+      {
+        success: false,
+        error: "firewall_rejected",
+        reasons: firewallResult.reasons,
+        riskLevel: firewallResult.riskLevel,
+      },
+      403
+    );
+  }
+
+  const result = await transferViaGateway({
+    sourceDomain,
+    destinationDomain,
+    sender: sender as Address,
+    recipient: recipient as Address,
+    amount: amountUsdc,
+  });
+
+  return c.json({
+    ...result,
+    firewall: {
+      decision: firewallResult.decision,
+      riskLevel: firewallResult.riskLevel,
+      reasons: firewallResult.reasons,
+    },
+  });
+});
+
+// ──────────────────────────────────────────────
+// GET /transfer/:id - Check transfer status
+// ──────────────────────────────────────────────
 
 gatewayRouter.get("/transfer/:id", async (c) => {
   const transferId = c.req.param("id");
-
   const transfer = await getGatewayTransfer(transferId);
   if (!transfer) {
     return c.json({ error: "Transfer not found" }, 404);
   }
-
   return c.json({ transfer });
 });
 
-// ============================================
-// POST /pay - Execute payment via Gateway
-// This is the main endpoint for ZeroKey firewall-protected payments
-// ============================================
+// ──────────────────────────────────────────────
+// POST /payout - Multi-recipient payout
+// Track 2: Global Payouts and Treasury Systems
+// ──────────────────────────────────────────────
 
-const paySchema = z.object({
-  /** Session/negotiation ID from firewall approval */
-  sessionId: z.string().min(1),
-  /** Payer address */
-  from: z.string().min(1),
-  /** Recipient address */
-  to: z.string().min(1),
-  /** Amount in USDC */
-  amount: z.string().min(1),
-  /** Source chain (default: Base Sepolia) */
-  sourceChain: z.string().default("BASE-SEPOLIA"),
-  /** Destination chain (default: same as source) */
-  destinationChain: z.string().optional(),
+const payoutRecipientSchema = z.object({
+  address: ethAddress,
+  amountUsdc: z.string().min(1),
+  destinationDomain: z.number().int().min(0),
+  label: z.string().optional(),
 });
 
-gatewayRouter.post("/pay", zValidator("json", paySchema), async (c) => {
-  const body = c.req.valid("json");
-  const destChain = body.destinationChain || body.sourceChain;
+const payoutSchema = z.object({
+  sender: ethAddress,
+  sourceDomain: z.number().int().min(0),
+  recipients: z.array(payoutRecipientSchema).min(1).max(16),
+});
 
-  // In production, verify firewall approval here
-  // For now, proceed with the transfer
+gatewayRouter.post("/payout", zValidator("json", payoutSchema), async (c) => {
+  const { sender, sourceDomain, recipients } = c.req.valid("json");
 
-  try {
-    const result = await createGatewayTransfer({
-      idempotencyKey: `pay_${body.sessionId}_${Date.now()}`,
-      sourceChain: body.sourceChain,
-      sourceAddress: body.from,
-      destinationChain: destChain,
-      destinationAddress: body.to,
-      amount: body.amount,
-    });
+  // Firewall check for total payout amount
+  const totalAmount = recipients.reduce((sum, r) => sum + parseFloat(r.amountUsdc), 0);
 
-    return c.json({
-      success: true,
-      payment: {
-        sessionId: body.sessionId,
-        transferId: result.transferId,
-        status: result.status,
-        amount: result.amount,
-        from: body.from,
-        to: body.to,
-      },
-      gateway: {
-        transferId: result.transferId,
-        status: result.status,
-        arcRouting: result.arcRouting,
-      },
-      // Proof for Arc prize submission
-      arcLiquidityHub: {
-        used: true,
-        routing: "Source → Arc Hub → Destination",
-        chainAbstraction: true,
-      },
-    });
-  } catch (error) {
-    console.error("Payment via Gateway failed:", error);
+  const firewallResult = await checkFirewall({
+    tx: {
+      chainId: 84532,
+      from: sender,
+      to: "0x0000000000000000000000000000000000000000", // multi-recipient
+      value: (totalAmount * 1_000_000).toString(),
+    },
+  });
+
+  if (firewallResult.decision === "REJECTED") {
     return c.json(
       {
-        error: "Payment failed",
-        message: error instanceof Error ? error.message : "Unknown error",
+        success: false,
+        error: "firewall_rejected",
+        reasons: firewallResult.reasons,
+        totalAmountUsdc: totalAmount.toFixed(6),
+        recipientCount: recipients.length,
       },
-      500
+      403
     );
   }
+
+  const result = await executeMultiPayout(
+    sender as Address,
+    sourceDomain,
+    recipients as PayoutRecipient[]
+  );
+
+  return c.json({
+    ...result,
+    firewall: {
+      decision: firewallResult.decision,
+      riskLevel: firewallResult.riskLevel,
+      reasons: firewallResult.reasons,
+    },
+  });
+});
+
+// ──────────────────────────────────────────────
+// POST /agent-commerce - Agent-driven commerce
+// Track 3: Agentic Commerce powered by RWA
+// ──────────────────────────────────────────────
+
+const agentCommerceSchema = z.object({
+  agentId: z.string().min(1),
+  action: z.enum(["purchase", "payout", "rebalance"]),
+  sender: ethAddress,
+  recipient: ethAddress,
+  amountUsdc: z.string().min(1),
+  sourceDomain: z.number().int().min(0),
+  destinationDomain: z.number().int().min(0),
+  metadata: z
+    .object({
+      serviceId: z.string().optional(),
+      reason: z.string().optional(),
+      rwaCollateral: z.string().optional(),
+    })
+    .optional(),
+});
+
+gatewayRouter.post("/agent-commerce", zValidator("json", agentCommerceSchema), async (c) => {
+  const input = c.req.valid("json");
+
+  // 1. Firewall check with agent context
+  const firewallResult = await checkFirewall({
+    tx: {
+      chainId: 84532,
+      from: input.sender,
+      to: input.recipient,
+      value: (parseFloat(input.amountUsdc) * 1_000_000).toString(),
+    },
+  });
+
+  if (firewallResult.decision === "REJECTED") {
+    return c.json(
+      {
+        success: false,
+        agentId: input.agentId,
+        action: input.action,
+        error: "firewall_rejected",
+        reasons: firewallResult.reasons,
+      },
+      403
+    );
+  }
+
+  // 2. Execute crosschain transfer via Arc hub
+  const transfer = await transferViaGateway({
+    sourceDomain: input.sourceDomain,
+    destinationDomain: input.destinationDomain,
+    sender: input.sender as Address,
+    recipient: input.recipient as Address,
+    amount: input.amountUsdc,
+  });
+
+  return c.json({
+    agentId: input.agentId,
+    action: input.action,
+    transfer,
+    firewall: {
+      decision: firewallResult.decision,
+      riskLevel: firewallResult.riskLevel,
+    },
+    metadata: input.metadata,
+  });
 });
