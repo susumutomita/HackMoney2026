@@ -140,12 +140,12 @@ ZeroKey implements **Arc as the USDC Liquidity Hub** for cross-chain agent payme
 
 #### Implementation Details
 
-| Component | File Location | Description |
-|-----------|---------------|-------------|
-| **Gateway Service** | `packages/backend/src/services/circleGateway.ts` | Circle Gateway client for cross-chain transfers |
-| **Gateway Routes** | `packages/backend/src/routes/gateway.ts` | API endpoints for Arc-routed payments |
-| **Crosschain Panel** | `packages/frontend/src/components/CrosschainPanel.tsx` | UI for cross-chain USDC transfers |
-| **Chain Config** | `packages/shared/src/constants.ts` | Arc network configuration |
+| Component            | File Location                                          | Description                                     |
+| -------------------- | ------------------------------------------------------ | ----------------------------------------------- |
+| **Gateway Service**  | `packages/backend/src/services/circleGateway.ts`       | Circle Gateway client for cross-chain transfers |
+| **Gateway Routes**   | `packages/backend/src/routes/gateway.ts`               | API endpoints for Arc-routed payments           |
+| **Crosschain Panel** | `packages/frontend/src/components/CrosschainPanel.tsx` | UI for cross-chain USDC transfers               |
+| **Chain Config**     | `packages/shared/src/constants.ts`                     | Arc network configuration                       |
 
 #### Key API Endpoints
 
@@ -179,8 +179,11 @@ POST /api/gateway/pay
 #### Code Snippets
 
 **Circle Gateway Service** (`packages/backend/src/services/circleGateway.ts`):
+
 ```typescript
-export async function createGatewayTransfer(request: GatewayTransferRequest): Promise<GatewayTransferResult> {
+export async function createGatewayTransfer(
+  request: GatewayTransferRequest
+): Promise<GatewayTransferResult> {
   // Routes USDC through Arc as liquidity hub
   const result: GatewayTransferResult = {
     transferId,
@@ -196,6 +199,7 @@ export async function createGatewayTransfer(request: GatewayTransferRequest): Pr
 ```
 
 **Gateway Routes** (`packages/backend/src/routes/gateway.ts`):
+
 ```typescript
 gatewayRouter.post("/pay", async (c) => {
   const result = await createGatewayTransfer({ ... });
@@ -219,13 +223,13 @@ ZeroKey is an **execution firewall for autonomous AI agent commerce**:
 
 #### Implementation Details
 
-| Component | File Location | Description |
-|-----------|---------------|-------------|
-| **Firewall Engine** | `packages/backend/src/services/firewall.ts` | Policy-based transaction approval |
-| **A2A Gateway** | `packages/backend/src/routes/a2a.ts` | Agent-to-agent discovery & negotiation |
-| **Payment Handler** | `packages/backend/src/routes/pay.ts` | USDC payment with HTTP 402 |
-| **Safe Guard** | `packages/contracts/src/SafeZeroKeyGuard.sol` | On-chain transaction guard |
-| **Agent Registration** | `packages/backend/src/services/agent.ts` | AI agent identity management |
+| Component              | File Location                                 | Description                            |
+| ---------------------- | --------------------------------------------- | -------------------------------------- |
+| **Firewall Engine**    | `packages/backend/src/services/firewall.ts`   | Policy-based transaction approval      |
+| **A2A Gateway**        | `packages/backend/src/routes/a2a.ts`          | Agent-to-agent discovery & negotiation |
+| **Payment Handler**    | `packages/backend/src/routes/pay.ts`          | USDC payment with HTTP 402             |
+| **Safe Guard**         | `packages/contracts/src/SafeZeroKeyGuard.sol` | On-chain transaction guard             |
+| **Agent Registration** | `packages/backend/src/services/agent.ts`      | AI agent identity management           |
 
 #### Agentic Commerce Flow
 
@@ -256,6 +260,7 @@ ZeroKey is an **execution firewall for autonomous AI agent commerce**:
 #### Key Code
 
 **Firewall Check** (`packages/backend/src/services/firewall.ts`):
+
 ```typescript
 export async function checkFirewall(input: FirewallInput): Promise<FirewallResult> {
   // 1. Recipient invariant check (prevent payment hijacking)
@@ -263,7 +268,7 @@ export async function checkFirewall(input: FirewallInput): Promise<FirewallResul
   if (!recipientCheck.valid) {
     return { decision: "REJECTED", reasons: [recipientCheck.reason] };
   }
-  
+
   // 2. Spend limit check
   // 3. Trust score verification
   // 4. LLM semantic analysis
@@ -275,7 +280,8 @@ export async function checkFirewall(input: FirewallInput): Promise<FirewallResul
 
 ### ENS Integration ($3,500 + $1,500)
 
-**Prizes**: 
+**Prizes**:
+
 - Integrate ENS (Pool Prize - $3,500 split)
 - Most Creative Use of ENS for DeFi ($1,500)
 
@@ -283,52 +289,54 @@ ZeroKey uses **ENS for decentralized AI agent identity**:
 
 #### Implementation Details
 
-| Component | File Location | Description |
-|-----------|---------------|-------------|
-| **ENS Service** | `packages/backend/src/services/ens.ts` | ENS resolution & text records |
-| **ENS Profile Component** | `packages/frontend/src/components/EnsProfile.tsx` | Display ENS names & avatars |
-| **ENS Library** | `packages/frontend/src/lib/ens.ts` | Client-side ENS utilities |
-| **Provider Discovery** | `packages/backend/src/routes/a2a.ts` | ENS-enabled provider lookup |
+| Component                 | File Location                                     | Description                   |
+| ------------------------- | ------------------------------------------------- | ----------------------------- |
+| **ENS Service**           | `packages/backend/src/services/ens.ts`            | ENS resolution & text records |
+| **ENS Profile Component** | `packages/frontend/src/components/EnsProfile.tsx` | Display ENS names & avatars   |
+| **ENS Library**           | `packages/frontend/src/lib/ens.ts`                | Client-side ENS utilities     |
+| **Provider Discovery**    | `packages/backend/src/routes/a2a.ts`              | ENS-enabled provider lookup   |
 
 #### ENS Text Records for AI Agents
 
 We use **custom ENS text records** to store AI agent metadata:
 
-| Record Key | Purpose | Example |
-|------------|---------|--------|
-| `ai.api.endpoint` | API endpoint URL | `https://api.translateai.eth/v1` |
-| `ai.services` | Service types | `translation,summarization` |
-| `ai.trustscore` | Reputation score | `85` |
-| `description` | Agent description | `Professional translation service` |
+| Record Key        | Purpose           | Example                            |
+| ----------------- | ----------------- | ---------------------------------- |
+| `ai.api.endpoint` | API endpoint URL  | `https://api.translateai.eth/v1`   |
+| `ai.services`     | Service types     | `translation,summarization`        |
+| `ai.trustscore`   | Reputation score  | `85`                               |
+| `description`     | Agent description | `Professional translation service` |
 
 #### Key Code
 
 **ENS Resolution** (`packages/frontend/src/lib/ens.ts`):
+
 ```typescript
 export async function resolveEnsProfile(addressOrName: string): Promise<EnsProfile | null> {
   const client = createPublicClient({ chain: mainnet, transport: http() });
-  
+
   // Resolve ENS name to address or reverse lookup
   const ensName = await client.getEnsName({ address });
   const avatar = await client.getEnsAvatar({ name: ensName });
-  
+
   // Fetch AI-specific text records
   const [apiEndpoint, services, trustScore] = await Promise.all([
-    client.getEnsText({ name: ensName, key: 'ai.api.endpoint' }),
-    client.getEnsText({ name: ensName, key: 'ai.services' }),
-    client.getEnsText({ name: ensName, key: 'ai.trustscore' }),
+    client.getEnsText({ name: ensName, key: "ai.api.endpoint" }),
+    client.getEnsText({ name: ensName, key: "ai.services" }),
+    client.getEnsText({ name: ensName, key: "ai.trustscore" }),
   ]);
-  
+
   return { ensName, avatar, apiEndpoint, services, trustScore };
 }
 ```
 
 **ENS Profile Component** (`packages/frontend/src/components/EnsProfile.tsx`):
+
 ```typescript
 export function EnsProfile({ address }: { address: string }) {
   const { data: ensName } = useEnsName({ address });
   const { data: avatar } = useEnsAvatar({ name: ensName });
-  
+
   return (
     <div className="flex items-center gap-2">
       {avatar && <img src={avatar} className="w-8 h-8 rounded-full" />}
@@ -340,6 +348,7 @@ export function EnsProfile({ address }: { address: string }) {
 ```
 
 **Provider Cards with ENS** (`packages/frontend/src/app/marketplace/page.tsx`):
+
 ```typescript
 // Marketplace displays ENS names and badges for providers
 {provider.walletAddress && (
@@ -355,12 +364,12 @@ ZeroKey deploys **SafeZeroKeyGuard** to enforce policies at the smart contract l
 
 #### Implementation Details
 
-| Component | File Location | Description |
-|-----------|---------------|-------------|
-| **Safe Guard Contract** | `packages/contracts/src/SafeZeroKeyGuard.sol` | Transaction guard for Safe multisig |
-| **Guard Routes** | `packages/backend/src/routes/guard.ts` | Guard registration & pre-approval API |
-| **Setup Wizard** | `packages/frontend/src/app/setup/page.tsx` | UI for Guard configuration |
-| **Safe Library** | `packages/frontend/src/lib/safe.ts` | Safe SDK integration |
+| Component               | File Location                                 | Description                           |
+| ----------------------- | --------------------------------------------- | ------------------------------------- |
+| **Safe Guard Contract** | `packages/contracts/src/SafeZeroKeyGuard.sol` | Transaction guard for Safe multisig   |
+| **Guard Routes**        | `packages/backend/src/routes/guard.ts`        | Guard registration & pre-approval API |
+| **Setup Wizard**        | `packages/frontend/src/app/setup/page.tsx`    | UI for Guard configuration            |
+| **Safe Library**        | `packages/frontend/src/lib/safe.ts`           | Safe SDK integration                  |
 
 **Deployed Contract**: `0x5fBdEEE03e76Bb0616060697D0d41300F3B2d3D2` (Base Sepolia)
 
@@ -376,7 +385,7 @@ function checkTransaction(
 ) external view override {
     bytes32 txHash = computeTxHash(to, value, data, ...);
     Decision memory decision = decisions[txHash];
-    
+
     // Require pre-approval from ZeroKey oracle
     require(decision.approved, "ZeroKey: Transaction not approved");
     require(decision.riskLevel <= maxAllowedRisk, "ZeroKey: Risk too high");
@@ -387,13 +396,13 @@ function checkTransaction(
 
 ## 🏆 Prize Track Summary
 
-| Prize Track | Amount | Status | Key Files |
-|-------------|--------|--------|----------|
-| **Arc - Chain Abstracted USDC** | $5,000 | ✅ Implemented | `circleGateway.ts`, `gateway.ts` |
-| **Arc - Agentic Commerce** | $2,500 | ✅ Implemented | `firewall.ts`, `a2a.ts`, `pay.ts` |
-| **Arc - Global Treasury** | $2,500 | ✅ Implemented | `gateway.ts`, `CrosschainPanel.tsx` |
-| **ENS - Integration** | $3,500 (pool) | ✅ Implemented | `ens.ts`, `EnsProfile.tsx` |
-| **ENS - Creative DeFi** | $1,500 | ✅ Implemented | AI agent text records |
+| Prize Track                     | Amount        | Status         | Key Files                           |
+| ------------------------------- | ------------- | -------------- | ----------------------------------- |
+| **Arc - Chain Abstracted USDC** | $5,000        | ✅ Implemented | `circleGateway.ts`, `gateway.ts`    |
+| **Arc - Agentic Commerce**      | $2,500        | ✅ Implemented | `firewall.ts`, `a2a.ts`, `pay.ts`   |
+| **Arc - Global Treasury**       | $2,500        | ✅ Implemented | `gateway.ts`, `CrosschainPanel.tsx` |
+| **ENS - Integration**           | $3,500 (pool) | ✅ Implemented | `ens.ts`, `EnsProfile.tsx`          |
+| **ENS - Creative DeFi**         | $1,500        | ✅ Implemented | AI agent text records               |
 
 ---
 
