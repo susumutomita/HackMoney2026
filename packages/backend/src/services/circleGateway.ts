@@ -47,7 +47,9 @@ function getBaseUrl(): string {
   return API_BASE_URLS[config.circleEnv || "sandbox"];
 }
 
-async function circleFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+type FetchInit = Parameters<typeof fetch>[1];
+
+async function circleFetch<T>(path: string, init: FetchInit = {}): Promise<T> {
   const apiKey = config.circleApiKey;
   if (!apiKey) {
     throw new CircleGatewayError("Missing CIRCLE_API_KEY. Add it to packages/backend/.env");
