@@ -25,10 +25,6 @@ const envSchema = z.object({
 
   /** JSON object mapping providerId -> { recipient } */
   PROVIDER_REGISTRY_JSON: z.string().optional(),
-
-  // Circle Gateway (Arc Liquidity Hub)
-  CIRCLE_API_KEY: z.string().optional(),
-  CIRCLE_ENV: z.enum(["sandbox", "production"]).default("sandbox"),
 });
 
 const env = envSchema.parse(process.env);
