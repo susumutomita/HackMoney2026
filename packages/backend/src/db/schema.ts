@@ -241,3 +241,25 @@ export const guardRegistrations = sqliteTable("guard_registrations", {
 
 export type GuardRegistrationRow = typeof guardRegistrations.$inferSelect;
 export type NewGuardRegistrationRow = typeof guardRegistrations.$inferInsert;
+
+/**
+ * Agents table
+ * Stores AI agent API keys and budget configuration
+ */
+export const agents = sqliteTable("agents", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  apiKeyPrefix: text("api_key_prefix").notNull(),
+  apiKeyHash: text("api_key_hash").notNull().unique(),
+  safeAddress: text("safe_address").notNull(),
+  allowedCategories: text("allowed_categories", { mode: "json" }).$type<string[]>().notNull(),
+  dailyBudgetUsd: text("daily_budget_usd").notNull().default("10"),
+  spentTodayUsd: text("spent_today_usd").notNull().default("0"),
+  lastResetDate: text("last_reset_date").notNull(),
+  createdAt: text("created_at").notNull(),
+  lastUsedAt: text("last_used_at"),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+});
+
+export type AgentRow = typeof agents.$inferSelect;
+export type NewAgentRow = typeof agents.$inferInsert;

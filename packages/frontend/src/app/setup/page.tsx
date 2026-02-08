@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Link from "next/link";
-import { policyApi } from "@/lib/api";
+import { policyApi, agentsApi } from "@/lib/api";
+import type { AgentInfo } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -115,6 +116,42 @@ function ClipboardCopyIcon({ className }: { className?: string }) {
   );
 }
 
+function PlugIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"
+      />
+    </svg>
+  );
+}
+
+function TrashIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+      />
+    </svg>
+  );
+}
+
 // ── Nav components (reused from dashboard) ───────────
 
 function Logo() {
@@ -181,6 +218,7 @@ const STEPS = [
   { label: "Enter Safe", icon: LockIcon },
   { label: "Enable Guard", icon: ShieldCheckIcon },
   { label: "Configure", icon: CogIcon },
+  { label: "Connect Agent", icon: PlugIcon },
   { label: "Complete", icon: CheckCircleIcon },
 ];
 
@@ -707,7 +745,268 @@ function StepConfigurePolicies({ onNext }: { onNext: () => void }) {
   );
 }
 
-// ── Step 4: Success ──────────────────────────────────
+// ── Step 4: Connect Agent ─────────────────────────────
+
+function StepConnectAgent({
+  guardStatus,
+  onNext,
+}: {
+  guardStatus: GuardStatus | null;
+  onNext: () => void;
+}) {
+  const [activeTab, setActiveTab] = useState<"mcp" | "apikeys">("mcp");
+  const [agentName, setAgentName] = useState("");
+  const [agents, setAgents] = useState<AgentInfo[]>([]);
+  const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [copiedMcp, setCopiedMcp] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+
+  const safeAddress = guardStatus?.safeAddress ?? "";
+
+  const loadAgents = useCallback(async () => {
+    if (!safeAddress) return;
+    setIsLoading(true);
+    try {
+      const data = await agentsApi.list(safeAddress);
+      setAgents(data.agents);
+    } catch {
+      // Silently fail on load — agents may not exist yet
+    } finally {
+      setIsLoading(false);
+    }
+  }, [safeAddress]);
+
+  useEffect(() => {
+    void loadAgents();
+  }, [loadAgents]);
+
+  const mcpConfig = JSON.stringify(
+    {
+      mcpServers: {
+        zerokey: {
+          command: "npx",
+          args: ["-y", "@zerokey/mcp-server@latest"],
+          env: {
+            ZEROKEY_API_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001",
+            ZEROKEY_API_KEY: "<your-agent-api-key>",
+          },
+        },
+      },
+    },
+    null,
+    2
+  );
+
+  const copyToClipboard = (text: string, target: "mcp" | "key") => {
+    void globalThis.navigator.clipboard.writeText(text);
+    if (target === "mcp") {
+      setCopiedMcp(true);
+      setTimeout(() => setCopiedMcp(false), 2000);
+    } else {
+      setCopiedKey(true);
+      setTimeout(() => setCopiedKey(false), 2000);
+    }
+  };
+
+  const createAgent = async () => {
+    if (!agentName.trim() || !safeAddress) return;
+    setIsCreating(true);
+    setError(null);
+    setGeneratedKey(null);
+    try {
+      const data = await agentsApi.create({ name: agentName.trim(), safeAddress });
+      setGeneratedKey(data.apiKey);
+      setAgentName("");
+      void loadAgents();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create agent");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const deleteAgent = async (id: string) => {
+    try {
+      await agentsApi.delete(id);
+      setAgents((prev) => prev.filter((a) => a.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete agent");
+    }
+  };
+
+  return (
+    <div className="glass-card p-8 max-w-xl mx-auto">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+          <PlugIcon className="w-5 h-5 text-cyan-400" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-white">Connect Agent</h2>
+          <p className="text-sm text-slate-500">Connect AI agents to your protected Safe</p>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 p-1 rounded-xl bg-slate-800/50 border border-white/5 mb-6">
+        <button
+          onClick={() => setActiveTab("mcp")}
+          className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+            activeTab === "mcp"
+              ? "bg-cyan-500/15 text-cyan-400"
+              : "text-slate-500 hover:text-slate-300"
+          }`}
+        >
+          MCP Config
+        </button>
+        <button
+          onClick={() => setActiveTab("apikeys")}
+          className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+            activeTab === "apikeys"
+              ? "bg-cyan-500/15 text-cyan-400"
+              : "text-slate-500 hover:text-slate-300"
+          }`}
+        >
+          API Keys
+        </button>
+      </div>
+
+      {/* MCP Tab */}
+      {activeTab === "mcp" && (
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">
+            Add this configuration to your Claude Desktop or MCP-compatible client:
+          </p>
+          <div className="relative">
+            <pre className="bg-slate-900/80 border border-white/5 rounded-xl p-4 font-mono text-xs text-slate-300 overflow-x-auto">
+              {mcpConfig}
+            </pre>
+            <button
+              onClick={() => copyToClipboard(mcpConfig, "mcp")}
+              className="absolute top-3 right-3 p-1.5 rounded-lg text-slate-500 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
+              title="Copy config"
+            >
+              <ClipboardCopyIcon className="w-4 h-4" />
+            </button>
+          </div>
+          {copiedMcp && <p className="text-xs text-emerald-400">Copied to clipboard</p>}
+          <p className="text-xs text-slate-600">
+            Replace{" "}
+            <code className="px-1 py-0.5 rounded bg-slate-700/50 text-amber-400">
+              &lt;your-agent-api-key&gt;
+            </code>{" "}
+            with a key generated in the API Keys tab.
+          </p>
+        </div>
+      )}
+
+      {/* API Keys Tab */}
+      {activeTab === "apikeys" && (
+        <div className="space-y-4">
+          {/* Generate new key */}
+          <div>
+            <label className="block text-sm font-medium text-slate-400 mb-2">Agent Name</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={agentName}
+                onChange={(e) => setAgentName(e.target.value)}
+                placeholder="e.g. my-claude-agent"
+                className="flex-1 px-4 py-3 rounded-xl bg-slate-800/50 border border-white/10 text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 font-mono text-sm"
+              />
+              <button
+                onClick={() => void createAgent()}
+                disabled={!agentName.trim() || isCreating}
+                className="px-4 py-3 rounded-xl font-medium text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/25 whitespace-nowrap"
+              >
+                {isCreating ? "Creating..." : "Generate"}
+              </button>
+            </div>
+          </div>
+
+          {/* Show generated key */}
+          {generatedKey && (
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <p className="text-sm font-medium text-amber-400 mb-2">
+                Save this key now -- it will not be shown again
+              </p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 px-3 py-2 rounded-lg bg-slate-900/50 border border-white/5 font-mono text-xs text-amber-400 break-all">
+                  {generatedKey}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(generatedKey, "key")}
+                  className="p-2 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all flex-shrink-0"
+                  title="Copy key"
+                >
+                  <ClipboardCopyIcon className="w-4 h-4" />
+                </button>
+              </div>
+              {copiedKey && <p className="text-xs text-emerald-400 mt-1">Copied to clipboard</p>}
+            </div>
+          )}
+
+          {error && (
+            <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+              <p className="text-rose-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Existing agents */}
+          <div>
+            <h3 className="text-sm font-medium text-slate-400 mb-3">Registered Agents</h3>
+            {isLoading ? (
+              <p className="text-sm text-slate-600">Loading agents...</p>
+            ) : agents.length === 0 ? (
+              <p className="text-sm text-slate-600">No agents registered yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {agents.map((agent) => (
+                  <div
+                    key={agent.id}
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-800/30 border border-white/5"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                          agent.enabled ? "bg-emerald-400" : "bg-slate-600"
+                        }`}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{agent.name}</p>
+                        <p className="text-xs text-slate-500 font-mono">{agent.apiKeyPrefix}...</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => void deleteAgent(agent.id)}
+                      className="p-1.5 rounded-lg text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-all flex-shrink-0"
+                      title="Delete agent"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Continue button */}
+      <button
+        onClick={onNext}
+        className="w-full mt-6 py-3 rounded-xl font-medium text-sm transition-all bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/25 flex items-center justify-center gap-2"
+      >
+        Continue
+        <ArrowRightIcon className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
+// ── Step 5: Success ──────────────────────────────────
 
 function StepSuccess({ guardStatus }: { guardStatus: GuardStatus | null }) {
   return (
@@ -761,7 +1060,7 @@ export default function SetupPage() {
     if (currentStep === 0 && guardStatus?.isProtected) {
       setCurrentStep(2);
     } else {
-      setCurrentStep((s) => Math.min(s + 1, 3));
+      setCurrentStep((s) => Math.min(s + 1, 4));
     }
   };
 
@@ -817,7 +1116,10 @@ export default function SetupPage() {
               <StepEnableProtection guardStatus={guardStatus} onNext={handleNext} />
             )}
             {currentStep === 2 && <StepConfigurePolicies onNext={handleNext} />}
-            {currentStep === 3 && <StepSuccess guardStatus={guardStatus} />}
+            {currentStep === 3 && (
+              <StepConnectAgent guardStatus={guardStatus} onNext={handleNext} />
+            )}
+            {currentStep === 4 && <StepSuccess guardStatus={guardStatus} />}
           </div>
         </div>
       </main>

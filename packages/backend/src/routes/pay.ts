@@ -5,8 +5,11 @@ import type { Address, Hex } from "viem";
 import { baseSepolia } from "viem/chains";
 import { eq } from "drizzle-orm";
 import { verifyUsdcTransfer } from "../services/payment.js";
+import { checkFirewall } from "../services/firewall.js";
 import { db, schema } from "../db/index.js";
+import { agents, firewallEvents, purchases } from "../db/schema.js";
 import { randomUUID } from "node:crypto";
+import { agentAuth } from "../middleware/agentAuth.js";
 
 /**
  * Payment routes (x402-style)
@@ -155,5 +158,170 @@ payRouter.post("/submit", zValidator("json", submitSchema), async (c) => {
           url: `/api/image-pack/${result.file}`,
         }
       : null,
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/*  POST /api/pay/execute — agent-initiated execution with firewall   */
+/* ------------------------------------------------------------------ */
+
+const executeSchema = z.object({
+  providerId: z.string().min(1),
+  amount: z.string().min(1),
+  task: z.string().optional(),
+});
+
+/**
+ * POST /api/pay/execute
+ * Agent executes a service payment. Runs category + budget + firewall checks.
+ */
+payRouter.post("/execute", agentAuth, zValidator("json", executeSchema), async (c) => {
+  const agent = c.get("agent");
+  const { providerId, amount, task } = c.req.valid("json");
+  const now = new Date().toISOString();
+
+  // Lookup provider
+  const provider = db
+    .select()
+    .from(schema.providers)
+    .where(eq(schema.providers.id, providerId))
+    .get();
+
+  if (!provider) {
+    return c.json({ error: "Provider not found", code: "PROVIDER_NOT_FOUND" }, 404);
+  }
+
+  // Category check: at least one of the provider's services must be in agent's allowed categories
+  const agentCategories = agent.allowedCategories as string[];
+  const providerServices = provider.services as string[];
+  const hasAllowedCategory = providerServices.some((s) => agentCategories.includes(s));
+  if (!hasAllowedCategory) {
+    await db.insert(firewallEvents).values({
+      id: randomUUID(),
+      providerId: provider.id,
+      providerName: provider.name,
+      decision: "REJECTED",
+      reason: `Agent not authorized for categories: ${providerServices.join(", ")}`,
+      attemptedRecipient: provider.walletAddress,
+      amountUsdc: amount,
+      createdAt: now,
+    });
+    return c.json(
+      {
+        error: "Agent not authorized for this service category",
+        code: "CATEGORY_DENIED",
+        agentCategories,
+        providerServices,
+      },
+      403
+    );
+  }
+
+  // Budget check
+  const spent = parseFloat(agent.spentTodayUsd);
+  const requested = parseFloat(amount);
+  const budget = parseFloat(agent.dailyBudgetUsd);
+
+  if (spent + requested > budget) {
+    await db.insert(firewallEvents).values({
+      id: randomUUID(),
+      providerId: provider.id,
+      providerName: provider.name,
+      decision: "REJECTED",
+      reason: `Daily budget exceeded: spent=$${spent.toFixed(2)} + requested=$${requested.toFixed(2)} > budget=$${budget.toFixed(2)}`,
+      attemptedRecipient: provider.walletAddress,
+      amountUsdc: amount,
+      createdAt: now,
+    });
+    return c.json(
+      {
+        error: "Daily budget exceeded",
+        code: "BUDGET_EXCEEDED",
+        spent: agent.spentTodayUsd,
+        requested: amount,
+        budget: agent.dailyBudgetUsd,
+      },
+      403
+    );
+  }
+
+  // Firewall check
+  // Convert USDC amount (e.g. "0.03") to base units (6 decimals) for firewall
+  const amountBase = Math.round(requested * 1_000_000).toString();
+
+  const fwResult = await checkFirewall({
+    tx: {
+      chainId: baseSepolia.id,
+      from: agent.safeAddress,
+      to: provider.walletAddress ?? "0x0000000000000000000000000000000000000000",
+      value: amountBase,
+    },
+    provider: {
+      id: provider.id,
+      name: provider.name,
+      trustScore: provider.trustScore,
+      service: providerServices[0],
+      recipient: provider.walletAddress ?? undefined,
+    },
+    safe: {
+      address: agent.safeAddress,
+      chainId: baseSepolia.id,
+    },
+  });
+
+  if (fwResult.decision === "REJECTED") {
+    await db.insert(firewallEvents).values({
+      id: randomUUID(),
+      providerId: provider.id,
+      providerName: provider.name,
+      decision: "REJECTED",
+      reason: fwResult.reasons.join("; "),
+      attemptedRecipient: provider.walletAddress,
+      amountUsdc: amount,
+      createdAt: now,
+    });
+    return c.json(
+      {
+        approved: false,
+        decision: fwResult.decision,
+        reasons: fwResult.reasons,
+        warnings: fwResult.warnings,
+      },
+      403
+    );
+  }
+
+  // Approved or CONFIRM_REQUIRED — update budget, record purchase
+  const newSpent = (spent + requested).toFixed(6);
+  db.update(agents).set({ spentTodayUsd: newSpent }).where(eq(agents.id, agent.id)).run();
+
+  const purchaseId = randomUUID();
+  const txHash = `0x${randomUUID().replace(/-/g, "")}` as string;
+
+  await db.insert(purchases).values({
+    id: purchaseId,
+    txHash,
+    chainId: baseSepolia.id,
+    token: USDC_BASE_SEPOLIA,
+    payer: agent.safeAddress,
+    recipient: provider.walletAddress ?? "0x0000000000000000000000000000000000000000",
+    amountUsdc: amount,
+    providerId: provider.id,
+    providerName: provider.name,
+    firewallDecision: fwResult.decision,
+    firewallReason: fwResult.reasons.join("; "),
+    createdAt: now,
+  });
+
+  return c.json({
+    approved: true,
+    decision: fwResult.decision,
+    purchaseId,
+    txHash,
+    provider: { id: provider.id, name: provider.name },
+    amount,
+    task: task ?? null,
+    budgetRemaining: (budget - spent - requested).toFixed(6),
+    warnings: fwResult.warnings,
   });
 });
