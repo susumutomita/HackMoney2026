@@ -195,6 +195,32 @@ gatewayRouter.post("/transfer/signed", zValidator("json", signedTransferSchema),
 
   // Convert string values back to BigInt and Hex for the service
   const spec = input.burnIntent.spec;
+  // Extract sender/recipient from bytes32 fields (last 40 hex chars)
+  const sender = `0x${spec.sourceDepositor.slice(-40)}`;
+  const recipient = `0x${spec.destinationRecipient.slice(-40)}`;
+
+  // Firewall check before forwarding to Gateway API
+  const firewallResult = await checkFirewall({
+    tx: {
+      chainId: 84532,
+      from: sender,
+      to: recipient,
+      value: spec.value,
+    },
+  });
+
+  if (firewallResult.decision === "REJECTED") {
+    return c.json(
+      {
+        success: false,
+        error: "firewall_rejected",
+        reasons: firewallResult.reasons,
+        riskLevel: firewallResult.riskLevel,
+      },
+      403
+    );
+  }
+
   const signedIntent: SignedBurnIntent = {
     burnIntent: {
       maxBlockHeight: BigInt(input.burnIntent.maxBlockHeight),
@@ -221,7 +247,17 @@ gatewayRouter.post("/transfer/signed", zValidator("json", signedTransferSchema),
 
   const result = await transferWithSignedIntent(signedIntent);
 
-  return c.json(result, result.success ? 200 : 500);
+  return c.json(
+    {
+      ...result,
+      firewall: {
+        decision: firewallResult.decision,
+        riskLevel: firewallResult.riskLevel,
+        reasons: firewallResult.reasons,
+      },
+    },
+    result.success ? 200 : 500
+  );
 });
 
 // ──────────────────────────────────────────────

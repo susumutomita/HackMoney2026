@@ -561,8 +561,8 @@ export async function transferWithSignedIntent(
     sourceDomain: spec.sourceDomain,
     destinationDomain: spec.destinationDomain,
     amount: spec.value.toString(),
-    sender: spec.sourceDepositor.slice(0, 42) as Address,
-    recipient: spec.destinationRecipient.slice(0, 42) as Address,
+    sender: `0x${spec.sourceDepositor.slice(-40)}` as Address,
+    recipient: `0x${spec.destinationRecipient.slice(-40)}` as Address,
     arcRouting: {
       usedAsHub: useArcHub,
       hubDomain: GATEWAY_DOMAINS.arcTestnet.domainId,
