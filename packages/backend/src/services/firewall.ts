@@ -15,6 +15,7 @@ export interface FirewallCheckInput {
     /** Price hint for the provider (same units as tx.value). Optional. */
     priceWei?: string;
     service?: string;
+    ensName?: string | null;
     /** Verified recipient (from registry) for recipient-invariant checks. */
     expectedRecipient?: string;
     /** Recipient presented by marketplace/provider listing. */
@@ -135,6 +136,72 @@ function enforceProtocolAllowlistPolicy(
     state.hardReject = true;
     reasons.push(`Policy '${policy.name}' blocks: destination not in allowlist`);
     warnings.push(`Destination address ${txTo} is not allowlisted`);
+  }
+}
+
+function enforceTrustScorePolicy(
+  policy: Policy,
+  providerTrustScore: number | undefined,
+  matchedPolicyIds: string[],
+  reasons: string[],
+  warnings: string[],
+  state: { risk: 1 | 2 | 3; hardReject: boolean }
+): void {
+  const config = policy.config as PolicyConfig;
+  if (config.type !== "trust_score") return;
+  if (providerTrustScore === undefined) return;
+
+  if (providerTrustScore < config.minScore) {
+    matchedPolicyIds.push(policy.id);
+    state.risk = maxRisk(state.risk, 3);
+    state.hardReject = true;
+    reasons.push(`Policy '${policy.name}' blocks: trust score below threshold`);
+    warnings.push(`Trust score ${providerTrustScore} < ${config.minScore}`);
+  }
+}
+
+function enforceRequireEnsPolicy(
+  policy: Policy,
+  providerEnsName: string | null | undefined,
+  providerRecipient: string | undefined,
+  matchedPolicyIds: string[],
+  reasons: string[],
+  warnings: string[],
+  state: { risk: 1 | 2 | 3; hardReject: boolean }
+): void {
+  const config = policy.config as PolicyConfig;
+  if (config.type !== "require_ens") return;
+  if (!config.required) return;
+
+  const hasEns = Boolean(providerEnsName && providerEnsName.trim().length > 0);
+  if (!hasEns) {
+    matchedPolicyIds.push(policy.id);
+    state.risk = maxRisk(state.risk, 3);
+    state.hardReject = true;
+    reasons.push(`Policy '${policy.name}' blocks: recipient has no ENS`);
+    warnings.push(`Recipient ${providerRecipient ?? "(unknown)"} has no ENS name`);
+  }
+}
+
+function enforceCategoryRestrictionPolicy(
+  policy: Policy,
+  providerService: string | undefined,
+  matchedPolicyIds: string[],
+  reasons: string[],
+  warnings: string[],
+  state: { risk: 1 | 2 | 3; hardReject: boolean }
+): void {
+  const config = policy.config as PolicyConfig;
+  if (config.type !== "category_restriction") return;
+
+  if (!providerService) return;
+
+  if (!config.allowed.includes(providerService)) {
+    matchedPolicyIds.push(policy.id);
+    state.risk = maxRisk(state.risk, 3);
+    state.hardReject = true;
+    reasons.push(`Policy '${policy.name}' blocks: category not allowed`);
+    warnings.push(`Category '${providerService}' not in allowed list`);
   }
 }
 
@@ -265,9 +332,33 @@ export async function checkFirewall(input: FirewallCheckInput): Promise<Firewall
         warnings,
         state
       );
+      enforceTrustScorePolicy(
+        policy,
+        input.provider?.trustScore,
+        matchedPolicyIds,
+        reasons,
+        warnings,
+        state
+      );
+      enforceRequireEnsPolicy(
+        policy,
+        input.provider?.ensName,
+        input.provider?.recipient,
+        matchedPolicyIds,
+        reasons,
+        warnings,
+        state
+      );
+      enforceCategoryRestrictionPolicy(
+        policy,
+        input.provider?.service,
+        matchedPolicyIds,
+        reasons,
+        warnings,
+        state
+      );
       risk = state.risk;
       hardReject = state.hardReject;
-      // NOTE: Other policy types are intentionally ignored in this demo firewall.
     }
   } catch (err) {
     // Fail closed? For demo, fail to CONFIRM_REQUIRED but do not hard reject on policy load failure.

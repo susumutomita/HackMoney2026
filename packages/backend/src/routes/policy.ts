@@ -69,11 +69,29 @@ const timeRestrictionConfigSchema = z.object({
  * Discriminated union schema for all policy configs
  * This ensures type-safe validation based on the 'type' field
  */
+const trustScoreConfigSchema = z.object({
+  type: z.literal("trust_score"),
+  minScore: z.number().min(0).max(100),
+});
+
+const requireEnsConfigSchema = z.object({
+  type: z.literal("require_ens"),
+  required: z.boolean(),
+});
+
+const categoryRestrictionConfigSchema = z.object({
+  type: z.literal("category_restriction"),
+  allowed: z.array(z.string().min(1)).min(1),
+});
+
 const policyConfigSchema = z.discriminatedUnion("type", [
   spendingLimitConfigSchema,
   protocolAllowlistConfigSchema,
   kycRequirementConfigSchema,
   timeRestrictionConfigSchema,
+  trustScoreConfigSchema,
+  requireEnsConfigSchema,
+  categoryRestrictionConfigSchema,
 ]);
 
 /**

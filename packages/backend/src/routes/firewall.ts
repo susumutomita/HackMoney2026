@@ -167,6 +167,7 @@ firewallRouter.post("/check", zValidator("json", checkSchema), async (c) => {
         trustScore: providerRow.trustScore,
         priceWei: providerRow.pricePerUnit,
         service: providerRow.services?.[0] ?? undefined,
+        ensName: providerRow.ensName ?? null,
         expectedRecipient,
         recipient: providerRow.walletAddress ?? undefined,
       }

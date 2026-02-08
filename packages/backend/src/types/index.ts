@@ -27,7 +27,10 @@ export type PolicyType =
   | "spending_limit"
   | "protocol_allowlist"
   | "kyc_requirement"
-  | "time_restriction";
+  | "time_restriction"
+  | "trust_score"
+  | "require_ens"
+  | "category_restriction";
 
 /**
  * Spending limit policy configuration
@@ -77,11 +80,29 @@ export interface TimeRestrictionConfig {
  * Discriminated union of all policy configurations
  * Type-safe policy config that enforces correct structure per policy type
  */
+export interface TrustScoreConfig {
+  type: "trust_score";
+  minScore: number; // 0-100
+}
+
+export interface RequireEnsConfig {
+  type: "require_ens";
+  required: boolean;
+}
+
+export interface CategoryRestrictionConfig {
+  type: "category_restriction";
+  allowed: string[];
+}
+
 export type PolicyConfig =
   | SpendingLimitConfig
   | ProtocolAllowlistConfig
   | KycRequirementConfig
-  | TimeRestrictionConfig;
+  | TimeRestrictionConfig
+  | TrustScoreConfig
+  | RequireEnsConfig
+  | CategoryRestrictionConfig;
 
 /**
  * Policy definition with strongly-typed configuration
