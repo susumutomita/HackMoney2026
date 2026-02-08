@@ -207,6 +207,24 @@ const CREATE_TABLES_SQL = `
   CREATE INDEX IF NOT EXISTS idx_wallet_policies_safe ON wallet_policies(safe_address);
   CREATE INDEX IF NOT EXISTS idx_pending_approvals_safe ON pending_approvals(safe_address);
   CREATE INDEX IF NOT EXISTS idx_guard_registrations_safe ON guard_registrations(safe_address);
+
+  CREATE TABLE IF NOT EXISTS agents (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    api_key_prefix TEXT NOT NULL,
+    api_key_hash TEXT NOT NULL UNIQUE,
+    safe_address TEXT NOT NULL,
+    allowed_categories TEXT NOT NULL,
+    daily_budget_usd TEXT NOT NULL DEFAULT '10',
+    spent_today_usd TEXT NOT NULL DEFAULT '0',
+    last_reset_date TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    last_used_at TEXT,
+    enabled INTEGER NOT NULL DEFAULT 1
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_agents_api_key_hash ON agents(api_key_hash);
+  CREATE INDEX IF NOT EXISTS idx_agents_safe_address ON agents(safe_address);
 `;
 
 /**

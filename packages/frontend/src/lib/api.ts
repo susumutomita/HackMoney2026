@@ -190,6 +190,48 @@ export const policyApi = {
 };
 
 /**
+ * Agent info returned from the backend
+ */
+export interface AgentInfo {
+  id: string;
+  name: string;
+  apiKeyPrefix: string;
+  safeAddress: string;
+  allowedCategories: string[];
+  dailyBudgetUsd: string;
+  spentTodayUsd: string;
+  enabled: boolean;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+/**
+ * Agents API
+ */
+export const agentsApi = {
+  list: (safeAddress: string) =>
+    fetchApi<{ agents: AgentInfo[] }>(`/api/agents?safe=${safeAddress}`),
+
+  create: (params: {
+    name: string;
+    safeAddress: string;
+    allowedCategories?: string[];
+    dailyBudgetUsd?: string;
+  }) =>
+    fetchApi<{ success: true; agent: AgentInfo; apiKey: string }>("/api/agents", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
+
+  delete: (id: string) => fetchApi<{ success: boolean }>(`/api/agents/${id}`, { method: "DELETE" }),
+
+  rotateKey: (id: string) =>
+    fetchApi<{ apiKey: string; apiKeyPrefix: string }>(`/api/agents/${id}/rotate-key`, {
+      method: "POST",
+    }),
+};
+
+/**
  * Health API
  */
 export const healthApi = {
