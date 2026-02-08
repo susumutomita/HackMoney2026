@@ -75,6 +75,20 @@ export type PolicyConfig =
       type: "time_restriction";
       allowedDays: number[];
       allowedHoursUtc: { start: number; end: number };
+    }
+  | {
+      type: "trust_score_threshold";
+      minScore: number;
+      action: "reject" | "confirm_required";
+    }
+  | {
+      type: "ens_required";
+      requireEns: boolean;
+    }
+  | {
+      type: "category_restriction";
+      allowedCategories: string[];
+      blockUnknown: boolean;
     };
 
 /**

@@ -134,6 +134,20 @@ function PlugIcon({ className }: { className?: string }) {
   );
 }
 
+function ChevronDownIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      stroke="currentColor"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+    </svg>
+  );
+}
+
 function TrashIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -611,12 +625,34 @@ function StepEnableProtection({
 
 // ── Step 3: Configure Policies ───────────────────────
 
+const SERVICE_CATEGORIES = [
+  { id: "translation", label: "Translation" },
+  { id: "summarization", label: "Summarization" },
+  { id: "data_analysis", label: "Data Analysis" },
+  { id: "code_review", label: "Code Review" },
+  { id: "image_generation", label: "Image Generation" },
+];
+
 function StepConfigurePolicies({ onNext }: { onNext: () => void }) {
   const [maxTxAmount, setMaxTxAmount] = useState("1000");
   const [dailyLimit, setDailyLimit] = useState("5000");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+
+  // Advanced settings
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [ensRequired, setEnsRequired] = useState(false);
+  const [trustScoreThreshold, setTrustScoreThreshold] = useState("50");
+  const [allowedCategories, setAllowedCategories] = useState<string[]>(
+    SERVICE_CATEGORIES.map((c) => c.id)
+  );
+
+  const toggleCategory = (id: string) => {
+    setAllowedCategories((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+  };
 
   const savePolicies = async () => {
     setIsSaving(true);
@@ -643,6 +679,39 @@ function StepConfigurePolicies({ onNext }: { onNext: () => void }) {
         },
         enabled: true,
       });
+
+      // Advanced policies
+      if (ensRequired) {
+        await policyApi.create({
+          name: "ENS Required",
+          config: { type: "ens_required", requireEns: true },
+          enabled: true,
+        });
+      }
+
+      if (Number(trustScoreThreshold) > 0) {
+        await policyApi.create({
+          name: `Trust Score Threshold: ${trustScoreThreshold}`,
+          config: {
+            type: "trust_score_threshold",
+            minScore: Number(trustScoreThreshold),
+            action: "confirm_required",
+          },
+          enabled: true,
+        });
+      }
+
+      if (allowedCategories.length < SERVICE_CATEGORIES.length) {
+        await policyApi.create({
+          name: "Category Restrictions",
+          config: {
+            type: "category_restriction",
+            allowedCategories,
+            blockUnknown: true,
+          },
+          enabled: true,
+        });
+      }
 
       setSaved(true);
     } catch (err) {
@@ -707,6 +776,113 @@ function StepConfigurePolicies({ onNext }: { onNext: () => void }) {
           <p className="text-xs text-slate-600 mt-1">
             Total daily spending across all transactions
           </p>
+        </div>
+
+        {/* Advanced Settings */}
+        <div className="border border-white/5 rounded-xl overflow-hidden">
+          <button
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+          >
+            <span>Advanced Settings</span>
+            <ChevronDownIcon
+              className={`w-4 h-4 transition-transform duration-200 ${showAdvanced ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {showAdvanced && (
+            <div className="px-4 pb-4 space-y-5 border-t border-white/5">
+              {/* ENS Required */}
+              <div className="pt-4">
+                <label className="flex items-center justify-between cursor-pointer">
+                  <div>
+                    <p className="text-sm font-medium text-slate-400">ENS Required</p>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Block transactions to addresses without an ENS name
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setEnsRequired(!ensRequired)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${
+                      ensRequired ? "bg-cyan-500" : "bg-slate-700"
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                        ensRequired ? "translate-x-5" : ""
+                      }`}
+                    />
+                  </button>
+                </label>
+              </div>
+
+              {/* Trust Score Threshold */}
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-2">
+                  Minimum Trust Score
+                </label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={trustScoreThreshold}
+                    onChange={(e) => setTrustScoreThreshold(e.target.value)}
+                    className="flex-1 h-2 rounded-full appearance-none bg-slate-700 accent-cyan-500"
+                  />
+                  <span className="text-sm font-mono text-cyan-400 w-10 text-right">
+                    {trustScoreThreshold}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-1">
+                  Providers below this score require manual confirmation
+                </p>
+              </div>
+
+              {/* Category Restrictions */}
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-2">
+                  Allowed Categories
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {SERVICE_CATEGORIES.map((cat) => (
+                    <label
+                      key={cat.id}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition-all ${
+                        allowedCategories.includes(cat.id)
+                          ? "bg-cyan-500/10 border border-cyan-500/20 text-cyan-400"
+                          : "bg-slate-800/30 border border-white/5 text-slate-500"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={allowedCategories.includes(cat.id)}
+                        onChange={() => toggleCategory(cat.id)}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
+                          allowedCategories.includes(cat.id)
+                            ? "bg-cyan-500 border-cyan-500"
+                            : "border-slate-600"
+                        }`}
+                      >
+                        {allowedCategories.includes(cat.id) && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      {cat.label}
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-600 mt-1">
+                  Unchecked categories will be blocked by the firewall
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {error && (

@@ -78,6 +78,9 @@ const POLICY_TYPE_LABELS: Record<PolicyConfig["type"], string> = {
   protocol_allowlist: "Protocol Allowlist",
   kyc_requirement: "KYC Requirement",
   time_restriction: "Time Restriction",
+  trust_score_threshold: "Trust Score",
+  ens_required: "ENS Required",
+  category_restriction: "Category Restriction",
 };
 
 const POLICY_TYPE_STYLES: Record<PolicyConfig["type"], { bg: string; text: string; icon: string }> =
@@ -94,6 +97,21 @@ const POLICY_TYPE_STYLES: Record<PolicyConfig["type"], { bg: string; text: strin
       text: "text-emerald-400",
       icon: "text-emerald-400",
     },
+    trust_score_threshold: {
+      bg: "bg-orange-500/10",
+      text: "text-orange-400",
+      icon: "text-orange-400",
+    },
+    ens_required: {
+      bg: "bg-blue-500/10",
+      text: "text-blue-400",
+      icon: "text-blue-400",
+    },
+    category_restriction: {
+      bg: "bg-rose-500/10",
+      text: "text-rose-400",
+      icon: "text-rose-400",
+    },
   };
 
 function formatPolicyDetails(config: PolicyConfig): string {
@@ -106,6 +124,12 @@ function formatPolicyDetails(config: PolicyConfig): string {
       return `${config.requiredLevel} KYC required above ${formatEther(BigInt(config.thresholdWei))} ETH`;
     case "time_restriction":
       return `${config.allowedDays.length} days, ${config.allowedHoursUtc.start}:00-${config.allowedHoursUtc.end}:00 UTC`;
+    case "trust_score_threshold":
+      return `Min score: ${config.minScore} (${config.action.replace("_", " ")})`;
+    case "ens_required":
+      return config.requireEns ? "ENS name required" : "ENS not required";
+    case "category_restriction":
+      return `${config.allowedCategories.length} categories allowed`;
     default:
       return "Unknown policy type";
   }

@@ -97,6 +97,62 @@ Minimal flow:
 3. `POST /api/firewall/check` (execution gate)
 4. If approved: `POST /api/pay/request` → (HTTP 402) → send USDC → `POST /api/pay/submit` with `txHash`
 
+## MCP Integration (Agent Onboarding)
+
+Connect any MCP-compatible AI agent (Claude Desktop, OpenClaw, etc.) to ZeroKey in 3 steps:
+
+### 1. Generate an API Key
+
+```bash
+# Via API
+curl -X POST http://localhost:3001/api/agents \
+  -H "Content-Type: application/json" \
+  -d '{"name":"my-agent","safeAddress":"0xYourSafe..."}'
+# → { "apiKey": "zk_abc123...", "agent": { ... } }
+
+# Or via UI: /setup → Step 4 "Connect Agent" → API Keys tab
+```
+
+### 2. Configure MCP Client
+
+Add to `claude_desktop_config.json` (or any MCP client):
+
+```json
+{
+  "mcpServers": {
+    "zerokey": {
+      "command": "npx",
+      "args": ["-y", "@zerokey/mcp-server@latest"],
+      "env": {
+        "ZEROKEY_API_URL": "http://localhost:3001",
+        "ZEROKEY_API_KEY": "zk_your_key_here"
+      }
+    }
+  }
+}
+```
+
+### 3. Use the Tools
+
+| Tool | Description |
+|---|---|
+| `zerokey_discover` | Search marketplace for API services by keyword |
+| `zerokey_pay` | Pay a provider through the execution firewall |
+| `zerokey_balance` | Check agent budget and spending status |
+| `zerokey_history` | View purchase audit trail |
+
+**Example conversation:**
+```
+User: "Translate this contract to English"
+Agent: → zerokey_discover(service: "translation")
+     → zerokey_pay(providerId: "translate-ai-001", amount: "0.03", task: "Translate contract")
+     → Returns translation result (or REJECTED with reason)
+```
+
+Every payment goes through the ZeroKey firewall: spending limits, trust score checks, category restrictions, and rate limiting — all enforced **before money moves**.
+
+---
+
 ## Cost model (why routing is worth it)
 
 Routing adds a small governance/audit overhead (like fraud detection / 3DS), but prevents catastrophic loss:
@@ -555,7 +611,7 @@ Built for **HackMoney 2026** by ETHGlobal
 ## 📞 Contact
 
 - GitHub: [@susumutomita](https://github.com/susumutomita)
-- Twitter: [@tomitasusumu999](https://twitter.com/tomitasusumu999)
+- Twitter: [@tonitoni415](https://twitter.com/tonitoni415)
 
 ---
 

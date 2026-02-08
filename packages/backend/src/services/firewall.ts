@@ -138,6 +138,91 @@ function enforceProtocolAllowlistPolicy(
   }
 }
 
+function enforceTrustScoreThresholdPolicy(
+  policy: Policy,
+  trustScore: number | undefined,
+  matchedPolicyIds: string[],
+  reasons: string[],
+  _warnings: string[],
+  state: { risk: 1 | 2 | 3; hardReject: boolean }
+): void {
+  const config = policy.config as PolicyConfig;
+  if (config.type !== "trust_score_threshold") return;
+  if (trustScore === undefined) return;
+
+  if (trustScore < config.minScore) {
+    matchedPolicyIds.push(policy.id);
+    if (config.action === "reject") {
+      state.risk = maxRisk(state.risk, 3);
+      state.hardReject = true;
+      reasons.push(
+        `Policy '${policy.name}' blocks: trust score ${trustScore} below threshold ${config.minScore}`
+      );
+    } else {
+      state.risk = maxRisk(state.risk, 2);
+      reasons.push(
+        `Policy '${policy.name}': trust score ${trustScore} below threshold ${config.minScore} — requires confirmation`
+      );
+    }
+  }
+}
+
+function enforceEnsRequiredPolicy(
+  policy: Policy,
+  toLabel: string | undefined,
+  matchedPolicyIds: string[],
+  reasons: string[],
+  warnings: string[],
+  state: { risk: 1 | 2 | 3; hardReject: boolean }
+): void {
+  const config = policy.config as PolicyConfig;
+  if (config.type !== "ens_required") return;
+  if (!config.requireEns) return;
+
+  if (!toLabel || !toLabel.endsWith(".eth")) {
+    matchedPolicyIds.push(policy.id);
+    state.risk = maxRisk(state.risk, 3);
+    state.hardReject = true;
+    reasons.push(`Policy '${policy.name}' blocks: destination has no ENS name`);
+    warnings.push("ENS name required but destination is a raw address");
+  }
+}
+
+function enforceCategoryRestrictionPolicy(
+  policy: Policy,
+  service: string | undefined,
+  matchedPolicyIds: string[],
+  reasons: string[],
+  warnings: string[],
+  state: { risk: 1 | 2 | 3; hardReject: boolean }
+): void {
+  const config = policy.config as PolicyConfig;
+  if (config.type !== "category_restriction") return;
+
+  const category = service?.toLowerCase();
+  if (!category) {
+    if (config.blockUnknown) {
+      matchedPolicyIds.push(policy.id);
+      state.risk = maxRisk(state.risk, 3);
+      state.hardReject = true;
+      reasons.push(`Policy '${policy.name}' blocks: unknown service category`);
+      warnings.push("Service category not specified");
+    }
+    return;
+  }
+
+  const allowed = config.allowedCategories.map((c) => c.toLowerCase());
+  if (!allowed.includes(category)) {
+    matchedPolicyIds.push(policy.id);
+    state.risk = maxRisk(state.risk, 3);
+    state.hardReject = true;
+    reasons.push(
+      `Policy '${policy.name}' blocks: category '${category}' not in allowed list`
+    );
+    warnings.push(`Service category '${category}' is restricted`);
+  }
+}
+
 export async function checkFirewall(input: FirewallCheckInput): Promise<FirewallCheckResult> {
   const now = input.now ?? new Date();
   const reasons: string[] = [];
@@ -265,9 +350,32 @@ export async function checkFirewall(input: FirewallCheckInput): Promise<Firewall
         warnings,
         state
       );
+      enforceTrustScoreThresholdPolicy(
+        policy,
+        input.provider?.trustScore,
+        matchedPolicyIds,
+        reasons,
+        warnings,
+        state
+      );
+      enforceEnsRequiredPolicy(
+        policy,
+        input.tx.toLabel,
+        matchedPolicyIds,
+        reasons,
+        warnings,
+        state
+      );
+      enforceCategoryRestrictionPolicy(
+        policy,
+        input.provider?.service,
+        matchedPolicyIds,
+        reasons,
+        warnings,
+        state
+      );
       risk = state.risk;
       hardReject = state.hardReject;
-      // NOTE: Other policy types are intentionally ignored in this demo firewall.
     }
   } catch (err) {
     // Fail closed? For demo, fail to CONFIRM_REQUIRED but do not hard reject on policy load failure.
