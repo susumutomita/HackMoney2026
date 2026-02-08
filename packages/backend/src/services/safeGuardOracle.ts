@@ -15,17 +15,16 @@ import { baseSepolia } from "viem/chains";
  * Safe Guard Oracle Service
  *
  * This service:
- * 1. Monitors Safe wallets for pending transactions
- * 2. Evaluates transactions against ZeroKey policies
- * 3. Submits approve/reject decisions to the ZeroKeySafeGuard contract
+ * 1. Evaluates Safe transactions against ZeroKey policies
+ * 2. Calls preApproveTransaction() on SafeZeroKeyGuard to whitelist approved txs
+ * 3. When Safe executes, checkTransaction() verifies the pre-approval
  */
 
 const GUARD_ABI = parseAbi([
-  "function approveTransaction(address to, uint256 value, bytes data, string reason) external",
-  "function rejectTransaction(address to, uint256 value, bytes data, string reason) external",
-  "function markPendingHumanApproval(address to, uint256 value, bytes data) external",
-  "function approvedTxHashes(bytes32) view returns (bool)",
-  "function pendingTransactions(bytes32) view returns (address to, uint256 value, bytes data, uint256 createdAt, bool exists)",
+  "function preApproveTransaction(bytes32 txHash, address safe) external",
+  "function preApproved(bytes32) view returns (bool)",
+  "function getPolicy(address safe) view returns (bool enabled, uint256 maxTransferValue, uint256 dailyLimit, uint256 dailySpent, bool allowArbitraryCalls)",
+  "function policyOracle() view returns (address)",
 ]);
 
 // ERC20 transfer function selector
@@ -76,21 +75,63 @@ export class SafeGuardOracle {
   }
 
   /**
-   * Compute transaction hash (same as contract)
+   * Compute transaction hash (matches SafeZeroKeyGuard.checkTransaction)
+   *
+   * Contract computes: keccak256(abi.encodePacked(
+   *   safe, to, value, keccak256(data), operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver
+   * ))
    */
-  computeTxHash(tx: TransactionRequest): Hex {
-    return keccak256(encodePacked(["address", "uint256", "bytes"], [tx.to, tx.value, tx.data]));
+  computeTxHash(
+    safe: Address,
+    to: Address,
+    value: bigint,
+    data: Hex,
+    operation: number,
+    safeTxGas: bigint,
+    baseGas: bigint,
+    gasPrice: bigint,
+    gasToken: Address,
+    refundReceiver: Address
+  ): Hex {
+    const dataHash = keccak256(data);
+    return keccak256(
+      encodePacked(
+        [
+          "address",
+          "address",
+          "uint256",
+          "bytes32",
+          "uint8",
+          "uint256",
+          "uint256",
+          "uint256",
+          "address",
+          "address",
+        ],
+        [
+          safe,
+          to,
+          value,
+          dataHash,
+          operation as 0 | 1,
+          safeTxGas,
+          baseGas,
+          gasPrice,
+          gasToken,
+          refundReceiver,
+        ]
+      )
+    );
   }
 
   /**
-   * Check if transaction is already approved
+   * Check if transaction is already pre-approved
    */
-  async isApproved(tx: TransactionRequest): Promise<boolean> {
-    const txHash = this.computeTxHash(tx);
+  async isPreApproved(txHash: Hex): Promise<boolean> {
     const approved = await this.publicClient.readContract({
       address: this.guardAddress,
       abi: GUARD_ABI,
-      functionName: "approvedTxHashes",
+      functionName: "preApproved",
       args: [txHash],
     });
     return approved as boolean;
@@ -168,49 +209,32 @@ export class SafeGuardOracle {
   }
 
   /**
-   * Submit approval to the Guard contract
+   * Pre-approve a transaction on-chain (only for APPROVED decisions)
+   *
+   * Calls SafeZeroKeyGuard.preApproveTransaction(txHash, safe)
+   * This allows the Safe's checkTransaction() to pass for this specific tx.
    */
-  async approveTransaction(tx: TransactionRequest, reason: string): Promise<Hex> {
+  async preApprove(txHash: Hex, safe: Address): Promise<Hex> {
     const hash = await this.walletClient.writeContract({
       address: this.guardAddress,
       abi: GUARD_ABI,
-      functionName: "approveTransaction",
-      args: [tx.to, tx.value, tx.data, reason],
-    });
-    return hash;
-  }
-
-  /**
-   * Submit rejection to the Guard contract
-   */
-  async rejectTransaction(tx: TransactionRequest, reason: string): Promise<Hex> {
-    const hash = await this.walletClient.writeContract({
-      address: this.guardAddress,
-      abi: GUARD_ABI,
-      functionName: "rejectTransaction",
-      args: [tx.to, tx.value, tx.data, reason],
-    });
-    return hash;
-  }
-
-  /**
-   * Mark transaction as pending human approval
-   */
-  async markPendingHumanApproval(tx: TransactionRequest): Promise<Hex> {
-    const hash = await this.walletClient.writeContract({
-      address: this.guardAddress,
-      abi: GUARD_ABI,
-      functionName: "markPendingHumanApproval",
-      args: [tx.to, tx.value, tx.data],
+      functionName: "preApproveTransaction",
+      args: [txHash, safe],
     });
     return hash;
   }
 
   /**
    * Process a transaction request end-to-end
+   *
+   * For APPROVED: calls preApproveTransaction on-chain
+   * For REJECTED/CONFIRM_REQUIRED: no on-chain call (tx stays unapproved,
+   *   so checkTransaction will enforce policies)
    */
   async processTransaction(
+    safe: Address,
     tx: TransactionRequest,
+    txHash: Hex,
     context?: {
       trustScore?: number;
       providerName?: string;
@@ -218,27 +242,19 @@ export class SafeGuardOracle {
     }
   ): Promise<{
     decision: PolicyDecision;
-    txHash?: Hex;
+    onChainTxHash?: Hex;
   }> {
     // Evaluate
     const decision = await this.evaluateTransaction(tx, context);
 
-    // Submit to contract
-    let txHash: Hex | undefined;
+    // Only submit on-chain for approved transactions
+    let onChainTxHash: Hex | undefined;
 
-    switch (decision.decision) {
-      case "APPROVED":
-        txHash = await this.approveTransaction(tx, decision.reason);
-        break;
-      case "REJECTED":
-        txHash = await this.rejectTransaction(tx, decision.reason);
-        break;
-      case "CONFIRM_REQUIRED":
-        txHash = await this.markPendingHumanApproval(tx);
-        break;
+    if (decision.decision === "APPROVED") {
+      onChainTxHash = await this.preApprove(txHash, safe);
     }
 
-    return { decision, txHash };
+    return { decision, onChainTxHash };
   }
 }
 
