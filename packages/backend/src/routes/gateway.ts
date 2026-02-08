@@ -2,6 +2,8 @@
  * Circle Gateway Routes
  *
  * Exposes crosschain USDC routing via Arc as a liquidity hub.
+ * All endpoints call the real Circle Gateway API — no mocks.
+ *
  * Covers all 3 Circle/Arc prize tracks:
  *  - Track 1: Chain Abstracted USDC via Arc Hub (/transfer)
  *  - Track 2: Global Payouts and Treasury Systems (/payout)
@@ -15,17 +17,15 @@ import {
   getGatewayBalances,
   depositToGateway,
   transferViaGateway,
+  transferWithSignedIntent,
   executeMultiPayout,
   getGatewayInfo,
+  getBurnIntentTypedDataConfig,
   GATEWAY_DOMAINS,
   type PayoutRecipient,
+  type SignedBurnIntent,
 } from "../services/gateway.js";
-import {
-  getGatewayStatus,
-  getGatewayTransfer,
-  CCTP_CHAINS,
-  USDC_ADDRESSES,
-} from "../services/circleGateway.js";
+import { getGatewayStatus, CCTP_CHAINS, USDC_ADDRESSES } from "../services/circleGateway.js";
 import { checkFirewall } from "../services/firewall.js";
 
 export const gatewayRouter = new Hono();
@@ -36,7 +36,7 @@ const ethAddress = z.string().refine(
 );
 
 // ──────────────────────────────────────────────
-// GET /info - Gateway service information
+// GET /info - Gateway service information (real API)
 // ──────────────────────────────────────────────
 
 gatewayRouter.get("/info", async (c) => {
@@ -58,7 +58,15 @@ gatewayRouter.get("/status", (c) => {
 });
 
 // ──────────────────────────────────────────────
-// POST /balances - Check unified USDC balances
+// GET /eip712-config - EIP-712 types for frontend signing
+// ──────────────────────────────────────────────
+
+gatewayRouter.get("/eip712-config", (c) => {
+  return c.json(getBurnIntentTypedDataConfig());
+});
+
+// ──────────────────────────────────────────────
+// POST /balances - Check unified USDC balances (real API)
 // ──────────────────────────────────────────────
 
 const balancesSchema = z.object({
@@ -77,7 +85,7 @@ gatewayRouter.post("/balances", zValidator("json", balancesSchema), async (c) =>
 });
 
 // ──────────────────────────────────────────────
-// POST /deposit - Deposit USDC to Gateway
+// POST /deposit - Deposit USDC to Gateway (real on-chain)
 // ──────────────────────────────────────────────
 
 const depositSchema = z.object({
@@ -94,8 +102,9 @@ gatewayRouter.post("/deposit", zValidator("json", depositSchema), async (c) => {
 });
 
 // ──────────────────────────────────────────────
-// POST /transfer - Cross-chain USDC transfer
+// POST /transfer - Cross-chain USDC transfer (real Gateway API)
 // Track 1: Chain Abstracted USDC via Arc Hub
+// Backend signs BurnIntent with EIP-712 and submits to Gateway API
 // ──────────────────────────────────────────────
 
 const transferSchema = z.object({
@@ -139,31 +148,84 @@ gatewayRouter.post("/transfer", zValidator("json", transferSchema), async (c) =>
     amount: amountUsdc,
   });
 
-  return c.json({
-    ...result,
-    firewall: {
-      decision: firewallResult.decision,
-      riskLevel: firewallResult.riskLevel,
-      reasons: firewallResult.reasons,
+  return c.json(
+    {
+      ...result,
+      firewall: {
+        decision: firewallResult.decision,
+        riskLevel: firewallResult.riskLevel,
+        reasons: firewallResult.reasons,
+      },
     },
-  });
+    result.success ? 200 : 500
+  );
 });
 
 // ──────────────────────────────────────────────
-// GET /transfer/:id - Check transfer status
+// POST /transfer/signed - Submit pre-signed BurnIntent
+// For frontend wallets that sign EIP-712 themselves
 // ──────────────────────────────────────────────
 
-gatewayRouter.get("/transfer/:id", async (c) => {
-  const transferId = c.req.param("id");
-  const transfer = await getGatewayTransfer(transferId);
-  if (!transfer) {
-    return c.json({ error: "Transfer not found" }, 404);
-  }
-  return c.json({ transfer });
+const signedTransferSchema = z.object({
+  burnIntent: z.object({
+    maxBlockHeight: z.string(),
+    maxFee: z.string(),
+    spec: z.object({
+      version: z.number(),
+      sourceDomain: z.number(),
+      destinationDomain: z.number(),
+      sourceContract: z.string(),
+      destinationContract: z.string(),
+      sourceToken: z.string(),
+      destinationToken: z.string(),
+      sourceDepositor: z.string(),
+      destinationRecipient: z.string(),
+      sourceSigner: z.string(),
+      destinationCaller: z.string(),
+      value: z.string(),
+      salt: z.string(),
+      hookData: z.string(),
+    }),
+  }),
+  signature: z.string(),
+});
+
+gatewayRouter.post("/transfer/signed", zValidator("json", signedTransferSchema), async (c) => {
+  const input = c.req.valid("json");
+
+  // Convert string values back to BigInt and Hex for the service
+  const spec = input.burnIntent.spec;
+  const signedIntent: SignedBurnIntent = {
+    burnIntent: {
+      maxBlockHeight: BigInt(input.burnIntent.maxBlockHeight),
+      maxFee: BigInt(input.burnIntent.maxFee),
+      spec: {
+        version: spec.version,
+        sourceDomain: spec.sourceDomain,
+        destinationDomain: spec.destinationDomain,
+        sourceContract: spec.sourceContract as `0x${string}`,
+        destinationContract: spec.destinationContract as `0x${string}`,
+        sourceToken: spec.sourceToken as `0x${string}`,
+        destinationToken: spec.destinationToken as `0x${string}`,
+        sourceDepositor: spec.sourceDepositor as `0x${string}`,
+        destinationRecipient: spec.destinationRecipient as `0x${string}`,
+        sourceSigner: spec.sourceSigner as `0x${string}`,
+        destinationCaller: spec.destinationCaller as `0x${string}`,
+        value: BigInt(spec.value),
+        salt: spec.salt as `0x${string}`,
+        hookData: spec.hookData as `0x${string}`,
+      },
+    },
+    signature: input.signature as `0x${string}`,
+  };
+
+  const result = await transferWithSignedIntent(signedIntent);
+
+  return c.json(result, result.success ? 200 : 500);
 });
 
 // ──────────────────────────────────────────────
-// POST /payout - Multi-recipient payout
+// POST /payout - Multi-recipient payout (real Gateway API)
 // Track 2: Global Payouts and Treasury Systems
 // ──────────────────────────────────────────────
 
@@ -225,7 +287,7 @@ gatewayRouter.post("/payout", zValidator("json", payoutSchema), async (c) => {
 });
 
 // ──────────────────────────────────────────────
-// POST /agent-commerce - Agent-driven commerce
+// POST /agent-commerce - Agent-driven commerce (real Gateway API)
 // Track 3: Agentic Commerce powered by RWA
 // ──────────────────────────────────────────────
 
@@ -272,7 +334,7 @@ gatewayRouter.post("/agent-commerce", zValidator("json", agentCommerceSchema), a
     );
   }
 
-  // 2. Execute crosschain transfer via Arc hub
+  // 2. Execute crosschain transfer via Arc hub (real Gateway API)
   const transfer = await transferViaGateway({
     sourceDomain: input.sourceDomain,
     destinationDomain: input.destinationDomain,

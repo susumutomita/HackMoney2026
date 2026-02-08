@@ -213,6 +213,12 @@ const CREATE_TABLES_SQL = `
  * Demo providers for the marketplace
  * Including wallet addresses for ENS integration demonstration
  */
+/**
+ * Demo provider addresses:
+ * - Project EOA: 0x7aD8317e9aB4837AEF734e23d1C62F4938a6D950
+ * - Provider wallet: 0xae0D06961f7103B43ed93721d5a2644c09EB159C
+ * These are project-owned testnet addresses, NOT famous people's wallets.
+ */
 const DEMO_PROVIDERS = [
   {
     id: "translate-ai-001",
@@ -224,9 +230,9 @@ const DEMO_PROVIDERS = [
     trust_score: 85,
     total_transactions: 1250,
     is_active: 1,
-    // Demo: Using vitalik.eth's address to show ENS resolution
-    wallet_address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
-    ens_name: null, // Will be resolved dynamically
+    // Project-owned provider wallet (Base Sepolia)
+    wallet_address: "0xae0D06961f7103B43ed93721d5a2644c09EB159C",
+    ens_name: null,
   },
   {
     id: "summarize-bot-001",
@@ -238,8 +244,8 @@ const DEMO_PROVIDERS = [
     trust_score: 78,
     total_transactions: 890,
     is_active: 1,
-    // Demo: Using nick.eth's address
-    wallet_address: "0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5",
+    // Project EOA address
+    wallet_address: "0x7aD8317e9aB4837AEF734e23d1C62F4938a6D950",
     ens_name: null,
   },
   {
@@ -252,7 +258,7 @@ const DEMO_PROVIDERS = [
     trust_score: 15,
     total_transactions: 3,
     is_active: 1,
-    // Sketchy provider - no ENS, random address
+    // Sketchy provider - intentionally suspicious address
     wallet_address: "0x0000000000000000000000000000000000000001",
     ens_name: null,
   },
@@ -266,8 +272,8 @@ const DEMO_PROVIDERS = [
     trust_score: 92,
     total_transactions: 420,
     is_active: 1,
-    // Demo: use a stable, known recipient
-    wallet_address: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+    // Project-owned provider wallet
+    wallet_address: "0xae0D06961f7103B43ed93721d5a2644c09EB159C",
     ens_name: null,
   },
   {

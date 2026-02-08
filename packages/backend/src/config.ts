@@ -39,14 +39,13 @@ function parseJson<T>(raw: string | undefined, fallback: T): T {
 }
 
 const DEFAULT_PROVIDER_REGISTRY: Record<string, { recipient: string }> = {
-  // Demo “verified” providers (recipient invariants)
-  "translate-ai-001": { recipient: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" },
-  "summarize-bot-001": { recipient: "0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5" },
-  // Demo “attack” provider: marketplace shows one recipient but registry expects another.
+  // Project-owned provider wallet (Base Sepolia)
+  "translate-ai-001": { recipient: "0xae0D06961f7103B43ed93721d5a2644c09EB159C" },
+  "summarize-bot-001": { recipient: "0x7aD8317e9aB4837AEF734e23d1C62F4938a6D950" },
+  // Demo "attack" provider: marketplace shows one recipient but registry expects another.
   "sketchy-service-001": { recipient: "0x000000000000000000000000000000000000dEaD" },
-
-  // Demo “success” provider for visible output
-  "image-pack-001": { recipient: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" },
+  // Project-owned provider wallet
+  "image-pack-001": { recipient: "0xae0D06961f7103B43ed93721d5a2644c09EB159C" },
 };
 
 export const config = {
