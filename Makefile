@@ -1,4 +1,4 @@
-.PHONY: help demo demo-local demo-hosted backend agent-demo agent-demo-blocked
+.PHONY: help install build test lint format typecheck dev backend frontend demo demo-local demo-hosted agent-demo agent-demo-blocked
 
 # Load .env if exists
 ifneq (,$(wildcard .env))
@@ -43,8 +43,20 @@ help:
 	@echo "🛠️  DEVELOPMENT"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo ""
+	@echo "  dev                 Start backend + frontend"
 	@echo "  backend             Start backend server (port 3001)"
 	@echo "  frontend            Start frontend (port 8000)"
+	@echo ""
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "📦 BUILD & TEST"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "  install             Install dependencies (pnpm)"
+	@echo "  build               Build all packages"
+	@echo "  test                Run all tests"
+	@echo "  lint                Run ESLint"
+	@echo "  format              Run Prettier"
+	@echo "  typecheck           Run TypeScript checks"
 	@echo ""
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "🌐 URLS"
@@ -96,3 +108,25 @@ agent-demo:
 
 agent-demo-blocked:
 	cd packages/backend && pnpm tsx ../../scripts/agent-demo-blocked.ts
+
+export_pdf:        # Export pitch deck to PDF using Marp
+	npx marp pitch_deck.md --pdf --allow-local-files --html
+
+# Build & Test
+install:
+	pnpm install
+
+build:
+	pnpm build
+
+test:
+	pnpm test
+
+lint:
+	pnpm lint
+
+format:
+	pnpm format
+
+typecheck:
+	pnpm typecheck
