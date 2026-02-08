@@ -67,7 +67,106 @@ This document lists **exact code locations (file + line ranges)** for sponsor / 
 
 ---
 
+## Circle Gateway / Arc Network — crosschain USDC via Arc Liquidity Hub
+
+### Track 1: Chain Abstracted USDC Apps Using Arc as Liquidity Hub ($5,000)
+
+- `packages/backend/src/services/gateway.ts`
+  - Arc domain constants and GATEWAY_DOMAINS: **lines 37–56**
+  - `transferViaGateway()` — determines Arc hub routing, calls Gateway API: **lines 261–330**
+  - `getGatewayBalances()` — unified USDC balance across all Gateway domains: **lines 159–195**
+  - `depositToGateway()` — approve + deposit USDC to Gateway Wallet: **lines 201–255**
+
+- `packages/backend/src/services/circleGateway.ts`
+  - Circle CCTP client with Arc chain support: **lines 30–37**
+  - `createGatewayTransfer()` — creates transfer with Arc routing metadata: **lines 184–230**
+  - `getGatewayTransfer()` — status polling: **lines 235–239**
+
+- `packages/backend/src/routes/gateway.ts`
+  - `POST /transfer` — firewall-gated crosschain transfer: **lines 99–153**
+  - `GET /status` — Circle configuration status: **lines 54–61**
+  - `GET /transfer/:id` — transfer status check: **lines 159–166**
+
+- `packages/frontend/src/components/CrosschainPanel.tsx`
+  - "Single Transfer" tab with source/destination chain selection: **lines 1–200**
+  - Arc routing path visualization: **lines 250–300**
+
+- `packages/shared/src/constants.ts`
+  - `GATEWAY_CONFIG` — wallet/minter contracts, domain definitions: **lines 66–80**
+  - `ARC_CONFIG` — Arc chain IDs, USDC address, gateway domain ID: **lines 86–100**
+  - Arc Network chain configs (411, 412): **lines 43–59**
+
+### Track 2: Global Payouts and Treasury Systems with USDC on Arc ($2,500)
+
+- `packages/backend/src/services/gateway.ts`
+  - `executeMultiPayout()` — batch payouts across chains via Arc hub: **lines 338–367**
+
+- `packages/backend/src/routes/gateway.ts`
+  - `POST /payout` — multi-recipient payout (1–16 recipients), firewall-gated: **lines 168–224**
+  - `POST /balances` — check unified USDC balances: **lines 67–80**
+
+- `packages/frontend/src/components/CrosschainPanel.tsx`
+  - "Multi-Payout" tab with recipient builder (add/remove): **lines 300–450**
+
+- `packages/backend/src/services/payment.ts`
+  - USDC receipt verification on Base Sepolia for audit trail
+
+### Track 3: Agentic Commerce powered by RWA on Arc ($2,500)
+
+- `packages/backend/src/routes/gateway.ts`
+  - `POST /agent-commerce` — agent-driven commerce with firewall check + Arc routing: **lines 226–293**
+
+- `packages/backend/src/services/analyzer.ts`
+  - Claude API integration for transaction classification: **lines 30–120**
+  - Risk level determination and semantic analysis
+
+- `packages/backend/src/services/firewall.ts`
+  - `checkFirewall()` — policy evaluation engine: **lines 50–180**
+  - Recipient invariant checking, spend limits, anomaly detection
+
+- `packages/backend/src/services/trustScore.ts`
+  - Trust scoring with on-chain signals (ENS, wallet age, contract verification)
+
+- `packages/backend/src/routes/a2a.ts`
+  - Agent-to-Agent discovery and WebSocket negotiation
+
+---
+
+## Safe Guard — multisig transaction protection
+
+- `packages/contracts/src/SafeZeroKeyGuard.sol`
+  - Implements Safe Guard interface (`checkTransaction`, `checkAfterExecution`)
+  - Per-Safe policy registration: `registerSafe()` with max amounts, daily limits
+  - Pre-approval mechanism: `approveTransaction()`, `rejectTransaction()`, `markPendingHumanApproval()`
+
+- `packages/contracts/src/ZeroKeyGuard.sol`
+  - Execution governance layer for on-chain decision storage
+  - `submitDecision()` — oracle submits approve/reject with risk level
+
+- `packages/backend/src/services/safeGuardOracle.ts`
+  - Oracle service monitoring pending Safe transactions
+  - Evaluates against policies, computes transaction hashes
+  - Submits decisions to guard contract on-chain
+
+- `packages/backend/src/routes/guard.ts`
+  - `POST /register` — register Safe with ZeroKey protection
+  - `GET /status/:safeAddress` — check guard status
+  - `POST /pre-approve` — evaluate and submit decision
+
+- `packages/backend/src/routes/safe-policy.ts`
+  - Safe policy CRUD operations
+
+- `packages/frontend/src/components/SafeGuardStatus.tsx`
+  - Displays Safe protection status, active policies
+
+- `packages/frontend/src/app/setup/page.tsx`
+  - Safe registration and guard setup wizard UI
+
+---
+
 ## Notes
 
 - This project uses **real on-chain settlement on Base Sepolia** (not a mock): we verify tx receipts and persist txHash in logs.
-- Our “firewall decision” and “money never moved” events are designed to be **auditable** and easy for judges to understand.
+- Our "firewall decision" and "money never moved" events are designed to be **auditable** and easy for judges to understand.
+- Circle Gateway integration uses Arc (domain 26) as the central liquidity hub — all crosschain USDC transfers route through Arc.
+- SafeZeroKeyGuard is deployed and verified on Base Sepolia.

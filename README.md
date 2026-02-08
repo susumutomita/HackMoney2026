@@ -130,30 +130,98 @@ Routing adds a small governance/audit overhead (like fraud detection / 3DS), but
 
 ---
 
-## 🏆 Prize Tracks
+## 🏆 Prize Tracks & Code Map
+
+> **For judges**: each section below links directly to the code that implements the prize requirements.
+> See also [`docs/SPONSOR_TECH_MAP.md`](docs/SPONSOR_TECH_MAP.md) for file + line-level detail.
+
+---
+
+### Circle / Arc Track 1: Chain Abstracted USDC Apps Using Arc as Liquidity Hub ($5,000)
+
+USDC transfers route through **Arc (domain 26)** as the central liquidity hub via Circle Gateway.
+
+| What               | File                                                                                                           | Purpose                                                        |
+| ------------------ | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Gateway service    | [`packages/backend/src/services/gateway.ts`](packages/backend/src/services/gateway.ts)                         | `transferViaGateway()` — routes Source → Arc Hub → Destination |
+| Circle CCTP client | [`packages/backend/src/services/circleGateway.ts`](packages/backend/src/services/circleGateway.ts)             | CCTP transfer creation, status polling, demo fallback          |
+| Gateway API routes | [`packages/backend/src/routes/gateway.ts`](packages/backend/src/routes/gateway.ts)                             | `POST /transfer` — firewall-gated crosschain transfer          |
+| Crosschain UI      | [`packages/frontend/src/components/CrosschainPanel.tsx`](packages/frontend/src/components/CrosschainPanel.tsx) | Transfer form with Arc routing path visualization              |
+| Gateway config     | [`packages/shared/src/constants.ts`](packages/shared/src/constants.ts)                                         | `GATEWAY_CONFIG`, `ARC_CONFIG`, domain IDs, USDC addresses     |
+| Chain definitions  | [`packages/shared/src/constants.ts`](packages/shared/src/constants.ts)                                         | Arc (411) and Arc Testnet (412) chain configs                  |
+
+**How it works**: `POST /api/gateway/transfer` → firewall check → `transferViaGateway()` → Gateway API call with Arc hub routing → attestation → mint on destination.
+
+---
+
+### Circle / Arc Track 2: Global Payouts and Treasury Systems with USDC on Arc ($2,500)
+
+Multi-recipient, multi-chain USDC payouts using Arc as the centralized liquidity hub for treasury operations.
+
+| What                 | File                                                                                                           | Purpose                                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Multi-payout service | [`packages/backend/src/services/gateway.ts`](packages/backend/src/services/gateway.ts)                         | `executeMultiPayout()` — batch recipients across chains via Arc     |
+| Payout API route     | [`packages/backend/src/routes/gateway.ts`](packages/backend/src/routes/gateway.ts)                             | `POST /payout` — up to 16 recipients, firewall-gated                |
+| Unified balances     | [`packages/backend/src/services/gateway.ts`](packages/backend/src/services/gateway.ts)                         | `getGatewayBalances()` — aggregated USDC across all Gateway domains |
+| Balance API          | [`packages/backend/src/routes/gateway.ts`](packages/backend/src/routes/gateway.ts)                             | `POST /balances` — check depositor balances across chains           |
+| Multi-payout UI      | [`packages/frontend/src/components/CrosschainPanel.tsx`](packages/frontend/src/components/CrosschainPanel.tsx) | "Multi-Payout" tab with recipient builder                           |
+| Purchase audit       | [`packages/frontend/src/components/PurchaseLogCard.tsx`](packages/frontend/src/components/PurchaseLogCard.tsx) | Treasury transaction history and audit trail                        |
+| Payment verification | [`packages/backend/src/services/payment.ts`](packages/backend/src/services/payment.ts)                         | On-chain receipt verification for USDC transfers                    |
+
+**How it works**: `POST /api/gateway/payout` → firewall check on total amount → `executeMultiPayout()` → each recipient routed through Arc Hub → audit log persisted.
+
+---
+
+### Circle / Arc Track 3: Agentic Commerce powered by RWA on Arc ($2,500)
+
+AI agents autonomously discover, negotiate, and pay for services — protected by an LLM-powered execution firewall.
+
+| What                 | File                                                                                         | Purpose                                                      |
+| -------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Agent commerce route | [`packages/backend/src/routes/gateway.ts`](packages/backend/src/routes/gateway.ts)           | `POST /agent-commerce` — agent-driven purchase with firewall |
+| LLM analyzer         | [`packages/backend/src/services/analyzer.ts`](packages/backend/src/services/analyzer.ts)     | Claude API transaction classification and risk analysis      |
+| Execution firewall   | [`packages/backend/src/services/firewall.ts`](packages/backend/src/services/firewall.ts)     | Semantic policy evaluation (approve/block agent decisions)   |
+| Trust scoring        | [`packages/backend/src/services/trustScore.ts`](packages/backend/src/services/trustScore.ts) | On-chain trust score: ENS, wallet age, contract verification |
+| A2A discovery        | [`packages/backend/src/routes/a2a.ts`](packages/backend/src/routes/a2a.ts)                   | Service discovery and WebSocket negotiation                  |
+| AI agent engine      | [`packages/backend/src/services/agent.ts`](packages/backend/src/services/agent.ts)           | Agent orchestration and autonomous reasoning                 |
+| On-chain guard       | [`packages/contracts/src/ZeroKeyGuard.sol`](packages/contracts/src/ZeroKeyGuard.sol)         | Stores approve/reject decisions on-chain                     |
+
+**How it works**: Agent discovers provider via A2A → negotiates price → `POST /api/gateway/agent-commerce` → firewall analyzes intent + checks policy → if approved, USDC routed via Arc → decision logged on-chain.
+
+---
 
 ### ENS Integration ($3,500 - $5,000)
 
-ZeroKey Treasury uses **ENS (Ethereum Name Service)** for decentralized AI agent identity:
+Custom ENS text records for AI agent discovery, identity resolution, and trust scoring.
 
-- **Provider ENS Profiles**: AI service providers can register using ENS names
-- **Custom Text Records**: We leverage ENS text records for AI agent discovery:
-  - `ai.api.endpoint` - API endpoint URL
-  - `ai.services` - Comma-separated service types
-  - `ai.trustscore` - Reputation score (0-100)
-- **Address Resolution**: Seamless ENS name → address resolution for payments
-- **Reverse Lookup**: Display ENS names instead of raw addresses
+| What               | File                                                                                                 | Purpose                                                       |
+| ------------------ | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| ENS library        | [`packages/frontend/src/lib/ens.ts`](packages/frontend/src/lib/ens.ts)                               | Forward/reverse resolution, custom text records, batch lookup |
+| ENS profile card   | [`packages/frontend/src/components/EnsProfile.tsx`](packages/frontend/src/components/EnsProfile.tsx) | Displays avatar, social links, AI agent fields                |
+| ENS name component | [`packages/frontend/src/components/EnsProfile.tsx`](packages/frontend/src/components/EnsProfile.tsx) | `EnsName` — inline ENS display with address fallback          |
+| Server-side ENS    | [`packages/backend/src/services/ens.ts`](packages/backend/src/services/ens.ts)                       | Mainnet ENS resolution for backend services                   |
+| Trust scoring      | [`packages/backend/src/services/trustScore.ts`](packages/backend/src/services/trustScore.ts)         | ENS name as trust signal in provider scoring                  |
+| Marketplace        | [`packages/frontend/src/app/marketplace/page.tsx`](packages/frontend/src/app/marketplace/page.tsx)   | Provider cards with ENS badges and names                      |
 
-**Example**: `translateai.eth` can register their translation service on-chain via ENS records.
+**Custom text records** (`ai.api.endpoint`, `ai.services`, `ai.trustscore`) enable on-chain AI agent registration via ENS.
 
-### Arc Network - Global Treasury ($2,500)
+---
 
-ZeroKey Treasury is designed as a **global payout and treasury system** using USDC:
+### Safe Guard ($2,500)
 
-- **Multi-chain Support**: Works on Base Sepolia, ready for Arc Network deployment
-- **USDC Payments**: Native stablecoin payments via Circle integration
-- **AI Treasury Management**: AI agents can autonomously manage budgets and payments
-- **Global Accessibility**: Any AI agent worldwide can discover and pay for services
+Safe multisig protection via a transaction Guard that enforces policies before execution.
+
+| What                 | File                                                                                                           | Purpose                                                  |
+| -------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Guard contract       | [`packages/contracts/src/SafeZeroKeyGuard.sol`](packages/contracts/src/SafeZeroKeyGuard.sol)                   | `checkTransaction()` hook with policy enforcement        |
+| Base contract        | [`packages/contracts/src/ZeroKeyGuard.sol`](packages/contracts/src/ZeroKeyGuard.sol)                           | Execution governance layer, on-chain decision storage    |
+| Oracle service       | [`packages/backend/src/services/safeGuardOracle.ts`](packages/backend/src/services/safeGuardOracle.ts)         | Monitors Safe txs, evaluates policies, submits decisions |
+| Guard API            | [`packages/backend/src/routes/guard.ts`](packages/backend/src/routes/guard.ts)                                 | `POST /register`, `GET /status`, `POST /pre-approve`     |
+| Policy API           | [`packages/backend/src/routes/safe-policy.ts`](packages/backend/src/routes/safe-policy.ts)                     | Safe policy CRUD operations                              |
+| Firewall integration | [`packages/backend/src/services/firewall.ts`](packages/backend/src/services/firewall.ts)                       | Safe Guard registration verification in firewall checks  |
+| Guard status UI      | [`packages/frontend/src/components/SafeGuardStatus.tsx`](packages/frontend/src/components/SafeGuardStatus.tsx) | Displays protection status and active policies           |
+| Setup wizard         | [`packages/frontend/src/app/setup/page.tsx`](packages/frontend/src/app/setup/page.tsx)                         | Safe registration and `setGuard()` flow                  |
+| Deployed             | Base Sepolia                                                                                                   | `SafeZeroKeyGuard` deployed and verified                 |
 
 ---
 
