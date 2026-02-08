@@ -11,6 +11,10 @@ const envSchema = z.object({
   BASE_SEPOLIA_RPC_URL: z.string().optional(),
   GUARD_CONTRACT_ADDRESS: z.string().optional(),
 
+  // Circle Gateway / CCTP (Arc Liquidity Hub)
+  CIRCLE_API_KEY: z.string().optional(),
+  CIRCLE_ENV: z.enum(["sandbox", "production"]).default("sandbox"),
+
   // A2A auth (see docs/a2a-firewall.md)
   A2A_AUTH_ENABLED: z.string().optional(),
   A2A_TIMESTAMP_WINDOW_SECONDS: z.string().optional(),
@@ -54,6 +58,10 @@ export const config = {
   policyOraclePrivateKey: env.POLICY_ORACLE_PRIVATE_KEY,
   rpcUrl: env.BASE_SEPOLIA_RPC_URL,
   guardContractAddress: env.GUARD_CONTRACT_ADDRESS,
+
+  // Circle Gateway / CCTP
+  circleApiKey: env.CIRCLE_API_KEY,
+  circleEnv: env.CIRCLE_ENV,
 
   a2a: {
     enabled: env.A2A_AUTH_ENABLED === "true",
