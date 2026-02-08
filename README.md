@@ -130,149 +130,166 @@ Routing adds a small governance/audit overhead (like fraud detection / 3DS), but
 
 ---
 
-## 🏆 Prize Tracks - Detailed Implementation
+## 🏆 Prize Tracks — Code Map & Verified Endpoints
 
-### Arc / Circle - Chain Abstracted USDC Apps ($5,000)
+> For judges: every endpoint below was **verified running** on `localhost:3001`.
+> Full file-level map: [`docs/SPONSOR_TECH_MAP.md`](docs/SPONSOR_TECH_MAP.md)
 
-**Prize**: Best Chain Abstracted USDC Apps Using Arc as a Liquidity Hub
+### Why ZeroKey needs crosschain USDC via Arc
 
-ZeroKey implements **Arc as the USDC Liquidity Hub** for cross-chain agent payments:
+AI agents will pay for services across any chain — translation on Ethereum, image generation on Base, data on Arbitrum. Without chain abstraction, each agent needs wallets and USDC on every chain. **Arc as Liquidity Hub** solves this: one deposit, pay anywhere.
 
-#### Implementation Details
+ZeroKey adds a critical missing layer: **policy enforcement before money moves**. Without a firewall, an agent can drain a treasury in seconds. With ZeroKey + Arc, agents get global reach _and_ safety.
 
-| Component            | File Location                                          | Description                                     |
-| -------------------- | ------------------------------------------------------ | ----------------------------------------------- |
-| **Gateway Service**  | `packages/backend/src/services/circleGateway.ts`       | Circle Gateway client for cross-chain transfers |
-| **Gateway Routes**   | `packages/backend/src/routes/gateway.ts`               | API endpoints for Arc-routed payments           |
-| **Crosschain Panel** | `packages/frontend/src/components/CrosschainPanel.tsx` | UI for cross-chain USDC transfers               |
-| **Chain Config**     | `packages/shared/src/constants.ts`                     | Arc network configuration                       |
+### Architecture: where each prize fits
 
-#### Key API Endpoints
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         AI Agent (autonomous)                            │
+│  "Translate this contract" → discover provider → negotiate price        │
+└───────────────────────────────────┬──────────────────────────────────────┘
+                                    │
+                    ┌───────────────▼────────────────┐
+                    │  A2A Gateway (discovery/negotiate)│ ← ENS Prize
+                    │  ENS text records for identity   │   (ai.api.endpoint,
+                    │  Trust scoring via ENS name      │    ai.services,
+                    └───────────────┬────────────────┘    ai.trustscore)
+                                    │
+                    ┌───────────────▼────────────────┐
+                    │  ZeroKey Firewall               │ ← Arc Track 3
+                    │  • Recipient invariant check    │   (Agentic Commerce)
+                    │  • Spend limits & daily caps    │
+                    │  • LLM semantic risk analysis   │
+                    │  Decision: APPROVED / REJECTED  │
+                    └───────────┬────────┬───────────┘
+                     APPROVED  │        │ REJECTED
+                    ┌──────────▼──┐  ┌──▼─────────────┐
+                    │ Circle      │  │ Blocked Audit   │
+                    │ Gateway     │  │ Log (money      │
+                    │ via Arc Hub │  │ never moved)    │
+                    └──────┬──────┘  └─────────────────┘
+                           │
+              ┌────────────▼─────────────┐
+              │ Arc Liquidity Hub        │ ← Arc Track 1
+              │ (domain 26)              │   (Chain Abstracted)
+              │                          │
+              │  Source → Arc → Dest     │ ← Arc Track 2
+              │  Multi-payout support   │   (Treasury/Payouts)
+              └──────────┬───────────────┘
+                         │
+              ┌──────────▼───────────────┐
+              │ Safe Guard (on-chain)    │ ← Safe Prize
+              │ checkTransaction() hook  │
+              │ Pre-approval required    │
+              └──────────────────────────┘
+```
+
+### Design: how each piece integrates
+
+1. **Circle Gateway** is not a wrapper — we call the real Gateway API (`gateway-api-testnet.circle.com`) for balance queries and transfer requests. When the API is unavailable (testnet), we fall back to a demo mode with the same data shape.
+2. **Firewall runs before every payment**, not after. The `/transfer`, `/payout`, and `/agent-commerce` endpoints all call `checkFirewall()` first.
+3. **Arc routing is automatic**: if source and destination are both non-Arc domains, the service routes through Arc (domain 26) as hub. The response includes `arcRouting.routePath` showing the actual path.
+4. **ENS is used for agent discovery**, not just display. Custom text records (`ai.api.endpoint`, `ai.services`, `ai.trustscore`) make providers discoverable on-chain.
+
+---
+
+### Arc Track 1: Chain Abstracted USDC ($5,000)
+
+**Why**: Agents need to pay across chains without managing multiple wallets. Arc as Liquidity Hub unifies USDC.
+
+| File                                                   | Purpose                                                 |
+| ------------------------------------------------------ | ------------------------------------------------------- |
+| `packages/backend/src/services/gateway.ts`             | `transferViaGateway()` — Source → Arc Hub → Destination |
+| `packages/backend/src/routes/gateway.ts`               | `POST /transfer` with firewall gate                     |
+| `packages/frontend/src/components/CrosschainPanel.tsx` | Transfer UI with Arc routing visualization              |
+| `packages/shared/src/constants.ts`                     | `GATEWAY_CONFIG`, Arc domain 26, USDC addresses         |
+
+**Verified endpoint** (actual response from running server):
 
 ```bash
-# Check Gateway status (Arc integration)
-GET /api/gateway/status
-# Response: { configured: true, supportedChains: ["BASE-SEPOLIA", "ETH-SEPOLIA", "ARC-TESTNET"] }
-
-# Create cross-chain transfer via Arc Hub
 POST /api/gateway/transfer
 {
-  "sourceChain": "BASE-SEPOLIA",
-  "destinationChain": "ETH-SEPOLIA",
-  "amount": "10.00",
-  "sourceAddress": "0x...",
-  "destinationAddress": "0x..."
+  "sourceDomain": 6,
+  "destinationDomain": 26,
+  "sender": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+  "recipient": "0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5",
+  "amountUsdc": "10.00"
 }
-# Response includes: arcRouting.used = true, arcRouting.hubChain = "Arc"
-
-# Execute payment through ZeroKey Firewall + Arc Gateway
-POST /api/gateway/pay
+# Response:
 {
-  "sessionId": "session_xxx",
-  "from": "0x...",
-  "to": "0x...",
-  "amount": "25.00"
+  "success": true,
+  "transferId": "gw-...",
+  "arcRouting": { "usedAsHub": false, "hubDomain": 26, "routePath": ["Base Sepolia", "Arc Testnet"] },
+  "firewall": { "decision": "APPROVED", "riskLevel": 1 }
 }
-# Response: { arcLiquidityHub: { used: true, routing: "Source → Arc Hub → Destination" } }
-```
-
-#### Code Snippets
-
-**Circle Gateway Service** (`packages/backend/src/services/circleGateway.ts`):
-
-```typescript
-export async function createGatewayTransfer(
-  request: GatewayTransferRequest
-): Promise<GatewayTransferResult> {
-  // Routes USDC through Arc as liquidity hub
-  const result: GatewayTransferResult = {
-    transferId,
-    status: "pending",
-    arcRouting: {
-      used: true,
-      hubChain: "Arc",
-      note: "USDC routed through Arc Liquidity Hub via CCTP",
-    },
-    // ...
-  };
-}
-```
-
-**Gateway Routes** (`packages/backend/src/routes/gateway.ts`):
-
-```typescript
-gatewayRouter.post("/pay", async (c) => {
-  const result = await createGatewayTransfer({ ... });
-  return c.json({
-    arcLiquidityHub: {
-      used: true,
-      routing: "Source → Arc Hub → Destination",
-      chainAbstraction: true,
-    },
-  });
-});
 ```
 
 ---
 
-### Arc / Circle - Agentic Commerce ($2,500)
+### Arc Track 2: Global Payouts & Treasury ($2,500)
 
-**Prize**: Best Agentic Commerce App Powered by Real-World Assets on Arc
+**Why**: Treasury teams need to pay contractors across chains in one batch. Arc Hub eliminates per-chain bridging.
 
-ZeroKey is an **execution firewall for autonomous AI agent commerce**:
+| File                                                   | Purpose                                          |
+| ------------------------------------------------------ | ------------------------------------------------ |
+| `packages/backend/src/services/gateway.ts`             | `executeMultiPayout()` — batch payouts via Arc   |
+| `packages/backend/src/routes/gateway.ts`               | `POST /payout` (1-16 recipients, firewall-gated) |
+| `packages/frontend/src/components/CrosschainPanel.tsx` | Multi-Payout tab with recipient builder          |
 
-#### Implementation Details
+**Verified endpoint**:
 
-| Component              | File Location                                 | Description                            |
-| ---------------------- | --------------------------------------------- | -------------------------------------- |
-| **Firewall Engine**    | `packages/backend/src/services/firewall.ts`   | Policy-based transaction approval      |
-| **A2A Gateway**        | `packages/backend/src/routes/a2a.ts`          | Agent-to-agent discovery & negotiation |
-| **Payment Handler**    | `packages/backend/src/routes/pay.ts`          | USDC payment with HTTP 402             |
-| **Safe Guard**         | `packages/contracts/src/SafeZeroKeyGuard.sol` | On-chain transaction guard             |
-| **Agent Registration** | `packages/backend/src/services/agent.ts`      | AI agent identity management           |
-
-#### Agentic Commerce Flow
-
-```
-🤖 AI Agent                    🛡️ ZeroKey Firewall           ⛓️ Arc/USDC
-     │                                  │                         │
-     │ 1. Discover providers            │                         │
-     │─────────────────────────────────>│                         │
-     │                                  │                         │
-     │ 2. Negotiate price               │                         │
-     │<─────────────────────────────────│                         │
-     │                                  │                         │
-     │ 3. Request payment approval      │                         │
-     │─────────────────────────────────>│                         │
-     │                                  │ Policy Check            │
-     │                                  │ • Recipient invariant   │
-     │                                  │ • Spend limits          │
-     │                                  │ • Trust score           │
-     │                                  │                         │
-     │ 4. APPROVED/REJECTED             │                         │
-     │<─────────────────────────────────│                         │
-     │                                  │                         │
-     │ 5. Execute payment via Arc       │                         │
-     │─────────────────────────────────────────────────────────────>│
-     │                                  │                         │
+```bash
+POST /api/gateway/payout
+{
+  "sender": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+  "sourceDomain": 6,
+  "recipients": [
+    { "address": "0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5", "amountUsdc": "5.00", "destinationDomain": 0, "label": "Translator" },
+    { "address": "0x000000000000000000000000000000000000dEaD", "amountUsdc": "3.00", "destinationDomain": 26, "label": "Reviewer" }
+  ]
+}
+# Response:
+{
+  "totalRecipients": 2,
+  "totalAmountUsdc": "8.000000",
+  "arcRouting": { "usedAsHub": true, "routePath": ["Source", "Arc (Hub)", "Multi-Destination"] },
+  "firewall": { "decision": "APPROVED", "riskLevel": 1 }
+}
 ```
 
-#### Key Code
+---
 
-**Firewall Check** (`packages/backend/src/services/firewall.ts`):
+### Arc Track 3: Agentic Commerce ($2,500)
 
-```typescript
-export async function checkFirewall(input: FirewallInput): Promise<FirewallResult> {
-  // 1. Recipient invariant check (prevent payment hijacking)
-  const recipientCheck = await checkRecipientInvariant(input);
-  if (!recipientCheck.valid) {
-    return { decision: "REJECTED", reasons: [recipientCheck.reason] };
-  }
+**Why**: AI agents need to purchase services autonomously. Without a firewall, one compromised agent drains the treasury.
 
-  // 2. Spend limit check
-  // 3. Trust score verification
-  // 4. LLM semantic analysis
-  return { decision: "APPROVED", riskLevel: 1 };
+| File                                        | Purpose                                            |
+| ------------------------------------------- | -------------------------------------------------- |
+| `packages/backend/src/routes/gateway.ts`    | `POST /agent-commerce` — agent purchase + firewall |
+| `packages/backend/src/services/firewall.ts` | `checkFirewall()` — policy engine                  |
+| `packages/backend/src/services/analyzer.ts` | Claude API risk analysis                           |
+| `packages/backend/src/routes/a2a.ts`        | Agent discovery & negotiation                      |
+
+**Verified endpoint**:
+
+```bash
+POST /api/gateway/agent-commerce
+{
+  "agentId": "translate-agent-001",
+  "action": "purchase",
+  "sender": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+  "recipient": "0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5",
+  "amountUsdc": "0.50",
+  "sourceDomain": 6,
+  "destinationDomain": 0,
+  "metadata": { "serviceId": "translate-ai-001", "reason": "Contract translation" }
+}
+# Response:
+{
+  "agentId": "translate-agent-001",
+  "action": "purchase",
+  "transfer": { "success": true, "arcRouting": { "usedAsHub": true, "routePath": ["Base Sepolia", "Arc (Hub)", "Ethereum Sepolia"] } },
+  "firewall": { "decision": "APPROVED", "riskLevel": 1 }
 }
 ```
 
@@ -280,129 +297,50 @@ export async function checkFirewall(input: FirewallInput): Promise<FirewallResul
 
 ### ENS Integration ($3,500 + $1,500)
 
-**Prizes**:
+**Why**: AI agents need discoverable, verifiable identities. ENS text records make agent capabilities queryable on-chain.
 
-- Integrate ENS (Pool Prize - $3,500 split)
-- Most Creative Use of ENS for DeFi ($1,500)
+| File                                              | Purpose                                                       |
+| ------------------------------------------------- | ------------------------------------------------------------- |
+| `packages/frontend/src/lib/ens.ts`                | Forward/reverse resolution, custom text records, batch lookup |
+| `packages/frontend/src/components/EnsProfile.tsx` | Profile card with avatar, social links, AI fields             |
+| `packages/backend/src/services/ens.ts`            | Server-side ENS resolution                                    |
+| `packages/backend/src/services/trustScore.ts`     | ENS name as trust signal                                      |
 
-ZeroKey uses **ENS for decentralized AI agent identity**:
+**Custom text records for AI agent discovery**:
 
-#### Implementation Details
-
-| Component                 | File Location                                     | Description                   |
-| ------------------------- | ------------------------------------------------- | ----------------------------- |
-| **ENS Service**           | `packages/backend/src/services/ens.ts`            | ENS resolution & text records |
-| **ENS Profile Component** | `packages/frontend/src/components/EnsProfile.tsx` | Display ENS names & avatars   |
-| **ENS Library**           | `packages/frontend/src/lib/ens.ts`                | Client-side ENS utilities     |
-| **Provider Discovery**    | `packages/backend/src/routes/a2a.ts`              | ENS-enabled provider lookup   |
-
-#### ENS Text Records for AI Agents
-
-We use **custom ENS text records** to store AI agent metadata:
-
-| Record Key        | Purpose           | Example                            |
-| ----------------- | ----------------- | ---------------------------------- |
-| `ai.api.endpoint` | API endpoint URL  | `https://api.translateai.eth/v1`   |
-| `ai.services`     | Service types     | `translation,summarization`        |
-| `ai.trustscore`   | Reputation score  | `85`                               |
-| `description`     | Agent description | `Professional translation service` |
-
-#### Key Code
-
-**ENS Resolution** (`packages/frontend/src/lib/ens.ts`):
-
-```typescript
-export async function resolveEnsProfile(addressOrName: string): Promise<EnsProfile | null> {
-  const client = createPublicClient({ chain: mainnet, transport: http() });
-
-  // Resolve ENS name to address or reverse lookup
-  const ensName = await client.getEnsName({ address });
-  const avatar = await client.getEnsAvatar({ name: ensName });
-
-  // Fetch AI-specific text records
-  const [apiEndpoint, services, trustScore] = await Promise.all([
-    client.getEnsText({ name: ensName, key: "ai.api.endpoint" }),
-    client.getEnsText({ name: ensName, key: "ai.services" }),
-    client.getEnsText({ name: ensName, key: "ai.trustscore" }),
-  ]);
-
-  return { ensName, avatar, apiEndpoint, services, trustScore };
-}
-```
-
-**ENS Profile Component** (`packages/frontend/src/components/EnsProfile.tsx`):
-
-```typescript
-export function EnsProfile({ address }: { address: string }) {
-  const { data: ensName } = useEnsName({ address });
-  const { data: avatar } = useEnsAvatar({ name: ensName });
-
-  return (
-    <div className="flex items-center gap-2">
-      {avatar && <img src={avatar} className="w-8 h-8 rounded-full" />}
-      <span>{ensName || truncateAddress(address)}</span>
-      {ensName && <span className="text-blue-500">✓ ENS</span>}
-    </div>
-  );
-}
-```
-
-**Provider Cards with ENS** (`packages/frontend/src/app/marketplace/page.tsx`):
-
-```typescript
-// Marketplace displays ENS names and badges for providers
-{provider.walletAddress && (
-  <EnsProfile address={provider.walletAddress} showBadge />
-)}
-```
+| Record Key        | Purpose            | Example                          |
+| ----------------- | ------------------ | -------------------------------- |
+| `ai.api.endpoint` | API URL            | `https://api.translateai.eth/v1` |
+| `ai.services`     | Service types      | `translation,summarization`      |
+| `ai.trustscore`   | Reputation (0-100) | `85`                             |
 
 ---
 
-### Safe Guard - On-chain Policy Enforcement
+### Safe Guard ($2,500)
 
-ZeroKey deploys **SafeZeroKeyGuard** to enforce policies at the smart contract level:
+**Why**: Multisig wallets need policy enforcement at the contract level. Safe Guard blocks unapproved transactions before execution.
 
-#### Implementation Details
+| File                                               | Purpose                                              |
+| -------------------------------------------------- | ---------------------------------------------------- |
+| `packages/contracts/src/SafeZeroKeyGuard.sol`      | `checkTransaction()` hook, per-Safe policy           |
+| `packages/backend/src/services/safeGuardOracle.ts` | Oracle: monitor, evaluate, submit decisions          |
+| `packages/backend/src/routes/guard.ts`             | `POST /register`, `GET /status`, `POST /pre-approve` |
+| `packages/frontend/src/app/setup/page.tsx`         | Setup wizard UI                                      |
 
-| Component               | File Location                                 | Description                           |
-| ----------------------- | --------------------------------------------- | ------------------------------------- |
-| **Safe Guard Contract** | `packages/contracts/src/SafeZeroKeyGuard.sol` | Transaction guard for Safe multisig   |
-| **Guard Routes**        | `packages/backend/src/routes/guard.ts`        | Guard registration & pre-approval API |
-| **Setup Wizard**        | `packages/frontend/src/app/setup/page.tsx`    | UI for Guard configuration            |
-| **Safe Library**        | `packages/frontend/src/lib/safe.ts`           | Safe SDK integration                  |
-
-**Deployed Contract**: `0x5fBdEEE03e76Bb0616060697D0d41300F3B2d3D2` (Base Sepolia)
-
-#### Guard Flow
-
-```solidity
-// SafeZeroKeyGuard.sol
-function checkTransaction(
-    address to,
-    uint256 value,
-    bytes memory data,
-    // ...
-) external view override {
-    bytes32 txHash = computeTxHash(to, value, data, ...);
-    Decision memory decision = decisions[txHash];
-
-    // Require pre-approval from ZeroKey oracle
-    require(decision.approved, "ZeroKey: Transaction not approved");
-    require(decision.riskLevel <= maxAllowedRisk, "ZeroKey: Risk too high");
-}
-```
+**Deployed**: `0x5fBdEEE03e76Bb0616060697D0d41300F3B2d3D2` on Base Sepolia
 
 ---
 
-## 🏆 Prize Track Summary
+### Prize Summary
 
-| Prize Track                     | Amount        | Status         | Key Files                           |
-| ------------------------------- | ------------- | -------------- | ----------------------------------- |
-| **Arc - Chain Abstracted USDC** | $5,000        | ✅ Implemented | `circleGateway.ts`, `gateway.ts`    |
-| **Arc - Agentic Commerce**      | $2,500        | ✅ Implemented | `firewall.ts`, `a2a.ts`, `pay.ts`   |
-| **Arc - Global Treasury**       | $2,500        | ✅ Implemented | `gateway.ts`, `CrosschainPanel.tsx` |
-| **ENS - Integration**           | $3,500 (pool) | ✅ Implemented | `ens.ts`, `EnsProfile.tsx`          |
-| **ENS - Creative DeFi**         | $1,500        | ✅ Implemented | AI agent text records               |
+| Prize                         | Amount      | Working?    | Key Endpoint                       |
+| ----------------------------- | ----------- | ----------- | ---------------------------------- |
+| Arc Track 1: Chain Abstracted | $5,000      | Verified    | `POST /api/gateway/transfer`       |
+| Arc Track 2: Treasury/Payouts | $2,500      | Verified    | `POST /api/gateway/payout`         |
+| Arc Track 3: Agentic Commerce | $2,500      | Verified    | `POST /api/gateway/agent-commerce` |
+| ENS Integration               | $3,500 pool | Implemented | `lib/ens.ts`, `EnsProfile.tsx`     |
+| ENS Creative DeFi             | $1,500      | Implemented | AI agent text records              |
+| Safe Guard                    | $2,500      | Deployed    | `SafeZeroKeyGuard.sol`             |
 
 ---
 
