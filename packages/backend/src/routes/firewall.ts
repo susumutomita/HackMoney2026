@@ -60,13 +60,10 @@ const checkSchema = z
       .refine(
         (val) => {
           if (val === undefined) return true;
-          try {
-            return BigInt(val) >= 0n;
-          } catch {
-            return false;
-          }
+          const n = Number(val);
+          return !Number.isNaN(n) && n >= 0;
         },
-        (val) => ({ message: `Invalid value (must be non-negative integer): ${val}` })
+        (val) => ({ message: `Invalid value (must be non-negative number): ${val}` })
       ),
     data: z.string().optional(),
 
@@ -104,11 +101,18 @@ firewallRouter.post("/check", zValidator("json", checkSchema), async (c) => {
   const input = c.req.valid("json");
 
   // Resolve from negotiation session if provided.
+  // value can be a decimal USDC amount (e.g. "0.03") or an integer string.
+  // Convert decimal to base units (6 decimals) for internal processing.
+  let rawValue = input.value ?? "0";
+  if (rawValue.includes(".")) {
+    rawValue = usdcToBaseUnits(rawValue).toString();
+  }
+
   const tx = {
     chainId: input.chainId ?? 84532,
     from: input.from ?? ("0x0000000000000000000000000000000000000000" as string),
     to: input.to ?? ("0x0000000000000000000000000000000000000000" as string),
-    value: input.value ?? "0",
+    value: rawValue,
     data: input.data,
   };
 
