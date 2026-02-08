@@ -109,7 +109,7 @@ function getDomainByDomainId(domainId: number) {
 // ABIs
 // ──────────────────────────────────────────────
 
-/** ERC20 ABI subset for approve + balanceOf */
+/** ERC20 ABI subset for approve + balanceOf + allowance */
 const ERC20_ABI = [
   {
     type: "function",
@@ -128,9 +128,19 @@ const ERC20_ABI = [
     outputs: [{ name: "", type: "uint256" }],
     stateMutability: "view",
   },
+  {
+    type: "function",
+    name: "allowance",
+    inputs: [
+      { name: "owner", type: "address" },
+      { name: "spender", type: "address" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
 ] as const;
 
-/** Gateway Wallet ABI subset for deposit */
+/** Gateway Wallet ABI subset for deposit + getDepositorBalance */
 const GATEWAY_WALLET_ABI = [
   {
     type: "function",
@@ -141,6 +151,16 @@ const GATEWAY_WALLET_ABI = [
     ],
     outputs: [],
     stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "getDepositorBalance",
+    inputs: [
+      { name: "depositor", type: "address" },
+      { name: "token", type: "address" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
   },
 ] as const;
 
@@ -427,10 +447,101 @@ export async function depositToGateway(amount: bigint): Promise<{
 }
 
 /**
+ * Ensure the depositor has enough USDC deposited in the Gateway Wallet.
+ * If not, automatically approve + deposit the shortfall from the EOA's ERC-20 balance.
+ */
+async function ensureGatewayDeposit(
+  account: ReturnType<typeof privateKeyToAccount>,
+  usdcAddress: Address,
+  totalRequired: bigint
+): Promise<void> {
+  const transport = config.rpcUrl ? http(config.rpcUrl) : http();
+  const publicClient = createPublicClient({ chain: baseSepolia, transport });
+  const walletClient = createWalletClient({ account, chain: baseSepolia, transport });
+
+  // Check Gateway Wallet internal balance for this depositor
+  let gatewayBalance = BigInt(0);
+  try {
+    gatewayBalance = (await publicClient.readContract({
+      address: GATEWAY_WALLET,
+      abi: GATEWAY_WALLET_ABI,
+      functionName: "getDepositorBalance",
+      args: [account.address, usdcAddress],
+    })) as bigint;
+  } catch {
+    // getDepositorBalance may not exist — fall back to Gateway API balance check
+    console.warn("getDepositorBalance not available, assuming 0 balance in Gateway Wallet");
+  }
+
+  if (gatewayBalance >= totalRequired) {
+    console.log(
+      `Gateway balance sufficient: ${gatewayBalance} >= ${totalRequired} (no deposit needed)`
+    );
+    return;
+  }
+
+  const shortfall = totalRequired - gatewayBalance;
+  console.log(
+    `Gateway balance insufficient: ${gatewayBalance} < ${totalRequired}. Depositing ${shortfall}...`
+  );
+
+  // Verify EOA has enough USDC on-chain
+  const erc20Balance = (await publicClient.readContract({
+    address: usdcAddress,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: [account.address],
+  })) as bigint;
+
+  if (erc20Balance < shortfall) {
+    throw new Error(
+      `Insufficient USDC balance on Base Sepolia: have ${erc20Balance}, need ${shortfall}`
+    );
+  }
+
+  // 1. Approve Gateway Wallet to spend USDC
+  const currentAllowance = (await publicClient.readContract({
+    address: usdcAddress,
+    abi: ERC20_ABI,
+    functionName: "allowance",
+    args: [account.address, GATEWAY_WALLET],
+  })) as bigint;
+
+  if (currentAllowance < shortfall) {
+    console.log(`Approving Gateway Wallet to spend ${shortfall} USDC...`);
+    const approveData = encodeFunctionData({
+      abi: ERC20_ABI,
+      functionName: "approve",
+      args: [GATEWAY_WALLET, shortfall],
+    });
+    const approveTx = await walletClient.sendTransaction({
+      to: usdcAddress,
+      data: approveData,
+    });
+    await publicClient.waitForTransactionReceipt({ hash: approveTx, confirmations: 1 });
+    console.log(`Approve tx confirmed: ${approveTx}`);
+  }
+
+  // 2. Deposit to Gateway Wallet
+  console.log(`Depositing ${shortfall} USDC to Gateway Wallet...`);
+  const depositData = encodeFunctionData({
+    abi: GATEWAY_WALLET_ABI,
+    functionName: "deposit",
+    args: [usdcAddress, shortfall],
+  });
+  const depositTx = await walletClient.sendTransaction({
+    to: GATEWAY_WALLET,
+    data: depositData,
+  });
+  await publicClient.waitForTransactionReceipt({ hash: depositTx, confirmations: 1 });
+  console.log(`Deposit tx confirmed: ${depositTx}`);
+}
+
+/**
  * Transfer USDC cross-chain via Circle Gateway (backend-signed).
  *
- * The backend's EOA signs the BurnIntent. The sourceDepositor must have
- * deposited USDC to the Gateway Wallet first.
+ * Automatically deposits USDC into the Gateway Wallet if the depositor's
+ * internal balance is insufficient.
  *
  * No mocks — submits to the real Gateway API and returns the real response.
  */
@@ -492,12 +603,17 @@ export async function transferViaGateway(
     const key = (privateKey.startsWith("0x") ? privateKey : `0x${privateKey}`) as `0x${string}`;
     const account = privateKeyToAccount(key);
     const amountBigInt = BigInt(Math.round(parseFloat(amount) * 1_000_000));
+    const maxFee = BigInt(1_010000); // 1.01 USDC — must match buildBurnIntent
+    const totalRequired = amountBigInt + maxFee;
+
+    // Auto-deposit: ensure depositor has enough balance in the Gateway Wallet
+    await ensureGatewayDeposit(account, source.usdc, totalRequired);
 
     // Build the BurnIntent
     const intent = buildBurnIntent({
       sourceDomain,
       destinationDomain,
-      depositor: sender,
+      depositor: account.address,
       recipient,
       signer: account.address,
       amount: amountBigInt,
