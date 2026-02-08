@@ -153,6 +153,23 @@ export function PolicyForm({ onSuccess, onCancel }: PolicyFormProps) {
             end: parseInt(endHour),
           },
         };
+      case "trust_score_threshold":
+        return {
+          type: "trust_score_threshold",
+          minScore: 50,
+          action: "confirm_required" as const,
+        };
+      case "ens_required":
+        return {
+          type: "ens_required",
+          requireEns: true,
+        };
+      case "category_restriction":
+        return {
+          type: "category_restriction",
+          allowedCategories: ["translation", "summarization", "data_analysis"],
+          blockUnknown: true,
+        };
     }
   };
 

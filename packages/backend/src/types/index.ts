@@ -27,7 +27,10 @@ export type PolicyType =
   | "spending_limit"
   | "protocol_allowlist"
   | "kyc_requirement"
-  | "time_restriction";
+  | "time_restriction"
+  | "trust_score_threshold"
+  | "ens_required"
+  | "category_restriction";
 
 /**
  * Spending limit policy configuration
@@ -74,6 +77,35 @@ export interface TimeRestrictionConfig {
 }
 
 /**
+ * Trust score threshold policy configuration
+ * Requires minimum trust score for auto-approval
+ */
+export interface TrustScoreThresholdConfig {
+  type: "trust_score_threshold";
+  minScore: number; // 0-100
+  action: "reject" | "confirm_required";
+}
+
+/**
+ * ENS required policy configuration
+ * Requires destination address to have an ENS name
+ */
+export interface EnsRequiredConfig {
+  type: "ens_required";
+  requireEns: boolean;
+}
+
+/**
+ * Category restriction policy configuration
+ * Only allows specific service categories
+ */
+export interface CategoryRestrictionConfig {
+  type: "category_restriction";
+  allowedCategories: string[];
+  blockUnknown: boolean;
+}
+
+/**
  * Discriminated union of all policy configurations
  * Type-safe policy config that enforces correct structure per policy type
  */
@@ -81,7 +113,10 @@ export type PolicyConfig =
   | SpendingLimitConfig
   | ProtocolAllowlistConfig
   | KycRequirementConfig
-  | TimeRestrictionConfig;
+  | TimeRestrictionConfig
+  | TrustScoreThresholdConfig
+  | EnsRequiredConfig
+  | CategoryRestrictionConfig;
 
 /**
  * Policy definition with strongly-typed configuration
