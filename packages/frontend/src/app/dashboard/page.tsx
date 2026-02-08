@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
 import Link from "next/link";
@@ -119,6 +119,8 @@ function WalletBanner() {
 
 export default function DashboardPage() {
   const { isConnected } = useAccount();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -149,7 +151,7 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {!isConnected && <WalletBanner />}
+        {mounted && !isConnected && <WalletBanner />}
         {
           <div className="space-y-8 animate-fade-in">
             {/* Header */}
