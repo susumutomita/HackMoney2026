@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useAccount } from "wagmi";
+import { useState, useCallback } from "react";
+import { useAccount, useSignTypedData, useWalletClient, usePublicClient } from "wagmi";
+import { pad, parseUnits, type Address, type Hex } from "viem";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -9,6 +10,7 @@ interface GatewayDomain {
   name: string;
   domainId: number;
   chainId: number;
+  usdc: string;
 }
 
 interface GatewayBalance {
@@ -36,14 +38,60 @@ interface TransferResult {
   error?: string;
 }
 
+interface Eip712Config {
+  domain: { name: string; version: string };
+  types: Record<string, Array<{ name: string; type: string }>>;
+  primaryType: string;
+  gatewayWallet: string;
+  gatewayMinter: string;
+  domains: Record<string, GatewayDomain>;
+}
+
 const DOMAINS: GatewayDomain[] = [
-  { name: "Base Sepolia", domainId: 6, chainId: 84532 },
-  { name: "Arc Testnet", domainId: 26, chainId: 412 },
-  { name: "Ethereum Sepolia", domainId: 0, chainId: 11155111 },
+  {
+    name: "Base Sepolia",
+    domainId: 6,
+    chainId: 84532,
+    usdc: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  },
+  {
+    name: "Arc Testnet",
+    domainId: 26,
+    chainId: 412,
+    usdc: "0x3600000000000000000000000000000000000000",
+  },
+  {
+    name: "Ethereum Sepolia",
+    domainId: 0,
+    chainId: 11155111,
+    usdc: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+  },
 ];
+
+const ERC20_ABI = [
+  {
+    type: "function" as const,
+    name: "approve",
+    inputs: [
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "nonpayable" as const,
+  },
+] as const;
+
+/** Convert a 20-byte address to 32-byte hex (left-padded) */
+function addressToBytes32(addr: string): Hex {
+  return pad(addr.toLowerCase() as Hex, { size: 32 });
+}
 
 export function CrosschainPanel() {
   const { address } = useAccount();
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
+  const { signTypedDataAsync } = useSignTypedData();
+
   const [balances, setBalances] = useState<GatewayBalance[]>([]);
   const [loading, setLoading] = useState(false);
   const [transferResult, setTransferResult] = useState<TransferResult | null>(null);
@@ -52,11 +100,24 @@ export function CrosschainPanel() {
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("1.00");
   const [tab, setTab] = useState<"transfer" | "payout">("transfer");
+  const [signingMode, setSigningMode] = useState<"wallet" | "backend">("wallet");
+  const [statusMsg, setStatusMsg] = useState("");
 
   // Payout state
   const [payoutRecipients, setPayoutRecipients] = useState([
     { address: "", amountUsdc: "0.50", destinationDomain: 26, label: "" },
   ]);
+
+  // EIP-712 config (lazy-loaded from backend)
+  const [eip712Config, setEip712Config] = useState<Eip712Config | null>(null);
+
+  const fetchEip712Config = useCallback(async () => {
+    if (eip712Config) return eip712Config;
+    const res = await fetch(`${API_BASE}/api/gateway/eip712-config`);
+    const data = await res.json();
+    setEip712Config(data);
+    return data as Eip712Config;
+  }, [eip712Config]);
 
   const fetchBalances = async () => {
     if (!address) return;
@@ -76,7 +137,99 @@ export function CrosschainPanel() {
     }
   };
 
-  const executeTransfer = async () => {
+  /** Wallet-signed transfer: user signs BurnIntent with their wallet */
+  const executeWalletSignedTransfer = async () => {
+    if (!address || !walletClient) return;
+    setLoading(true);
+    setTransferResult(null);
+    setStatusMsg("Fetching EIP-712 config...");
+
+    try {
+      const cfg = await fetchEip712Config();
+
+      const src = DOMAINS.find((d) => d.domainId === sourceDomain);
+      const dst = DOMAINS.find((d) => d.domainId === destDomain);
+      if (!src || !dst) throw new Error("Invalid domain selection");
+
+      const recipientAddr = (recipient || address) as Address;
+      const amountBigInt = parseUnits(amount, 6);
+
+      // Generate random salt
+      const saltBytes = new Uint8Array(32);
+      globalThis.crypto.getRandomValues(saltBytes);
+      const salt =
+        `0x${Array.from(saltBytes, (b) => b.toString(16).padStart(2, "0")).join("")}` as Hex;
+
+      const burnIntent = {
+        maxBlockHeight: BigInt(
+          "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        ),
+        maxFee: BigInt(1_010000), // 1.01 USDC
+        spec: {
+          version: 1,
+          sourceDomain: sourceDomain,
+          destinationDomain: destDomain,
+          sourceContract: addressToBytes32(cfg.gatewayWallet),
+          destinationContract: addressToBytes32(cfg.gatewayMinter),
+          sourceToken: addressToBytes32(src.usdc),
+          destinationToken: addressToBytes32(dst.usdc),
+          sourceDepositor: addressToBytes32(address),
+          destinationRecipient: addressToBytes32(recipientAddr),
+          sourceSigner: addressToBytes32(address),
+          destinationCaller: pad("0x00" as Hex, { size: 32 }),
+          value: amountBigInt,
+          salt,
+          hookData: "0x" as Hex,
+        },
+      };
+
+      // Sign with user's wallet
+      setStatusMsg("Sign BurnIntent in your wallet...");
+      const signature = await signTypedDataAsync({
+        domain: cfg.domain as { name: string; version: string },
+        types: cfg.types as Record<string, Array<{ name: string; type: string }>>,
+        primaryType: "BurnIntent",
+        message: burnIntent,
+      });
+
+      // Submit signed intent to backend
+      setStatusMsg("Submitting to Gateway API...");
+      const res = await fetch(`${API_BASE}/api/gateway/transfer/signed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          burnIntent: {
+            maxBlockHeight: burnIntent.maxBlockHeight.toString(),
+            maxFee: burnIntent.maxFee.toString(),
+            spec: {
+              ...burnIntent.spec,
+              value: burnIntent.spec.value.toString(),
+            },
+          },
+          signature,
+        }),
+      });
+
+      const data = await res.json();
+      setTransferResult(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Wallet signing failed";
+      setTransferResult({
+        success: false,
+        error: msg,
+        amount,
+        sender: address,
+        recipient: recipient || address,
+        status: "failed",
+      });
+    } finally {
+      setLoading(false);
+      setStatusMsg("");
+    }
+  };
+
+  /** Backend-signed transfer: backend signs with its own key */
+  const executeBackendTransfer = async () => {
     if (!address) return;
     setLoading(true);
     setTransferResult(null);
@@ -103,6 +256,37 @@ export function CrosschainPanel() {
         recipient: recipient || address,
         status: "failed",
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const executeTransfer =
+    signingMode === "wallet" ? executeWalletSignedTransfer : executeBackendTransfer;
+
+  /** Approve USDC spending by GatewayWallet */
+  const approveUsdc = async () => {
+    if (!address || !walletClient || !publicClient) return;
+    setLoading(true);
+    setStatusMsg("Approving USDC for Gateway...");
+    try {
+      const cfg = await fetchEip712Config();
+      const src = DOMAINS.find((d) => d.domainId === sourceDomain);
+      if (!src) throw new Error("Invalid source domain");
+
+      const amountBigInt = parseUnits(amount, 6);
+      const txHash = await walletClient.writeContract({
+        address: src.usdc as Address,
+        abi: ERC20_ABI,
+        functionName: "approve",
+        args: [cfg.gatewayWallet as Address, amountBigInt],
+      });
+
+      setStatusMsg("Waiting for confirmation...");
+      await publicClient.waitForTransactionReceipt({ hash: txHash });
+      setStatusMsg(`Approved! tx: ${txHash.slice(0, 10)}...`);
+    } catch (err) {
+      setStatusMsg(err instanceof Error ? err.message : "Approval failed");
     } finally {
       setLoading(false);
     }
@@ -229,6 +413,31 @@ export function CrosschainPanel() {
 
       {tab === "transfer" ? (
         <div className="space-y-3">
+          {/* Signing Mode Toggle */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900/30 border border-white/5">
+            <span className="text-xs text-slate-500">Signer:</span>
+            <button
+              onClick={() => setSigningMode("wallet")}
+              className={`px-2 py-1 rounded text-xs transition-colors ${
+                signingMode === "wallet"
+                  ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                  : "text-slate-500 hover:text-white"
+              }`}
+            >
+              Your Wallet
+            </button>
+            <button
+              onClick={() => setSigningMode("backend")}
+              className={`px-2 py-1 rounded text-xs transition-colors ${
+                signingMode === "backend"
+                  ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                  : "text-slate-500 hover:text-white"
+              }`}
+            >
+              Backend Key
+            </button>
+          </div>
+
           {/* Source Chain */}
           <div>
             <label className="block text-xs text-slate-500 mb-1">Source Chain</label>
@@ -290,23 +499,38 @@ export function CrosschainPanel() {
             <div className="text-[10px] text-violet-400 mb-1">Route via Arc Hub</div>
             <div className="flex items-center gap-1.5 text-xs text-slate-400">
               <span>{DOMAINS.find((d) => d.domainId === sourceDomain)?.name}</span>
-              <span className="text-violet-400">→</span>
+              <span className="text-violet-400">&rarr;</span>
               {sourceDomain !== 26 && destDomain !== 26 && (
                 <>
                   <span className="text-violet-400 font-medium">Arc</span>
-                  <span className="text-violet-400">→</span>
+                  <span className="text-violet-400">&rarr;</span>
                 </>
               )}
               <span>{DOMAINS.find((d) => d.domainId === destDomain)?.name}</span>
             </div>
           </div>
 
+          {/* Approve + Transfer buttons */}
+          {signingMode === "wallet" && (
+            <button
+              onClick={approveUsdc}
+              disabled={!address || loading}
+              className="w-full px-4 py-2 rounded-lg bg-slate-800/50 border border-amber-500/20 text-amber-400 text-xs font-medium hover:border-amber-500/40 transition-colors disabled:opacity-50"
+            >
+              1. Approve USDC for Gateway
+            </button>
+          )}
+
           <button
             onClick={executeTransfer}
             disabled={!address || loading}
             className="w-full px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {loading ? "Processing..." : "Transfer via Gateway"}
+            {loading
+              ? statusMsg || "Processing..."
+              : signingMode === "wallet"
+                ? "2. Sign & Transfer via Gateway"
+                : "Transfer via Gateway (Backend Signs)"}
           </button>
         </div>
       ) : (
@@ -388,6 +612,13 @@ export function CrosschainPanel() {
           >
             {loading ? "Processing..." : "Execute Multi-Chain Payout"}
           </button>
+        </div>
+      )}
+
+      {/* Status Message */}
+      {statusMsg && !loading && (
+        <div className="mt-3 px-3 py-2 rounded-lg bg-slate-900/30 border border-white/5">
+          <p className="text-xs text-slate-400">{statusMsg}</p>
         </div>
       )}
 

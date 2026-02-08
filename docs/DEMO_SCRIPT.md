@@ -1,6 +1,6 @@
-# Demo Script (3 minutes) — Agent buys an API with USDC (A2A + Firewall + x402)
+# Demo Script (5 minutes) — All 5 Prize Tracks
 
-Goal: a crisp, judge-friendly demo showing **Agent Economy** with a real payment, and why ZeroKey’s control layer matters.
+Goal: a judge-friendly demo showing ZeroKey across **all prize tracks**: Circle Gateway/Arc (Tracks 1-3), ENS, and Safe Guard.
 
 Target URL:
 
@@ -16,110 +16,158 @@ Target URL:
 
 ---
 
-## 0:00–0:20 — Hook (what this is)
+## 0:00–0:30 — Hook (what this is)
 
 Say:
 
-- “AI agents are starting to hire other agents and pay them in USDC. That’s the Agent Economy.”
-- “But if agents can pay, they can also overspend or get scammed. ZeroKey is the **execution governance layer** that sits before money leaves the wallet.”
+- "AI agents are hiring other agents and paying them in USDC. That's the Agent Economy."
+- "But agents can overspend or get scammed. ZeroKey is the **execution governance layer** — policy decides before money moves."
 
 Show:
 
-- Landing page headline + the idea of ‘Execution Governance Layer’
+- Landing page headline
 
 ---
 
-## 0:20–1:10 — Discover & negotiate (A2A)
+## 0:30–1:30 — Discover, Negotiate, Firewall (A2A + Firewall)
 
 Actions:
 
 1. Go to **Marketplace**
 2. Pick **ImagePack** (success flow)
-3. Start negotiation
-4. Accept price
+3. Start negotiation → Accept price
+4. Run **Firewall check** → show APPROVED + reason
+
+Then repeat with **CheapTranslate** (blocked flow):
+
+1. Start negotiation → Accept
+2. Firewall check → **REJECTED** ("money never moved")
 
 Say:
 
-- “The agent discovers providers and negotiates price — this is the A2A part.”
-
-Show:
-
-- Provider price + trust score
-- (Optional) **ERC-8004 Identity** viewer: on-chain identity + endpoint (read-only)
+- "The Firewall explains _why_ before we pay. CheapTranslate was blocked — recipient mismatch, trust score too low."
 
 ---
 
-## 1:10–1:50 — Firewall decision (control layer)
+## 1:30–2:30 — USDC Payment (x402 + on-chain receipt)
 
 Actions:
 
-1. After agreement, run **Firewall check**
-2. Show the decision (APPROVED / REJECTED) and the reason
+1. Back to ImagePack → Click **Pay**
+2. Confirm payment modal
+3. Show PaymentStatus flow (processing → success)
+4. Show txHash → open on BaseScan Sepolia
 
 Say:
 
-- “The Firewall explains why it’s safe or risky _before_ we pay.”
-
-Note:
-
-- For the full narrative, we run **Success → Blocked → Success**.
-  - Success: ImagePack (APPROVED)
-  - Blocked: CheapTranslate (REJECTED, money never moved)
+- "x402 flow: server responds Payment Required, agent pays USDC, backend verifies on-chain receipt."
 
 ---
 
-## 1:50–2:40 — Payment Required (x402) → USDC transfer
+## 2:30–3:30 — Circle Gateway / Arc Crosschain (Tracks 1-3)
 
 Actions:
 
-1. Click **Pay**
-2. Show the **Confirm Payment** modal (amount/recipient/network/firewall summary)
-3. Confirm
-4. Show the **PaymentStatus** flow (processing → success)
-5. Click the txHash / open BaseScan
+1. Navigate to the **Crosschain USDC via Arc** panel
+2. Show the Signer toggle: "Your Wallet" vs "Backend Key"
+3. Select **Your Wallet** mode
+4. Set source = Base Sepolia, destination = Arc Testnet
+5. Click **Check Unified USDC Balance** (real API call)
+6. Click **Approve USDC for Gateway** (on-chain tx)
+7. Click **Sign & Transfer via Gateway** (EIP-712 BurnIntent signing)
+8. Show result — if insufficient balance, explain:
 
 Say:
 
-- “This endpoint uses an x402-style flow: server responds Payment Required, then the agent pays in USDC.”
-- “The backend verifies the USDC transfer by **waiting for the on-chain receipt** and decoding the Transfer event.”
+- "This signs a real EIP-712 BurnIntent against Circle's Gateway specification. The Gateway API validated our signature and checked our on-chain balance."
+- "No mocks. The 'insufficient balance' error proves the entire pipeline is real."
 
-Proof (important):
+Show Multi-Payout tab briefly:
 
-- Show the **txHash** and open it on BaseScan Sepolia.
+- "Track 2: batch payouts to multiple recipients across chains."
 
 ---
 
-## 2:40–3:00 — Close (why it wins)
+## 3:30–4:15 — ENS Integration
+
+Actions:
+
+1. Show an **ENS Profile** card on the negotiate page
+2. Point out custom AI text records: `ai.api.endpoint`, `ai.services`, `ai.trustscore`
 
 Say:
 
-- “This isn’t a mock — it’s a real USDC payment flow.”
-- “ZeroKey makes Agent Economy safe: **A2A discovery + Firewall governance + USDC settlement**.”
-- “This is directly aligned with the Arc USDC treasury/agentic commerce tracks.”
+- "ENS is used for agent discovery. Custom text records make AI providers discoverable on-chain."
+- "Resolution is real — against Ethereum mainnet."
 
 ---
 
-## Acceptance criteria (must be true during demo)
+## 4:15–4:45 — Safe Guard
 
-- APPROVED path can complete: Firewall → Pay confirm → processing → success
-- Payment verification uses txHash receipt checks (not just a fake ‘ok’)
-- UI clearly explains _why_ the firewall allowed/blocked
+Actions:
+
+1. Navigate to `/setup`
+2. Show the Safe Guard registration flow
+3. Point out the deployed contract on Base Sepolia
+
+Say:
+
+- "Safe Guard adds policy enforcement at the contract level. `checkTransaction()` blocks unapproved transactions before execution."
+- "Deployed at `0x5fBdEE...` on Base Sepolia."
 
 ---
 
-## Backup plan (if wallet/USDC not available)
+## 4:45–5:00 — Close
 
-- Run the **Blocked** flow (CheapTranslate) and emphasize:
-  - “Money never moved” (audit log proof)
-- Show the 402 response payload from `/api/pay/request` and explain how the wallet step works.
+Say:
 
-## Dev-only reliability check (optional)
+- "This isn't mocked — real Gateway API, real on-chain USDC, real ENS resolution, real Safe Guard."
+- "ZeroKey makes Agent Economy safe: **A2A discovery + Firewall governance + crosschain USDC settlement**."
 
-If you need a quick sanity check before a demo:
+---
+
+## API proof commands (backup / judge Q&A)
 
 ```bash
-pnpm dev:backend
-pnpm --filter backend exec tsx ../../scripts/smoke-demo.ts
+# Gateway info (real Circle API)
+curl -s http://localhost:3001/api/gateway/info | jq .
+
+# EIP-712 config
+curl -s http://localhost:3001/api/gateway/eip712-config | jq .
+
+# Check balances (real Circle API)
+curl -s -X POST http://localhost:3001/api/gateway/balances \
+  -H "Content-Type: application/json" \
+  -d '{"depositor":"0x7aD8317e9aB4837AEF734e23d1C62F4938a6D950"}' | jq .
+
+# Transfer (real BurnIntent signing + Gateway API submission)
+curl -s -X POST http://localhost:3001/api/gateway/transfer \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sourceDomain": 6,
+    "destinationDomain": 26,
+    "sender": "0x7aD8317e9aB4837AEF734e23d1C62F4938a6D950",
+    "recipient": "0xae0D06961f7103B43ed93721d5a2644c09EB159C",
+    "amountUsdc": "1.00"
+  }' | jq .
+# Expected: 400 "Insufficient balance" (real — needs USDC deposited to GatewayWallet)
 ```
 
-This prints a fresh BaseScan txHash you can keep as backup proof.
+---
+
+## Acceptance criteria
+
+- [ ] Firewall APPROVED and REJECTED paths both work
+- [ ] USDC payment verifies on-chain receipt (txHash on BaseScan)
+- [ ] Gateway balance check returns real data from Circle API
+- [ ] Gateway transfer returns honest error (insufficient balance) or succeeds
+- [ ] ENS resolution works against Ethereum mainnet
+- [ ] Safe Guard contract address verifiable on Base Sepolia explorer
+
+---
+
+## If wallet/USDC not available
+
+- Run the **Blocked** flow (CheapTranslate) to prove firewall
+- Show Gateway API commands from terminal (backup proof above)
+- Show ENS profile cards and explain text record schema

@@ -2,7 +2,48 @@
 
 This document lists **exact code locations (file + line ranges)** for sponsor / partner technologies.
 
-> Tip: Use this to quickly answer “where is X used?” during submission or judging.
+> Tip: Use this to quickly answer "where is X used?" during submission or judging.
+
+---
+
+## Circle Gateway / Arc — Cross-chain USDC (Track 1, 2, 3)
+
+### Real Gateway API integration (EIP-712 BurnIntent signing)
+
+- **Backend: BurnIntent signing + Gateway API submission**
+  - `packages/backend/src/services/gateway.ts`
+    - EIP-712 domain + types (from Circle's evm-gateway-contracts): **lines 62–91**
+    - `buildBurnIntent()` — constructs TransferSpec with real contract addresses: **lines 236–272**
+    - `signBurnIntent()` — signs with `account.signTypedData()`: **lines 277–292**
+    - `submitToGatewayApi()` — POST to `gateway-api-testnet.circle.com/v1/transfer`: **lines 297–322**
+    - `transferViaGateway()` — full pipeline (build → sign → submit → honest result): **lines 439–539**
+    - `depositToGateway()` — real on-chain approve + deposit to GatewayWallet: **lines 375–429**
+    - `getGatewayBalances()` — real API call to /v1/balances: **lines 332–368**
+    - `getGatewayInfo()` — real API call to /v1/info: **lines 639–668**
+
+- **Backend: Gateway routes (all 3 prize tracks)**
+  - `packages/backend/src/routes/gateway.ts`
+    - Track 1 `/transfer` — signs BurnIntent, submits to real Gateway API: **lines 104–162**
+    - Track 2 `/payout` — multi-recipient payout via Gateway: **lines 214–274**
+    - Track 3 `/agent-commerce` — agent-driven crosschain transfer: **lines 276–343**
+    - `/transfer/signed` — accepts frontend-signed BurnIntent: **lines 164–212**
+    - `/eip712-config` — exports EIP-712 types for frontend signing: **lines 60–66**
+
+- **Frontend: CrosschainPanel (real wallet signing)**
+  - `packages/frontend/src/components/CrosschainPanel.tsx`
+    - EIP-712 BurnIntent construction + `useSignTypedData` (wagmi): **lines 125–175**
+    - USDC approve for GatewayWallet via `walletClient.writeContract`: **lines 248–274**
+    - Signing mode toggle (Wallet vs Backend): **lines 397–420**
+    - Transfer + Multi-Payout UI with domain selection: **full file**
+
+### Verified behavior
+
+```
+POST /api/gateway/transfer → Gateway API 400: "Insufficient balance for depositor 0x...
+  available 0, required 1.01005"
+```
+
+This proves: BurnIntent signed correctly, Gateway validated signature, checked real balances.
 
 ---
 
@@ -37,7 +78,7 @@ This document lists **exact code locations (file + line ranges)** for sponsor / 
   - mainnet client + resolve ENS name → address: **lines 1–28**
 
 - `packages/backend/src/routes/analyze.ts`
-  - accepts destination as 0x or ENS and resolves server-side: (see file around ENS logic)
+  - accepts destination as 0x or ENS and resolves server-side
 
 ### Frontend: ENS profile + text records
 
@@ -48,6 +89,19 @@ This document lists **exact code locations (file + line ranges)** for sponsor / 
 
 - `packages/frontend/src/components/EnsProfile.tsx`
   - UI card that displays ENS profile + custom records
+
+---
+
+## Safe Guard — On-chain execution governance
+
+- **Smart contract**
+  - `packages/contracts/src/SafeZeroKeyGuard.sol`
+    - Deployed at `0x5fBdEEE03e76Bb0616060697D0d41300F3B2d3D2` on Base Sepolia
+    - Implements `checkTransaction()` hook for Safe multisig
+
+- **Backend: Guard routes**
+  - `packages/backend/src/routes/guard.ts`
+    - Register wallet, check transactions, manage policies
 
 ---
 
@@ -69,5 +123,7 @@ This document lists **exact code locations (file + line ranges)** for sponsor / 
 
 ## Notes
 
-- This project uses **real on-chain settlement on Base Sepolia** (not a mock): we verify tx receipts and persist txHash in logs.
-- Our “firewall decision” and “money never moved” events are designed to be **auditable** and easy for judges to understand.
+- **No mocks**: All Gateway API calls go to the real `gateway-api-testnet.circle.com`. Honest errors (e.g., insufficient balance) are returned as-is.
+- **Real on-chain**: USDC payments on Base Sepolia with tx receipt verification. SafeZeroKeyGuard deployed and callable.
+- **Real ENS**: Resolution against Ethereum mainnet (forward, reverse, text records).
+- Provider addresses use project-owned testnet wallets, not famous people's addresses.
