@@ -102,6 +102,10 @@ demo-hosted:
 	fi
 	cd packages/backend && NEXT_PUBLIC_API_URL=https://zerokey.exe.xyz:8000 pnpm tsx ../../scripts/swarm-demo.ts
 
+# ENS Integration Demo (for ENS Prize)
+ens-demo:
+	cd packages/backend && pnpm tsx ../../scripts/ens-demo.ts
+
 # Agent demos (uses Claude API via OAuth token)
 agent-demo:
 	cd packages/backend && pnpm tsx ../../scripts/agent-demo.ts
