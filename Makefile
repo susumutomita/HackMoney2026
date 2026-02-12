@@ -1,4 +1,4 @@
-.PHONY: help install build test lint format typecheck dev backend frontend demo demo-local demo-hosted agent-demo agent-demo-blocked
+.PHONY: help install build test lint format typecheck dev backend frontend demo demo-local demo-hosted agent-demo agent-demo-blocked guard-demo
 
 # Load .env if exists
 ifneq (,$(wildcard .env))
@@ -112,6 +112,24 @@ agent-demo:
 
 agent-demo-blocked:
 	cd packages/backend && pnpm tsx ../../scripts/agent-demo-blocked.ts
+
+# Wallet-enforced guard demo (deploy Safe guard contract)
+# Requires Foundry installed.
+# Env (examples):
+#   PRIVATE_KEY=<uint> USDC_ADDRESS=0x... EXPECTED_RECIPIENT=0x... SAFE_ADDRESS=0xYourSafe
+#
+# Deploys: packages/contracts/script/DeployRecipientInvariantGuard.s.sol
+
+guard-demo:
+	@echo "Deploying RecipientInvariantGuard (Safe Guard)..."
+	@echo "Required env: PRIVATE_KEY (uint), USDC_ADDRESS, EXPECTED_RECIPIENT"
+	@echo "Optional env: SAFE_ADDRESS (defaults to 0x0 = any Safe)"
+	cd packages/contracts && forge script script/DeployRecipientInvariantGuard.s.sol:DeployRecipientInvariantGuardScript \
+		--rpc-url $${RPC_URL:-$${BASE_SEPOLIA_RPC_URL:-https://sepolia.base.org}} \
+		--broadcast \
+		--legacy
+	@echo "\nNext (Safe UI): set Guard to the deployed address, then try USDC transfer to wrong recipient (revert) and to EXPECTED_RECIPIENT (success)."
+	@echo "See docs/GUARD_DEMO.md"
 
 export_pdf:        # Export pitch deck to PDF using Marp
 	npx marp pitch_deck.md --pdf --allow-local-files --html
