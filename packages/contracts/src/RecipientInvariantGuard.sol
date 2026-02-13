@@ -90,12 +90,15 @@ contract RecipientInvariantGuard is BaseTransactionGuard {
         }
         if (sel != TRANSFER_SELECTOR) return;
 
-        // Decode transfer(address,uint256)
-        (address recipient,) = abi.decode(data[4:], (address, uint256));
-
-        if (recipient != expectedRecipient) {
-            revert RecipientMismatch(expectedRecipient, recipient);
+        // Decode transfer(address,uint256) without slicing (more portable for Foundry/Solc)
+        address recipient;
+        assembly {
+            // data layout: 0x00 length, 0x20 selector+arg1 (first 32 bytes), 0x40 arg2
+            // recipient is first argument, right-aligned in the 32-byte word at data+0x24
+            recipient := shr(96, mload(add(data, 0x24)))
         }
+
+        if (recipient != expectedRecipient) revert RecipientMismatch(expectedRecipient, recipient);
     }
 
     function checkAfterExecution(bytes32, bool) external pure override {}

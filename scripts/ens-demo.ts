@@ -2,7 +2,7 @@
 
 /**
  * ENS Integration Demo for ENS Prize
- * 
+ *
  * Demonstrates ZeroKey's ENS-aware security features:
  * 1) ENS name resolution for human-readable addresses
  * 2) ENS-based trust scoring (addresses with ENS get higher trust)
@@ -91,14 +91,14 @@ async function main() {
   console.log("└────────────────────────────────────────────────────────────┘\n");
 
   const ensNames = ["vitalik.eth", "nick.eth", "brantly.eth"];
-  
+
   for (const name of ensNames) {
     const address = resolveEns(name);
     if (address) {
       console.log(`  ${name.padEnd(20)} → ${address}`);
     }
   }
-  
+
   console.log("\n  → Agent says: 'Pay vitalik.eth 0.03 USDC'");
   console.log("  → ZeroKey resolves to: 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
 
@@ -136,7 +136,7 @@ async function main() {
     config: { type: "ens_required", requireEns: true },
     enabled: true,
   });
-  
+
   const policyId = policyRes.json?.id;
   if (policyRes.status === 200 || policyRes.status === 201) {
     console.log("  ✓ Policy active: Recipients must have ENS names\n");
@@ -145,7 +145,7 @@ async function main() {
   // Test 1: Non-ENS recipient (should be REJECTED)
   console.log("  Step 2: Agent tries to pay NON-ENS address");
   console.log(`    To: ${randomAddress} (no ENS)`);
-  
+
   const fwCheck1 = await postJson("/api/firewall/check", {
     from: vitalikAddress,
     to: randomAddress,
@@ -172,7 +172,7 @@ async function main() {
   // Test 2: ENS recipient (should be APPROVED)
   console.log("  Step 3: Agent pays ENS-verified address (policy disabled)");
   console.log(`    To: vitalik.eth (${vitalikAddress})`);
-  
+
   const fwCheck2 = await postJson("/api/firewall/check", {
     from: "0x7aD8317e9aB4837AEF734e23d1C62F4938a6D950",
     to: vitalikAddress,

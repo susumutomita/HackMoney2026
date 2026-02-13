@@ -44,9 +44,9 @@ make guard-demo
 
 ## Manual steps (Safe UI)
 
-1) In Safe UI, set Guard = deployed `RecipientInvariantGuard` address.
-2) Try USDC transfer **to a wrong address** → should revert.
-3) Try USDC transfer **to EXPECTED_RECIPIENT** → should succeed and show txHash.
+1. In Safe UI, set Guard = deployed `RecipientInvariantGuard` address.
+2. Try USDC transfer **to a wrong address** → should revert.
+3. Try USDC transfer **to EXPECTED_RECIPIENT** → should succeed and show txHash.
 
 ## What to capture on video
 
