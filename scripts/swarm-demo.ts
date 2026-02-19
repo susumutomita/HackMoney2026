@@ -321,7 +321,7 @@ async function main() {
   // Test: Non-ENS recipient should be REJECTED
   console.log("  Step 2: Agent tries to pay non-ENS address");
   console.log("    To: 0x0000000000000000000000000000000000000001 (no ENS)");
-  
+
   const ensCheck1 = await postJson("/api/firewall/check", {
     from: account.address,
     to: "0x0000000000000000000000000000000000000001",
@@ -340,7 +340,7 @@ async function main() {
   // Test: ENS recipient should be APPROVED (without ENS policy)
   console.log("  Step 3: Agent pays ENS-verified recipient (policy disabled)");
   console.log("    To: vitalik.eth (0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045)");
-  
+
   const ensCheck2 = await postJson("/api/firewall/check", {
     from: account.address,
     to: ENS_REGISTRY["vitalik.eth"],
